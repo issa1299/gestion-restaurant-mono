@@ -21,6 +21,17 @@ class ParametreRestaurant(models.Model):
     ouverture_soir = models.TimeField(null=True, blank=True)
     fermeture_soir = models.TimeField(null=True, blank=True)
 
+    # E-mails aux clients (SMTP)
+    smtp_host = models.CharField(max_length=150, blank=True, default="")
+    smtp_port = models.PositiveIntegerField(default=587)
+    smtp_utilisateur = models.CharField(max_length=150, blank=True, default="")
+    smtp_mot_de_passe = models.CharField(max_length=200, blank=True, default="")
+    smtp_use_tls = models.BooleanField(default=True)
+    email_expediteur = models.EmailField(blank=True, default="")
+
+    # Site & QR codes des tables
+    url_site = models.URLField(blank=True, default="")
+
     def save(self, *args, **kwargs):
         # S'assurer qu'il n'y a qu'une seule instance
         self.pk = 1

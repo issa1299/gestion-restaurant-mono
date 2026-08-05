@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from apps.accounts.decorators import role_required
+from apps.parametres.models import ParametreRestaurant
 from .models import Table
 
 
@@ -16,6 +17,7 @@ def liste_tables(request):
         "total": total,
         "disponibles": disponibles,
         "occupees": occupees,
+        "url_site": ParametreRestaurant.load().url_site,
     })
 
 
