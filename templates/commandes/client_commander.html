@@ -5,11 +5,11 @@
 
 {% block extra_css %}
 <style>
-    .product-card {
-        transition: all .25s ease;
+    .list-item {
+        transition: all .2s ease;
         border: 2px solid transparent;
     }
-    .product-card:active { transform: scale(.97); }
+    .list-item:active { background: #fff7ed; }
     .cat-chip { transition: all .2s ease; white-space: nowrap; }
     .cat-chip.active {
         background: #f97316;
@@ -17,25 +17,36 @@
         box-shadow: 0 4px 12px rgba(249,115,22,.35);
     }
     .qty-btn {
-        width: 28px; height: 28px;
+        width: 34px; height: 34px;
         border-radius: 9999px;
         display: flex; align-items: center; justify-content: center;
-        font-weight: 700; font-size: .85rem;
+        font-weight: 700; font-size: 1rem;
         background: #fff;
         border: 2px solid #f97316; color: #f97316;
         transition: all .15s ease;
     }
-    .qty-btn:active { transform: scale(.9); }
+    .qty-btn:active { transform: scale(.88); }
     .cart-drawer {
         transform: translateY(100%);
         transition: transform .35s cubic-bezier(.22,1,.36,1);
     }
     .cart-drawer.open { transform: translateY(0); }
-    .floating-cart {
-        box-shadow: 0 10px 30px rgba(249,115,22,.4);
+    .modal-produit {
+        transform: translateY(100%);
+        transition: transform .35s cubic-bezier(.22,1,.36,1);
     }
+    .modal-produit.open { transform: translateY(0); }
+    .floating-cart { box-shadow: 0 10px 30px rgba(249,115,22,.4); }
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+    .add-feedback {
+        animation: fadePulse .5s ease;
+    }
+    @keyframes fadePulse {
+        0% { transform: scale(.85); opacity: .6; }
+        50% { transform: scale(1.15); }
+        100% { transform: scale(1); opacity: 1; }
+    }
 </style>
 {% endblock %}
 
@@ -95,41 +106,42 @@
             {% endfor %}
         </div>
 
-        <!-- Produits -->
-        <div class="grid grid-cols-2 gap-3">
+        <!-- Liste des produits (version compacte) -->
+        <div id="liste-produits" class="space-y-2">
             {% for produit in produits %}
-            <div class="product-card bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col"
-                 data-id="{{ produit.id }}" data-nom="{{ produit.nom }}" data-prix="{{ produit.prix }}"
-                 data-cat="{{ produit.categorie.id }}">
-                <div class="relative">
+            <div class="list-item bg-white rounded-2xl shadow-sm p-3 flex items-center gap-3 cursor-pointer"
+                 data-id="{{ produit.id }}" data-nom="{{ produit.nom|escapejs }}" data-prix="{{ produit.prix }}"
+                 data-desc="{{ produit.description|escapejs }}" data-cat="{{ produit.categorie.id }}"
+                 data-cat-nom="{{ produit.categorie.nom }}"
+                 onclick="ouvrirProduit({{ produit.id }})">
+                <div class="relative shrink-0">
                     {% if produit.image %}
                         <img src="{{ produit.image.url }}" alt="{{ produit.nom }}"
-                             class="w-full h-28 object-cover">
+                             class="w-20 h-20 rounded-xl object-cover">
                     {% else %}
-                        <div class="w-full h-28 bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center">
-                            <i class="fas fa-utensils text-3xl text-orange-300"></i>
+                        <div class="w-20 h-20 rounded-xl bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center">
+                            <i class="fas fa-utensils text-2xl text-orange-300"></i>
                         </div>
                     {% endif %}
-                    {% if produit.disponible %}
-                    <span class="absolute top-2 right-2 bg-green-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow">
-                        <i class="fas fa-circle text-[6px] mr-1"></i>Dispo
+                    {% if not produit.disponible %}
+                    <span class="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center text-white text-[10px] font-bold">
+                        Indispo
                     </span>
                     {% endif %}
                 </div>
-                <div class="p-3 flex-1 flex flex-col">
-                    <h3 class="font-bold text-sm text-slate-800 leading-tight">{{ produit.nom }}</h3>
-                    <p class="text-gray-400 text-xs mt-0.5">{{ produit.categorie.nom }}</p>
-                    <div class="mt-auto pt-2 flex items-center justify-between gap-2">
+                <div class="flex-1 min-w-0">
+                    <h3 class="font-bold text-sm text-slate-800 leading-tight truncate">{{ produit.nom }}</h3>
+                    {% if produit.description %}
+                    <p class="text-gray-400 text-xs mt-0.5 truncate">{{ produit.description }}</p>
+                    {% endif %}
+                    <div class="flex items-center justify-between mt-1.5">
                         <span class="text-orange-600 font-extrabold">{{ produit.prix }} <span class="text-[10px] font-bold">FCFA</span></span>
-                        <button onclick="ajouterAuPanier({{ produit.id }}, '{{ produit.nom|escapejs }}', {{ produit.prix }})"
-                                class="w-9 h-9 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-md hover:bg-orange-600 active:scale-90 transition">
-                            <i class="fas fa-plus"></i>
-                        </button>
+                        <span class="text-xs text-orange-500"><i class="fas fa-plus-circle text-lg"></i></span>
                     </div>
                 </div>
             </div>
             {% empty %}
-            <div class="col-span-2 py-16 text-center">
+            <div class="py-16 text-center">
                 <i class="fas fa-utensils text-5xl text-orange-200 mb-4"></i>
                 <h2 class="text-xl font-bold text-gray-400">Le menu est en cours de préparation</h2>
             </div>
@@ -155,10 +167,7 @@
     <div class="fixed inset-0 z-30 hidden" id="panier-overlay">
         <div class="absolute inset-0 bg-black/40" onclick="fermerPanier()"></div>
         <div class="cart-drawer absolute bottom-0 inset-x-0 bg-gray-50 rounded-t-3xl max-h-[85vh] flex flex-col">
-            <!-- Poignée -->
             <div class="pt-3 pb-1 flex justify-center"><div class="w-12 h-1.5 bg-gray-300 rounded-full"></div></div>
-
-            <!-- Titre -->
             <div class="px-5 pb-3 flex items-center justify-between">
                 <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
                     <i class="fas fa-shopping-bag text-orange-500"></i> Mon panier
@@ -166,10 +175,7 @@
                 </h2>
                 <button onclick="fermerPanier()" class="text-gray-400 hover:text-gray-600 text-xl"><i class="fas fa-xmark"></i></button>
             </div>
-
-            <!-- Contenu -->
             <div class="flex-1 overflow-y-auto px-5 pb-3">
-                <!-- Nom / téléphone -->
                 <div class="bg-white rounded-2xl p-4 shadow-sm mb-3">
                     <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Vos informations</p>
                     <div class="grid grid-cols-2 gap-2">
@@ -179,8 +185,6 @@
                                class="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-orange-500">
                     </div>
                 </div>
-
-                <!-- Mode -->
                 <div class="bg-white rounded-2xl p-4 shadow-sm mb-3">
                     <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Mode de commande</p>
                     <div class="flex gap-2">
@@ -202,12 +206,8 @@
                                class="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-orange-500">
                     </div>
                 </div>
-
-                <!-- Articles -->
                 <div id="panier" class="space-y-2"></div>
             </div>
-
-            <!-- Pied du tiroir -->
             <div class="bg-white rounded-t-2xl shadow-[0_-8px_30px_rgba(0,0,0,.08)] p-5">
                 <div class="flex justify-between items-center mb-3">
                     <span class="text-gray-500 font-semibold text-sm">Total</span>
@@ -228,6 +228,52 @@
     </div>
 </div>
 
+<!-- BOÎTE DE DIALOGUE PRODUIT -->
+<div id="modal-produit-overlay" class="fixed inset-0 z-40 hidden">
+    <div class="absolute inset-0 bg-black/50" onclick="fermerProduit()"></div>
+    <div class="modal-produit absolute bottom-0 inset-x-0 bg-white rounded-t-3xl max-h-[85vh] overflow-y-auto">
+        <!-- Image -->
+        <div class="relative">
+            <img id="mp-img" src="" alt="" class="w-full h-52 object-cover">
+            <button onclick="fermerProduit()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/90 text-slate-700 flex items-center justify-center shadow-lg">
+                <i class="fas fa-xmark"></i>
+            </button>
+        </div>
+        <div class="p-6 pb-8">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <h2 id="mp-nom" class="text-2xl font-extrabold text-slate-800"></h2>
+                    <p id="mp-cat" class="text-gray-400 text-sm mt-1"></p>
+                </div>
+                <span id="mp-prix" class="text-xl font-extrabold text-orange-600 shrink-0"></span>
+            </div>
+            <p id="mp-desc" class="text-gray-500 text-sm mt-3 leading-relaxed"></p>
+
+            <!-- Quantité -->
+            <div class="flex items-center justify-between mt-6 bg-gray-50 rounded-2xl p-4">
+                <span class="font-bold text-slate-700">Quantité</span>
+                <div class="flex items-center gap-3">
+                    <button onclick="mpModifierQte(-1)" class="qty-btn"><i class="fas fa-minus"></i></button>
+                    <span id="mp-qte" class="font-extrabold text-lg w-8 text-center">1</span>
+                    <button onclick="mpModifierQte(1)" class="qty-btn"><i class="fas fa-plus"></i></button>
+                </div>
+            </div>
+
+            <!-- Boutons -->
+            <div class="flex gap-2 mt-5">
+                <button onclick="fermerProduit()"
+                        class="w-14 h-14 rounded-2xl bg-gray-100 text-slate-600 flex items-center justify-center transition hover:bg-gray-200">
+                    <i class="fas fa-xmark text-xl"></i>
+                </button>
+                <button onclick="mpAjouterPanier()" id="mp-btn"
+                        class="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-4 rounded-2xl font-extrabold text-base shadow-lg shadow-orange-200 flex items-center justify-center gap-2 transition active:scale-[.98]">
+                    <i class="fas fa-shopping-bag"></i> Ajouter au panier
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- MODALE CONFIRMATION -->
 <div id="modalConfirmation" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
     <div class="bg-white rounded-3xl shadow-2xl w-80 p-6 text-center">
@@ -236,7 +282,7 @@
         </div>
         <h2 class="text-2xl font-extrabold mt-4 text-slate-800" id="modal-titre">Commande envoyée !</h2>
         <p class="text-gray-500 mt-2 text-sm" id="modal-message">Votre commande a été créée avec succès.</p>
-        <button onclick="nouvelleCommande()" 
+        <button onclick="nouvelleCommande()"
                 class="w-full mt-5 bg-orange-600 hover:bg-orange-700 text-white py-3 rounded-xl font-bold transition">
             <i class="fas fa-plus mr-2"></i>Nouvelle commande
         </button>
@@ -248,7 +294,42 @@
 <script>
 let panier = JSON.parse(localStorage.getItem("panier_client")) || [];
 let mode = "SUR_PLACE";
+let mpId = null, mpQte = 1;
 
+/* ---- Modal produit ---- */
+function ouvrirProduit(id) {
+    const el = document.querySelector('.list-item[data-id="' + id + '"]');
+    if (!el || el.dataset.dispo === "false") return;
+    mpId = id; mpQte = 1;
+    const img = el.querySelector('img');
+    document.getElementById('mp-img').src = img ? img.src : '';
+    document.getElementById('mp-nom').textContent = el.dataset.nom;
+    document.getElementById('mp-cat').textContent = el.dataset.catNom || '';
+    document.getElementById('mp-desc').textContent = el.dataset.desc || 'Un délicieux plat préparé avec soin.';
+    document.getElementById('mp-prix').textContent = parseInt(el.dataset.prix).toLocaleString() + ' FCFA';
+    document.getElementById('mp-qte').textContent = '1';
+    document.getElementById('modal-produit-overlay').classList.remove('hidden');
+    setTimeout(() => document.querySelector('.modal-produit').classList.add('open'), 10);
+}
+
+function fermerProduit() {
+    document.querySelector('.modal-produit').classList.remove('open');
+    setTimeout(() => document.getElementById('modal-produit-overlay').classList.add('hidden'), 300);
+}
+
+function mpModifierQte(delta) {
+    mpQte += delta;
+    if (mpQte < 1) mpQte = 1;
+    document.getElementById('mp-qte').textContent = mpQte;
+}
+
+function mpAjouterPanier() {
+    const el = document.querySelector('.list-item[data-id="' + mpId + '"]');
+    ajouterAuPanier(mpId, el.dataset.nom, parseInt(el.dataset.prix), mpQte);
+    fermerProduit();
+}
+
+/* ---- Panier ---- */
 function ouvrirPanier() {
     document.getElementById("panier-overlay").classList.remove("hidden");
     document.getElementById("panier-overlay").classList.add("flex");
@@ -278,39 +359,29 @@ function setMode(m) {
 function filtrerCategorie(id, btn) {
     document.querySelectorAll(".cat-chip").forEach(c => c.classList.remove("active"));
     btn.classList.add("active");
-    document.querySelectorAll(".product-card").forEach(card => {
-        const show = !id || card.dataset.cat == id;
-        card.style.display = show ? "" : "none";
+    document.querySelectorAll(".list-item").forEach(item => {
+        const show = !id || item.dataset.cat == id;
+        item.style.display = show ? "" : "none";
     });
 }
 
 function filtrerProduits() {
     const q = document.getElementById("recherche").value.toLowerCase();
     const catActive = document.querySelector(".cat-chip.active").dataset.cat || "";
-    document.querySelectorAll(".product-card").forEach(card => {
-        const nom = card.dataset.nom.toLowerCase();
-        const inCat = !catActive || card.dataset.cat == catActive;
-        card.style.display = (nom.includes(q) && inCat) ? "" : "none";
+    document.querySelectorAll(".list-item").forEach(item => {
+        const nom = item.dataset.nom.toLowerCase();
+        const inCat = !catActive || item.dataset.cat == catActive;
+        item.style.display = (nom.includes(q) && inCat) ? "" : "none";
     });
 }
 
-function ajouterAuPanier(id, nom, prix) {
+function ajouterAuPanier(id, nom, prix, qte) {
+    qte = qte || 1;
     let produit = panier.find(p => p.id == id);
-    if (produit) { produit.qte++; }
-    else { panier.push({ id, nom, prix, qte: 1 }); }
+    if (produit) { produit.qte += qte; }
+    else { panier.push({ id, nom, prix, qte }); }
     sauvegarder();
     afficherPanier();
-    animerBouton(id);
-}
-
-function animerBouton(id) {
-    const btns = document.querySelectorAll('.product-card button');
-    btns.forEach(b => {
-        if (b.closest('.product-card') && b.closest('.product-card').dataset.id == id) {
-            b.style.transform = 'scale(.8)';
-            setTimeout(() => b.style.transform = '', 150);
-        }
-    });
 }
 
 function supprimer(index) {
@@ -373,9 +444,9 @@ function afficherPanier() {
                 </div>
                 <div class="flex items-center justify-between mt-2">
                     <div class="flex items-center gap-2">
-                        <button onclick="modifierQte(${i}, -1)" class="qty-btn">-</button>
+                        <button onclick="modifierQte(${i}, -1)" class="qty-btn"><i class="fas fa-minus"></i></button>
                         <span class="font-bold text-sm w-6 text-center">${p.qte}</span>
-                        <button onclick="modifierQte(${i}, 1)" class="qty-btn">+</button>
+                        <button onclick="modifierQte(${i}, 1)" class="qty-btn"><i class="fas fa-plus"></i></button>
                     </div>
                     <span class="font-extrabold text-orange-600 text-sm">${st.toLocaleString()} FCFA</span>
                 </div>
