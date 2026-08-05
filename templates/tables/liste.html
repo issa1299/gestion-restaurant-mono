@@ -153,7 +153,7 @@
     var urlSite = "{{ url_site|default:'' }}";
     function afficherQr(id, numero) {
         document.getElementById('qr-num').textContent = numero;
-        var lien = (urlSite || window.location.origin) + "/commandes/client/";
+        var lien = (urlSite || window.location.origin) + "/commandes/client/?table=" + numero;
         var api = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + encodeURIComponent(lien);
         document.getElementById('qr-img').src = api;
         document.getElementById('qr-imprimer').href = "https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=" + encodeURIComponent(lien);

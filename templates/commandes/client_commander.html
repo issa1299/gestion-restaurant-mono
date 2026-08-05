@@ -55,6 +55,11 @@
                 <p class="text-orange-100 text-sm mt-1">
                     {{ parametre.adresse|default:"Commandez votre repas en quelques clics" }}
                 </p>
+                {% if numero_table %}
+                <span class="inline-flex items-center gap-2 mt-3 bg-white/20 backdrop-blur text-white text-sm font-bold px-4 py-1.5 rounded-full">
+                    <i class="fas fa-chair"></i> Table n° {{ numero_table }}
+                </span>
+                {% endif %}
             </div>
             {% if parametre.logo %}
             <img src="{{ parametre.logo.url }}" alt="Logo"
@@ -295,7 +300,17 @@ function ajouterAuPanier(id, nom, prix) {
     else { panier.push({ id, nom, prix, qte: 1 }); }
     sauvegarder();
     afficherPanier();
-    ouvrirPanier();
+    animerBouton(id);
+}
+
+function animerBouton(id) {
+    const btns = document.querySelectorAll('.product-card button');
+    btns.forEach(b => {
+        if (b.closest('.product-card') && b.closest('.product-card').dataset.id == id) {
+            b.style.transform = 'scale(.8)';
+            setTimeout(() => b.style.transform = '', 150);
+        }
+    });
 }
 
 function supprimer(index) {
@@ -396,6 +411,7 @@ async function validerCommande() {
             body: JSON.stringify({
                 panier: panier.map(p => ({ id: p.id, qte: p.qte })),
                 mode: mode,
+                table: "{{ numero_table }}",
                 adresse: document.getElementById("adresse-livraison")?.value || "",
                 telephone: document.getElementById("tel-livraison")?.value || "",
                 guest_nom: document.getElementById("guest-nom")?.value || "",

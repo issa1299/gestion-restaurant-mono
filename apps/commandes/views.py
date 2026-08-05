@@ -145,10 +145,19 @@ def client_commander(request):
     from apps.menu.models import Categorie
     from apps.parametres.models import ParametreRestaurant
     categories = Categorie.objects.filter(produits__isnull=False).distinct()
+
+    numero_table = request.GET.get("table", "")
+    from apps.tables.models import Table
+    table = None
+    if numero_table:
+        table = Table.objects.filter(numero=numero_table).first()
+
     return render(request, "commandes/client_commander.html", {
         "produits": produits,
         "categories": categories,
         "parametre": ParametreRestaurant.load(),
+        "numero_table": numero_table,
+        "table": table,
         "groupe": "commandes"
     })
 
@@ -170,6 +179,7 @@ def client_passer_commande(request):
     telephone = data.get("telephone", "")
     guest_nom = data.get("guest_nom", "").strip()
     guest_telephone = data.get("guest_telephone", "").strip()
+    numero_table = str(data.get("table", "")).strip()
     
     if not panier:
         return JsonResponse({"success": False, "message": "Panier vide."}, status=400)
@@ -219,8 +229,14 @@ def client_passer_commande(request):
     if len(produits) != len(ids_produits):
         return JsonResponse({"success": False, "message": "Certains produits ne sont plus disponibles."}, status=400)
     
+    from apps.tables.models import Table
+    table = None
+    if numero_table:
+        table = Table.objects.filter(numero=numero_table).first()
+
     commande = Commande.objects.create(
         client=client,
+        table=table,
         type=mode if mode in (Commande.SUR_PLACE, Commande.LIVRAISON) else Commande.SUR_PLACE,
         statut=Commande.EN_ATTENTE,
         adresse_livraison=adresse if mode == "LIVRAISON" else "",
