@@ -12,6 +12,15 @@ class ParametreRestaurant(models.Model):
     
     message_ticket = models.TextField(blank=True, default="Merci de votre visite et à bientôt !")
 
+    # Horaires d'ouverture (deux services : midi et soir)
+    jours_ouverture = models.CharField(
+        max_length=50, blank=True, default="Lundi au Dimanche"
+    )
+    ouverture_midi = models.TimeField(null=True, blank=True)
+    fermeture_midi = models.TimeField(null=True, blank=True)
+    ouverture_soir = models.TimeField(null=True, blank=True)
+    fermeture_soir = models.TimeField(null=True, blank=True)
+
     def save(self, *args, **kwargs):
         # S'assurer qu'il n'y a qu'une seule instance
         self.pk = 1

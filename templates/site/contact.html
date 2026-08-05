@@ -46,7 +46,16 @@
                 <span class="w-11 h-11 shrink-0 rounded-xl bg-slate-700 text-white flex items-center justify-center shadow-lg"><i class="fas fa-clock"></i></span>
                 <div>
                     <h3 class="font-bold text-slate-900 text-sm">Horaires</h3>
-                    <p class="text-sm text-slate-600 mt-1">Ouvert 7j/7<br>de 11h à 23h</p>
+                    <p class="text-sm text-slate-600 mt-1">{{ parametre.jours_ouverture|default:"Ouvert 7j/7" }}</p>
+                    {% if parametre.ouverture_midi and parametre.fermeture_midi %}
+                    <p class="text-sm text-slate-600 mt-1">Midi : {{ parametre.ouverture_midi|time:"H:i" }} - {{ parametre.fermeture_midi|time:"H:i" }}</p>
+                    {% endif %}
+                    {% if parametre.ouverture_soir and parametre.fermeture_soir %}
+                    <p class="text-sm text-slate-600 mt-1">Soir : {{ parametre.ouverture_soir|time:"H:i" }} - {{ parametre.fermeture_soir|time:"H:i" }}</p>
+                    {% endif %}
+                    {% if not parametre.ouverture_midi and not parametre.ouverture_soir %}
+                    <p class="text-sm text-slate-600 mt-1">de 11h à 23h</p>
+                    {% endif %}
                 </div>
             </div>
         </div>
