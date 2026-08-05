@@ -182,8 +182,9 @@
 {% endblock %}
 
 {% block extra_js %}
+{{ commandes_json|json_script:"commandes-data" }}
 <script>
-let commandesData = {{ commandes_json|safe }};
+let commandesData = JSON.parse(document.getElementById('commandes-data').textContent);
 
 function ouvrirCommande(id) {
     const c = commandesData.find(x => x.id === id);
