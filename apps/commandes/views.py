@@ -21,9 +21,34 @@ def index(request):
         "en_preparation": commandes.filter(statut=Commande.EN_PREPARATION).count(),
         "pretes": commandes.filter(statut=Commande.PRETE).count(),
     }
+    commandes_json = []
+    for cmd in commandes:
+        commandes_json.append({
+            "id": cmd.id,
+            "client": str(cmd.client) if cmd.client else "À emporter",
+            "telephone": cmd.telephone_livraison if cmd.type == "LIVRAISON" else (cmd.client.telephone if cmd.client else ""),
+            "table": cmd.table.numero if cmd.table else None,
+            "type": cmd.get_type_display(),
+            "type_code": cmd.type,
+            "statut": cmd.get_statut_display(),
+            "statut_code": cmd.statut,
+            "date": cmd.created_at.strftime("%d/%m/%Y %H:%M"),
+            "serveur": str(cmd.serveur) if cmd.serveur else "-",
+            "adresse": cmd.adresse_livraison,
+            "telephone_livraison": cmd.telephone_livraison,
+            "articles": [{
+                "nom": l.produit.nom,
+                "qte": l.quantite,
+                "prix": float(l.prix),
+                "sous_total": float(l.sous_total),
+            } for l in cmd.lignes.all()],
+            "total": float(cmd.total),
+            "statuts": [{"code": s[0], "label": s[1]} for s in Commande.STATUTS if s[0] != cmd.statut],
+        })
     return render(request, "commandes/index.html", {
         "commandes": commandes,
         "stats": stats,
+        "commandes_json": commandes_json,
         "groupe": "commandes"
     })
 

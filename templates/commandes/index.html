@@ -41,93 +41,269 @@
         </div>
     </div>
 
-    <!-- Commandes List -->
+    <!-- Liste compacte des commandes -->
     {% if commandes %}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+    <div class="space-y-2">
         {% for commande in commandes %}
-        <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition p-4 sm:p-6 border-l-4 commande-card"
+        <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition px-3 sm:px-4 py-2.5 flex items-center gap-3 cursor-pointer border-l-4"
             {% if commande.statut == 'EN_ATTENTE' %}style="border-left-color: #f97316;"
             {% elif commande.statut == 'EN_PREPARATION' %}style="border-left-color: #3b82f6;"
             {% elif commande.statut == 'PRETE' %}style="border-left-color: #22c55e;"
             {% elif commande.statut == 'LIVREE' %}style="border-left-color: #10b981;"
-            {% else %}style="border-left-color: #64748b;"{% endif %}>
-            <div class="flex justify-between items-start mb-3 sm:mb-4">
-                <div class="min-w-0">
-                    <h3 class="text-lg sm:text-xl font-bold text-slate-900">Commande N° {{ commande.id }}</h3>
-                    <p class="text-xs sm:text-sm text-slate-500">{{ commande.created_at|date:"d/m/Y H:i" }}</p>
-                </div>
-                <div class="flex items-center gap-2 shrink-0">
-                    <span class="px-2 sm:px-3 py-1 rounded-full text-xs font-semibold {% if commande.type == 'LIVRAISON' %}bg-purple-100 text-purple-700{% elif commande.type == 'A_EMPORTER' %}bg-amber-100 text-amber-700{% else %}bg-teal-100 text-teal-700{% endif %}">
-                        {% if commande.type == 'LIVRAISON' %}<i class="fas fa-truck mr-1"></i>Livraison{% elif commande.type == 'A_EMPORTER' %}<i class="fas fa-bag-shopping mr-1"></i>À emporter{% else %}<i class="fas fa-chair mr-1"></i>Sur place{% endif %}
-                    </span>
-                    <span class="px-2 sm:px-3 py-1 rounded-full text-xs font-semibold"
-                        {% if commande.statut == 'EN_ATTENTE' %}style="background: #fef3c7; color: #92400e;"
-                        {% elif commande.statut == 'EN_PREPARATION' %}style="background: #dbeafe; color: #1e40af;"
-                        {% elif commande.statut == 'PRETE' %}style="background: #dcfce7; color: #166534;"
-                        {% elif commande.statut == 'LIVREE' %}style="background: #d1fae5; color: #065f46;"
-                        {% else %}style="background: #f1f5f9; color: #334155;"{% endif %}>
-                        {{ commande.get_statut_display }}
-                    </span>
-                </div>
+            {% else %}style="border-left-color: #64748b;"{% endif %}
+            onclick="ouvrirCommande({{ commande.id }})">
+
+            <!-- N° -->
+            <div class="min-w-[44px] flex flex-col items-center">
+                <span class="w-9 h-9 rounded-full bg-orange-100 text-orange-700 font-bold text-sm flex items-center justify-center">#{{ commande.id }}</span>
             </div>
-            <div class="space-y-1.5 sm:space-y-2 mb-3 sm:mb-4 text-sm">
-                <div class="flex justify-between">
-                    <span class="text-slate-600">Client:</span>
-                    <span class="font-semibold text-slate-900">{{ commande.client|default:"À emporter" }}</span>
-                </div>
+
+            <!-- Table / Type -->
+            <div class="w-16 sm:w-20 shrink-0 text-center">
                 {% if commande.type == 'LIVRAISON' %}
-                <div class="flex justify-between">
-                    <span class="text-slate-600">Adresse:</span>
-                    <span class="font-semibold text-slate-900 text-right break-words max-w-[60%]">{{ commande.adresse_livraison|default:"-" }}</span>
-                </div>
+                <span class="text-xs text-purple-700"><i class="fas fa-truck mr-1"></i><span class="hidden sm:inline">Livraison</span></span>
+                {% elif commande.type == 'A_EMPORTER' %}
+                <span class="text-xs text-amber-700"><i class="fas fa-bag-shopping mr-1"></i><span class="hidden sm:inline">Emporter</span></span>
                 {% elif commande.table %}
-                <div class="flex justify-between">
-                    <span class="text-slate-600">Table:</span>
-                    <span class="font-semibold text-slate-900">Table {{ commande.table.numero }}</span>
-                </div>
+                <span class="text-xs font-bold text-teal-700"><i class="fas fa-chair mr-1"></i>{{ commande.table.numero }}</span>
+                {% else %}
+                <span class="text-xs font-bold text-teal-700"><i class="fas fa-chair mr-1"></i>-</span>
                 {% endif %}
-                <div class="flex justify-between">
-                    <span class="text-slate-600">Serveur:</span>
-                    <span class="font-semibold text-slate-900">{{ commande.serveur|default:"-" }}</span>
-                </div>
-                <div class="border-t pt-2 sm:pt-3 flex justify-between">
-                    <span class="text-slate-600 font-semibold">Total:</span>
-                    <span class="text-lg font-bold text-slate-900">{{ commande.total }} FCFA</span>
-                </div>
             </div>
-            <div class="bg-slate-50 rounded p-2 sm:p-3 mb-3 sm:mb-4">
-                <p class="text-xs sm:text-sm font-semibold text-slate-700 mb-1 sm:mb-2">Articles ({{ commande.lignes.count }})</p>
-                <ul class="space-y-0.5 sm:space-y-1 text-xs sm:text-sm">
-                    {% for ligne in commande.lignes.all %}
-                    <li class="text-slate-600">{{ ligne.quantite }} × <span class="font-medium">{{ ligne.produit.nom }}</span></li>
-                    {% empty %}
-                    <li class="text-slate-500 italic">Aucun article</li>
-                    {% endfor %}
-                </ul>
+
+            <!-- Client + articles -->
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-slate-800 truncate">{{ commande.client|default:"À emporter" }}</p>
+                <p class="text-xs text-slate-500 truncate">
+                    {% for ligne in commande.lignes.all %}{{ ligne.quantite }}×{{ ligne.produit.nom }}{% if not forloop.last %}, {% endif %}{% empty %}-{% endfor %}
+                </p>
             </div>
-            <div class="flex gap-2">
-                {% if request.user|has_role:"SERVEUR" %}
-                <a href="{% url 'commandes:modifier' commande.id %}" 
-                   class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1.5 sm:py-2 rounded text-xs sm:text-sm transition text-center">
-                    Modifier
-                </a>
-                {% endif %}
-                <a href="{% url 'commandes:detail' commande.id %}" 
-                   class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-900 font-semibold py-1.5 sm:py-2 rounded text-xs sm:text-sm transition text-center">
-                    Détails
-                </a>
-            </div>
+
+            <!-- Statut (pastille) -->
+            <span class="hidden sm:inline-flex w-2.5 h-2.5 rounded-full shrink-0"
+                {% if commande.statut == 'EN_ATTENTE' %}style="background:#f97316;"
+                {% elif commande.statut == 'EN_PREPARATION' %}style="background:#3b82f6;"
+                {% elif commande.statut == 'PRETE' %}style="background:#22c55e;"
+                {% elif commande.statut == 'LIVREE' %}style="background:#10b981;"
+                {% else %}style="background:#64748b;"{% endif %}></span>
+
+            <!-- Total -->
+            <span class="font-bold text-slate-900 text-sm w-20 text-right shrink-0">{{ commande.total }} <span class="text-[10px]">FCFA</span></span>
+
+            <!-- Chevron -->
+            <i class="fas fa-chevron-right text-slate-300 text-xs shrink-0"></i>
         </div>
         {% endfor %}
     </div>
     {% else %}
     <div class="bg-white rounded-lg shadow p-8 sm:p-12 text-center">
         <svg class="w-12 h-12 sm:w-16 sm:h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
         </svg>
         <h3 class="text-lg sm:text-xl font-semibold text-slate-900 mb-2">Aucune commande</h3>
         <p class="text-slate-600 text-sm">Vous n'avez pas de commandes pour le moment.</p>
     </div>
     {% endif %}
 </div>
+
+<!-- BOÎTE DE DIALOGUE COMMANDE -->
+<div id="commande-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50" onclick="fermerCommande()"></div>
+    <div class="absolute bottom-0 inset-x-0 bg-gray-50 rounded-t-3xl max-h-[85vh] flex flex-col modal-commande" style="transition: transform .35s cubic-bezier(.22,1,.36,1); transform: translateY(100%);">
+        <div class="pt-3 pb-1 flex justify-center"><div class="w-12 h-1.5 bg-gray-300 rounded-full"></div></div>
+
+        <!-- Titre -->
+        <div class="px-5 pb-3 flex items-start justify-between">
+            <div>
+                <h2 class="text-xl font-extrabold text-slate-900" id="cd-titre">Commande</h2>
+                <p class="text-sm text-slate-500" id="cd-date"></p>
+            </div>
+            <button onclick="fermerCommande()" class="text-gray-400 hover:text-gray-600 text-xl"><i class="fas fa-xmark"></i></button>
+        </div>
+
+        <!-- Badges -->
+        <div class="px-5 pb-3 flex flex-wrap items-center gap-2">
+            <span id="cd-statut" class="px-3 py-1 rounded-full text-xs font-bold"></span>
+            <span id="cd-type" class="px-3 py-1 rounded-full text-xs font-bold"></span>
+            <span id="cd-table" class="px-3 py-1 rounded-full text-xs font-bold bg-teal-100 text-teal-800"></span>
+        </div>
+
+        <!-- Corps scrollable -->
+        <div class="flex-1 overflow-y-auto px-5 pb-3">
+            <!-- Infos client -->
+            <div class="bg-white rounded-2xl shadow-sm p-4 mb-3">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <p class="text-xs text-slate-500">Client</p>
+                        <p class="font-bold text-slate-900 text-sm" id="cd-client"></p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500">Téléphone</p>
+                        <p class="font-bold text-slate-900 text-sm" id="cd-tel"></p>
+                    </div>
+                    <div class="col-span-2" id="cd-adresse-wrap">
+                        <p class="text-xs text-slate-500">Adresse</p>
+                        <p class="font-bold text-slate-900 text-sm" id="cd-adresse"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Articles -->
+            <div class="bg-white rounded-2xl shadow-sm p-4 mb-3">
+                <h3 class="font-bold text-slate-900 mb-3 flex items-center gap-2">
+                    <i class="fas fa-utensils text-orange-500"></i> Articles
+                </h3>
+                <div id="cd-articles"></div>
+                <hr class="my-3">
+                <div class="flex justify-between items-center">
+                    <span class="font-bold text-slate-900">Total</span>
+                    <span class="text-xl font-extrabold text-orange-600" id="cd-total"></span>
+                </div>
+            </div>
+
+            <!-- Actions statut -->
+            <div class="bg-white rounded-2xl shadow-sm p-4 mb-3" id="cd-statuts-wrap">
+                <h3 class="font-bold text-slate-900 mb-3">Changer le statut</h3>
+                <div class="flex flex-wrap gap-2" id="cd-statuts-btns"></div>
+            </div>
+
+            <!-- Boutons -->
+            <div class="flex gap-2 pb-4">
+                <a id="cd-detail" href="#" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 transition">
+                    <i class="fas fa-expand"></i> Voir le détail
+                </a>
+                <button onclick="fermerCommande()" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-xl text-sm transition">
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let commandesData = {{ commandes_json|safe }};
+
+function ouvrirCommande(id) {
+    const c = commandesData.find(x => x.id === id);
+    if (!c) return;
+
+    document.getElementById('cd-titre').textContent = 'Commande N° ' + c.id;
+    document.getElementById('cd-date').textContent = c.date;
+    document.getElementById('cd-client').textContent = c.client;
+    document.getElementById('cd-tel').textContent = c.telephone || '-';
+
+    // Adresse
+    const adresseWrap = document.getElementById('cd-adresse-wrap');
+    if (c.type_code === 'LIVRAISON' && c.adresse) {
+        adresseWrap.classList.remove('hidden');
+        document.getElementById('cd-adresse').textContent = c.adresse;
+    } else {
+        adresseWrap.classList.add('hidden');
+    }
+
+    // Badges
+    const statutEl = document.getElementById('cd-statut');
+    statutEl.textContent = c.statut;
+    const statutCouleurs = {
+        'EN_ATTENTE': ['#fef3c7', '#92400e'],
+        'EN_PREPARATION': ['#dbeafe', '#1e40af'],
+        'PRETE': ['#dcfce7', '#166534'],
+        'LIVREE': ['#d1fae5', '#065f46'],
+        'ANNULEE': ['#fee2e2', '#991b1b']
+    };
+    const sc = statutCouleurs[c.statut_code] || ['#f1f5f9', '#334155'];
+    statutEl.style.background = sc[0];
+    statutEl.style.color = sc[1];
+
+    document.getElementById('cd-type').textContent = c.type;
+    document.getElementById('cd-type').className = 'px-3 py-1 rounded-full text-xs font-bold ' +
+        (c.type_code === 'LIVRAISON' ? 'bg-purple-100 text-purple-800' :
+         c.type_code === 'A_EMPORTER' ? 'bg-amber-100 text-amber-800' : 'bg-teal-100 text-teal-800');
+
+    const tableEl = document.getElementById('cd-table');
+    if (c.table) {
+        tableEl.textContent = '🪑 Table ' + c.table;
+        tableEl.classList.remove('hidden');
+    } else {
+        tableEl.classList.add('hidden');
+    }
+
+    // Articles
+    let articlesHtml = '';
+    c.articles.forEach(a => {
+        articlesHtml += `
+            <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                <div>
+                    <p class="font-semibold text-sm text-slate-800">${a.nom}</p>
+                    <p class="text-xs text-slate-400">${a.qte} × ${a.prix.toLocaleString()} FCFA</p>
+                </div>
+                <span class="font-bold text-sm text-slate-800">${a.sous_total.toLocaleString()} FCFA</span>
+            </div>`;
+    });
+    document.getElementById('cd-articles').innerHTML = articlesHtml;
+    document.getElementById('cd-total').textContent = c.total.toLocaleString() + ' FCFA';
+
+    // Boutons statut
+    document.getElementById('cd-detail').href = "/commandes/" + c.id + "/";
+    const statutsWrap = document.getElementById('cd-statuts-wrap');
+    {% if request.user|has_role:"SERVEUR,CUISINIER" %}
+    let btns = '';
+    c.statuts.forEach(s => {
+        const couleurs = {
+            'EN_ATTENTE': 'bg-orange-600 hover:bg-orange-700 text-white',
+            'EN_PREPARATION': 'bg-blue-600 hover:bg-blue-700 text-white',
+            'PRETE': 'bg-green-600 hover:bg-green-700 text-white',
+            'LIVREE': 'bg-emerald-600 hover:bg-emerald-700 text-white',
+            'ANNULEE': 'bg-red-600 hover:bg-red-700 text-white'
+        };
+        btns += `<button onclick="changerStatut('${c.id}', '${s.code}', this)"
+            class="${couleurs[s.code] || 'bg-slate-600 text-white'} px-4 py-1.5 rounded-lg font-semibold text-xs transition">
+            Passer à ${s.label}</button>`;
+    });
+    document.getElementById('cd-statuts-btns').innerHTML = btns || '<p class="text-sm text-slate-500">Aucun changement disponible.</p>';
+    statutsWrap.classList.remove('hidden');
+    {% else %}
+    statutsWrap.classList.add('hidden');
+    {% endif %}
+
+    document.getElementById('commande-modal').classList.remove('hidden');
+    setTimeout(() => document.querySelector('.modal-commande').style.transform = 'translateY(0)', 10);
+}
+
+function fermerCommande() {
+    document.querySelector('.modal-commande').style.transform = 'translateY(100%)';
+    setTimeout(() => document.getElementById('commande-modal').classList.add('hidden'), 300);
+}
+
+function changerStatut(id, nouveauStatut, btn) {
+    const texteOriginal = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> En cours...';
+    }
+    const formData = new FormData();
+    formData.append('statut', nouveauStatut);
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    fetch("/commandes/" + id + "/statut/", {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.error || 'Erreur lors du changement de statut');
+            if (btn) { btn.disabled = false; btn.innerHTML = texteOriginal; }
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('Erreur de connexion. Veuillez réessayer.');
+        if (btn) { btn.disabled = false; btn.innerHTML = texteOriginal; }
+    });
+}
+</script>
 {% endblock %}
