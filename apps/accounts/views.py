@@ -28,6 +28,10 @@ def login_view(request):
 
             login(request, user)
 
+            # Les superusers vont au dashboard (même si rôle par défaut CLIENT)
+            if user.is_superuser:
+                return redirect("dashboard:index")
+
             # Les clients vont directement au menu
             if user.role == "CLIENT":
                 return redirect("menu:accueil")

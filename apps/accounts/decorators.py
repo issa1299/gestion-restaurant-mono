@@ -22,6 +22,10 @@ def role_required(allowed_roles=[]):
                 return redirect("accounts:login")
 
 
+            if request.user.is_superuser:
+                return view_func(request, *args, **kwargs)
+
+
             if request.user.role in allowed_roles:
 
                 return view_func(
