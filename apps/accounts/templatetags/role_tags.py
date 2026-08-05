@@ -11,6 +11,9 @@ def has_role(user, roles):
 
     roles_list = roles.split(",")
 
+    if user.is_superuser:
+        return True
+
     return user.role in roles_list
 
 
