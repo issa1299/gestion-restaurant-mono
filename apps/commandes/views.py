@@ -142,8 +142,13 @@ def changer_statut(request, pk):
 def client_commander(request):
     """Page de commande pour les clients avec panier interactif (publique)"""
     produits = Produit.objects.filter(disponible=True)
+    from apps.menu.models import Categorie
+    from apps.parametres.models import ParametreRestaurant
+    categories = Categorie.objects.filter(produits__isnull=False).distinct()
     return render(request, "commandes/client_commander.html", {
         "produits": produits,
+        "categories": categories,
+        "parametre": ParametreRestaurant.load(),
         "groupe": "commandes"
     })
 
