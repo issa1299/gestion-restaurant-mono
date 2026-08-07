@@ -309,6 +309,7 @@ function localiserClient() {
                 const icon = L.divIcon({html:'<div style="background:#f97316;border:3px solid white;border-radius:50%;width:20px;height:20px;box-shadow:0 2px 8px rgba(0,0,0,0.3)"></div>',iconSize:[20,20],iconAnchor:[10,10]});
                 clientMarker = L.marker([lat,lng],{icon}).addTo(miniMap).bindPopup('Votre position').openPopup();
             } else { miniMap.setView([lat,lng],16); clientMarker.setLatLng([lat,lng]); }
+            setTimeout(() => { if (miniMap) miniMap.invalidateSize(); }, 250);
         },
         (err) => {
             btnText.textContent = 'Me localiser automatiquement'; btn.disabled = false;
@@ -385,5 +386,6 @@ async function validerCommande() {
 // Initialisation
 majPanier();
 document.getElementById("nb-plats-dispo").textContent = document.querySelectorAll(".produit-ligne").length;
+window.addEventListener("resize", () => { if (miniMap) miniMap.invalidateSize(); });
 </script>
 {% endblock %}

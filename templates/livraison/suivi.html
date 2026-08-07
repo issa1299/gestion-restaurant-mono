@@ -149,6 +149,10 @@
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
+    // Corrige les cartes blanches (conteneur à taille 0 au chargement)
+    setTimeout(() => map.invalidateSize(), 300);
+    window.addEventListener('resize', () => map.invalidateSize());
+
     // Icônes personnalisées
     const iconClient = L.divIcon({
         html: '<div style="background:#f97316;border:3px solid white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);width:26px;height:26px;box-shadow:0 2px 8px rgba(0,0,0,0.3)"></div>',

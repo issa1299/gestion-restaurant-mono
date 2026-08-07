@@ -176,6 +176,10 @@ const livraisonId = {{ livraison.id }};
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(mapLivraison);
 
+    // Corrige les cartes blanches (conteneur à taille 0 au chargement)
+    setTimeout(() => mapLivraison.invalidateSize(), 300);
+    window.addEventListener('resize', () => mapLivraison.invalidateSize());
+
     // Icônes personnalisées
     const iconClientLiv = L.divIcon({
         html: '<div style="background:#f97316;border:3px solid white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);width:24px;height:24px;box-shadow:0 2px 8px rgba(0,0,0,0.3)"></div>',
