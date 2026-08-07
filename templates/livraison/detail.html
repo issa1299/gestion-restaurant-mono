@@ -165,11 +165,11 @@
 <script>
 const livraisonId = {{ livraison.id }};
     const csrftoken = "{{ csrf_token }}";
-    const clientLat = {{ livraison.commande.latitude_client|default:'null' }};
-    const clientLng = {{ livraison.commande.longitude_client|default:'null' }};
+    const clientLat = {{ livraison.commande.latitude_client|stringformat:"f"|default:'null' }};
+    const clientLng = {{ livraison.commande.longitude_client|stringformat:"f"|default:'null' }};
 
-    const mapInitLat = clientLat || {{ livraison.latitude|default:'12.6392' }};
-    const mapInitLng = clientLng || {{ livraison.longitude|default:'-8.0029' }};
+    const mapInitLat = clientLat || {{ livraison.latitude|stringformat:"f"|default:'12.6392' }};
+    const mapInitLng = clientLng || {{ livraison.longitude|stringformat:"f"|default:'-8.0029' }};
     const mapLivraison = L.map('map-livraison').setView([mapInitLat, mapInitLng], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
@@ -278,7 +278,7 @@ const livraisonId = {{ livraison.id }};
     }
 
     {% if livraison.latitude and livraison.longitude %}
-    updateMarker({{ livraison.latitude }}, {{ livraison.longitude }});
+    updateMarker({{ livraison.latitude|stringformat:"f" }}, {{ livraison.longitude|stringformat:"f" }});
     {% endif %}
 
 // ===== Partage GPS continu (watchPosition toutes les 5s) =====

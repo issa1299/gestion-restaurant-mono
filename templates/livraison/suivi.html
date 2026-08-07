@@ -136,10 +136,10 @@
 <script>
     // ===== Données initiales =====
     const commandeId = {{ commande.id }};
-    const clientLat = {{ commande.latitude_client|default:'null' }};
-    const clientLng = {{ commande.longitude_client|default:'null' }};
-    const initialLat = {{ livraison.latitude|default:'null' }};
-    const initialLng = {{ livraison.longitude|default:'null' }};
+    const clientLat = {{ commande.latitude_client|stringformat:"f"|default:'null' }};
+    const clientLng = {{ commande.longitude_client|stringformat:"f"|default:'null' }};
+    const initialLat = {{ livraison.latitude|stringformat:"f"|default:'null' }};
+    const initialLng = {{ livraison.longitude|stringformat:"f"|default:'null' }};
     const apiUrl = `/livraisons/api/position/${commandeId}/{{ commande.token }}/`;
 
     // ===== Carte =====
