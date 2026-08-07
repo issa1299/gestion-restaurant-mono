@@ -19,12 +19,12 @@
             </h1>
             <p class="anim-hero anim-delay-3 text-orange-100 text-base sm:text-lg mt-5 max-w-xl leading-relaxed">
                 Découvrez nos plats savoureux, préparés avec des produits frais et beaucoup d'amour.
-                Sur place, à emporter ou en livraison.
+                Commandez en ligne et recevez-les en livraison à domicile.
             </p>
             <div class="anim-hero anim-delay-4 flex flex-col sm:flex-row gap-3 mt-8">
-                <a href="{% url 'menu:accueil' %}"
+                <a href="{% url 'commandes:client_commander' %}"
                    class="bg-white hover:bg-orange-50 text-orange-600 font-bold px-7 py-3.5 rounded-full transition flex items-center justify-center gap-2 shadow-xl hover:scale-105 active:scale-95">
-                    <i class="fas fa-book-open"></i> Voir le menu
+                    <i class="fas fa-shopping-cart"></i> Commander maintenant
                 </a>
                 <a href="{% url 'restaurant:reserver' %}"
                    class="bg-orange-800/40 hover:bg-orange-900/50 text-white font-bold px-7 py-3.5 rounded-full transition flex items-center justify-center gap-2 border border-white/30 backdrop-blur hover:scale-105 active:scale-95">
@@ -78,12 +78,12 @@
             <h2 class="text-2xl sm:text-4xl font-extrabold text-white mt-2">Des plats pour toutes les envies</h2>
             <p class="text-slate-300 mt-4 leading-relaxed">
                 Parcourez notre menu en ligne, composez votre panier et commandez en quelques clics.
-                Livraison ou sur place, à vous de choisir.
+                Livraison à domicile, à vous de choisir.
             </p>
         </div>
-        <a href="{% url 'menu:accueil' %}"
+        <a href="{% url 'commandes:client_commander' %}"
            class="anim-fade-up stagger-2 shrink-0 bg-orange-500 hover:bg-orange-600 text-white font-bold px-8 py-4 rounded-full transition flex items-center gap-2 shadow-xl shadow-orange-900/40 hover:scale-105 active:scale-95">
-            <i class="fas fa-book-open"></i> Explorer le menu
+            <i class="fas fa-shopping-cart"></i> Commander maintenant
         </a>
     </div>
 </section>

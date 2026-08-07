@@ -1,3 +1,5 @@
+import secrets
+
 from django.db import models
 
 from apps.clients.models import Client
@@ -67,6 +69,25 @@ class Commande(models.Model):
         verbose_name="Téléphone de livraison"
     )
 
+    latitude_client = models.FloatField(
+        null=True,
+        blank=True,
+        verbose_name="Latitude client"
+    )
+
+    longitude_client = models.FloatField(
+        null=True,
+        blank=True,
+        verbose_name="Longitude client"
+    )
+
+    nom_client_livraison = models.CharField(
+        max_length=120,
+        blank=True,
+        default="",
+        verbose_name="Nom du client (livraison)"
+    )
+
     type = models.CharField(
         max_length=20,
         choices=TYPES,
@@ -80,12 +101,26 @@ class Commande(models.Model):
         default=EN_ATTENTE
     )
 
+    token = models.CharField(
+        max_length=64,
+        unique=True,
+        blank=True,
+        editable=False,
+        db_index=True,
+        verbose_name="Jeton de suivi secret"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-created_at"]
         verbose_name = "Commande"
         verbose_name_plural = "Commandes"
+
+    def save(self, *args, **kwargs):
+        if not self.token:
+            self.token = secrets.token_urlsafe(32)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Commande N° {self.id}"

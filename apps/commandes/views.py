@@ -59,11 +59,11 @@ def ajouter(request):
     from apps.menu.models import Categorie
     produits = Produit.objects.filter(disponible=True).select_related('categorie', 'stock')
     categories = Categorie.objects.all()
-    
+
     if request.method == "POST":
         form = CommandeForm(request.POST)
         formset = LigneCommandeFormSet(request.POST)
-        
+
         if form.is_valid() and formset.is_valid():
             commande = form.save()
             formset.instance = commande
@@ -74,7 +74,7 @@ def ajouter(request):
     else:
         form = CommandeForm()
         formset = LigneCommandeFormSet()
-    
+
     return render(request, "commandes/ajouter.html", {
         'form': form,
         'formset': formset,
@@ -102,11 +102,11 @@ def modifier(request, pk):
     """Modifier une commande"""
     commande = get_object_or_404(Commande, pk=pk)
     produits = Produit.objects.filter(disponible=True)
-    
+
     if request.method == "POST":
         form = CommandeForm(request.POST, instance=commande)
         formset = LigneCommandeFormSet(request.POST, instance=commande)
-        
+
         if form.is_valid() and formset.is_valid():
             commande = form.save()
             formset.instance = commande
@@ -124,7 +124,7 @@ def modifier(request, pk):
     else:
         form = CommandeForm(instance=commande)
         formset = LigneCommandeFormSet(instance=commande)
-    
+
     return render(request, "commandes/ajouter.html", {
         'form': form,
         'formset': formset,
@@ -140,21 +140,21 @@ def changer_statut(request, pk):
     """Changer le statut d'une commande (AJAX)"""
     if request.method != "POST":
         return JsonResponse({"error": "Méthode non autorisée"}, status=405)
-    
+
     commande = get_object_or_404(Commande, pk=pk)
     nouveau_statut = request.POST.get("statut")
-    
+
     statuts_valides = [s[0] for s in Commande.STATUTS]
     if nouveau_statut not in statuts_valides:
         return JsonResponse({"error": "Statut invalide"}, status=400)
-    
+
     ancien_statut = commande.statut
     commande.statut = nouveau_statut
     commande.save()
-    
+
     # Notification WebSocket
     notifier_changement_statut_commande(commande.id, ancien_statut, nouveau_statut)
-    
+
     return JsonResponse({
         "success": True,
         "id": commande.id,
@@ -192,12 +192,12 @@ def client_commander(request):
 def client_passer_commande(request):
     """API: Le client valide son panier et crée une commande (support guest)"""
     import json
-    
+
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
         return JsonResponse({"success": False, "message": "Données invalides."}, status=400)
-    
+
     panier = data.get("panier", [])
     mode = data.get("mode", "SUR_PLACE")
     adresse = data.get("adresse", "")
@@ -205,13 +205,25 @@ def client_passer_commande(request):
     guest_nom = data.get("guest_nom", "").strip()
     guest_telephone = data.get("guest_telephone", "").strip()
     numero_table = str(data.get("table", "")).strip()
-    
+    latitude = data.get("latitude", "")
+    longitude = data.get("longitude", "")
+
+    # Normalisation des coordonnées GPS
+    try:
+        latitude_client = float(latitude) if latitude not in (None, "") else None
+    except (ValueError, TypeError):
+        latitude_client = None
+    try:
+        longitude_client = float(longitude) if longitude not in (None, "") else None
+    except (ValueError, TypeError):
+        longitude_client = None
+
     if not panier:
         return JsonResponse({"success": False, "message": "Panier vide."}, status=400)
-    
+
     if mode == "LIVRAISON" and not adresse:
         return JsonResponse({"success": False, "message": "Adresse de livraison requise."}, status=400)
-    
+
     # Gestion client : connecté ou guest
     if request.user.is_authenticated and request.user.role != "CLIENT":
         user = request.user
@@ -238,7 +250,7 @@ def client_passer_commande(request):
             nom = guest_nom
             tel = guest_telephone
             email = ""
-        
+
         client, _ = Client.objects.get_or_create(
             nom=nom,
             defaults={
@@ -247,13 +259,13 @@ def client_passer_commande(request):
                 "adresse": adresse,
             }
         )
-    
+
     ids_produits = [int(item.get("id")) for item in panier]
     produits = {p.id: p for p in Produit.objects.filter(id__in=ids_produits, disponible=True)}
-    
+
     if len(produits) != len(ids_produits):
         return JsonResponse({"success": False, "message": "Certains produits ne sont plus disponibles."}, status=400)
-    
+
     from apps.tables.models import Table
     table = None
     if numero_table:
@@ -266,8 +278,11 @@ def client_passer_commande(request):
         statut=Commande.EN_ATTENTE,
         adresse_livraison=adresse if mode == "LIVRAISON" else "",
         telephone_livraison=telephone if mode == "LIVRAISON" else guest_telephone,
+        nom_client_livraison=guest_nom or (request.user.username if request.user.is_authenticated else ""),
+        latitude_client=latitude_client,
+        longitude_client=longitude_client,
     )
-    
+
     for item in panier:
         produit = produits[int(item["id"])]
         quantite = int(item.get("qte", 1))
@@ -278,11 +293,12 @@ def client_passer_commande(request):
             quantite=quantite,
             prix=prix,
         )
-    
+
     notifier_nouvelle_commande(commande)
-    
+
     return JsonResponse({
         "success": True,
         "commande_id": commande.id,
+        "token": commande.token,
         "message": f"Commande N° {commande.id} créée !"
     })

@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.db.models import Q
 from .forms import UserCreateForm, UserEditForm
 from .models import CustomUser
-from .decorators import role_required
+from .decorators import ROLE_HOME, role_required
 
 
 
@@ -32,9 +32,9 @@ def login_view(request):
             if user.is_superuser:
                 return redirect("dashboard:index")
 
-            # Les clients vont directement au menu
-            if user.role == "CLIENT":
-                return redirect("menu:accueil")
+            home_name = ROLE_HOME.get(user.role)
+            if home_name:
+                return redirect(home_name)
 
             return redirect("dashboard:index")
 

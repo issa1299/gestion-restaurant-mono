@@ -33,7 +33,7 @@
         </div>
     </div>
 
-    <!-- Statut -->
+<!-- Statut -->
     <div class="bg-white rounded-xl sm:rounded-2xl shadow p-4 sm:p-6">
         <div class="flex flex-col sm:flex-row sm:items-center gap-4">
             <div class="flex-1">
@@ -63,6 +63,24 @@
             </div>
             {% endif %}
         </div>
+
+        {% if request.user|has_role:"LIVREUR" %}
+        <div class="mt-4 pt-4 border-t border-gray-100 flex flex-wrap gap-2">
+            {% for code, label in livraison.STATUTS %}
+            {% if code != livraison.statut %}
+            <button type="button" onclick="changerStatut('{{ code }}')"
+                    class="px-4 py-2 rounded-xl text-sm font-semibold transition
+                    {% if code == 'LIVREE' %}bg-emerald-500 hover:bg-emerald-600 text-white
+                    {% elif code == 'EN_COURS' %}bg-blue-500 hover:bg-blue-600 text-white
+                    {% elif code == 'ANNULEE' %}bg-red-500 hover:bg-red-600 text-white
+                    {% else %}bg-slate-100 hover:bg-slate-200 text-slate-700{% endif %}">
+                <i class="fas fa-{% if code == 'LIVREE' %}truck-ramp-box{% elif code == 'EN_COURS' %}play{% elif code == 'ANNULEE' %}ban{% else %}clock{% endif %} mr-1"></i>
+                Passer à {{ label }}
+            </button>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
     </div>
 
     <!-- Informations -->
@@ -97,6 +115,25 @@
 
     </div>
 
+<!-- Carte de suivi -->
+    {% if request.user|has_role:"LIVREUR" %}
+    <div class="no-print bg-white rounded-xl sm:rounded-2xl shadow p-5 sm:p-6">
+        <div class="flex items-center justify-between gap-3 mb-4">
+            <h3 class="font-bold text-gray-800"><i class="fas fa-map-location-dot text-orange-500 mr-2"></i>Position du livreur</h3>
+            <button type="button" id="btn-partager-position" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl font-semibold text-sm transition">
+                <i class="fas fa-location-crosshairs mr-1"></i> ▶ Démarrer le partage GPS
+            </button>
+        </div>
+        <div id="map-livraison" class="h-72 w-full rounded-2xl border border-slate-200"></div>
+        <div class="flex items-center gap-4 mt-3 flex-wrap text-xs text-slate-500">
+            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-orange-500 inline-block"></span> 🏠 Client</span>
+            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span> 🛵 Vous</span>
+            <span id="distance-livraison" class="ml-auto font-semibold text-slate-600"></span>
+        </div>
+        <p id="status-position" class="text-sm text-slate-500 mt-3">Cliquez sur « Démarrer le partage GPS » pour envoyer votre position toutes les 5 secondes.</p>
+    </div>
+    {% endif %}
+
     <!-- Assignation livreur -->
     {% if request.user|has_role:"LIVREUR" %}
     <div class="no-print bg-white rounded-xl sm:rounded-2xl shadow p-5 sm:p-6">
@@ -120,4 +157,213 @@
     {% endif %}
 
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script>
+const livraisonId = {{ livraison.id }};
+    const csrftoken = "{{ csrf_token }}";
+    const clientLat = {{ livraison.commande.latitude_client|default:'null' }};
+    const clientLng = {{ livraison.commande.longitude_client|default:'null' }};
+
+    const mapInitLat = clientLat || {{ livraison.latitude|default:'12.6392' }};
+    const mapInitLng = clientLng || {{ livraison.longitude|default:'-8.0029' }};
+    const mapLivraison = L.map('map-livraison').setView([mapInitLat, mapInitLng], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(mapLivraison);
+
+    // Icônes personnalisées
+    const iconClientLiv = L.divIcon({
+        html: '<div style="background:#f97316;border:3px solid white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);width:24px;height:24px;box-shadow:0 2px 8px rgba(0,0,0,0.3)"></div>',
+        iconSize: [24, 24], iconAnchor: [12, 24], className: ''
+    });
+    const iconLivreurLiv = L.divIcon({
+        html: '<div style="background:#3b82f6;border:3px solid white;border-radius:50%;width:24px;height:24px;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center"><i class="fas fa-motorcycle" style="color:white;font-size:11px"></i></div>',
+        iconSize: [24, 24], iconAnchor: [12, 12], className: ''
+    });
+
+    // Marqueur client (fixe)
+    let clientMarkerLiv = null;
+    if (clientLat && clientLng) {
+        clientMarkerLiv = L.marker([clientLat, clientLng], { icon: iconClientLiv })
+            .addTo(mapLivraison).bindPopup('<b>🏠 Client</b>').openPopup();
+    }
+
+    // Marqueur livreur (mobile)
+    let markerLivraison = null;
+    let trajetLivraison = null;
+    function updateMarker(lat, lng) {
+        if (!lat || !lng) return;
+        if (!markerLivraison) {
+            markerLivraison = L.marker([lat, lng], { icon: iconLivreurLiv })
+                .addTo(mapLivraison).bindPopup('<b>🛵 Vous</b>');
+        } else {
+            markerLivraison.setLatLng([lat, lng]);
+        }
+        drawTrajetLivraison();
+    }
+
+    function drawTrajetLivraison() {
+        if (trajetLivraison) { mapLivraison.removeLayer(trajetLivraison); trajetLivraison = null; }
+        if (markerLivraison && clientMarkerLiv) {
+            const livreur = markerLivraison.getLatLng();
+            const client = clientMarkerLiv.getLatLng();
+            trajetLivraison = L.polyline([livreur, client], { color: '#f97316', weight: 3, dashArray: '6,6' }).addTo(mapLivraison);
+            const km = haversine(livreur.lat, livreur.lng, client.lat, client.lng);
+            document.getElementById('distance-livraison').textContent =
+                km < 1 ? `À ${Math.round(km*1000)} m du client` : `À ${km.toFixed(1)} km du client`;
+        }
+    }
+
+    function haversine(lat1, lng1, lat2, lng2) {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLng = (lng2 - lng1) * Math.PI / 180;
+        const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    {% if livraison.latitude and livraison.longitude %}
+    updateMarker({{ livraison.latitude }}, {{ livraison.longitude }});
+    {% endif %}
+
+// ===== Partage GPS continu (watchPosition toutes les 5s) =====
+    let watchId = null;
+    let dernierEnvoi = 0;
+    let partageActif = false;
+
+    function setStatus(msg, color) {
+        const el = document.getElementById('status-position');
+        el.textContent = msg;
+        el.className = 'text-sm mt-3 ' + (color || 'text-slate-500');
+    }
+
+    async function envoyerPosition(lat, lng) {
+        const maintenant = Date.now();
+        if (maintenant - dernierEnvoi < 5000) return; // throttle toutes les 5s
+        dernierEnvoi = maintenant;
+        try {
+            const response = await fetch(`/livraisons/${livraisonId}/position/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                body: JSON.stringify({ latitude: lat, longitude: lng })
+            });
+            const data = await response.json();
+            if (data.success) {
+                updateMarker(data.latitude, data.longitude);
+                setStatus('📍 Position transmise en temps réel (toutes les 5s).', 'text-green-600');
+            } else {
+                setStatus(data.message || 'Erreur serveur.', 'text-red-600');
+            }
+        } catch (e) {
+            setStatus('Erreur réseau lors de l\'envoi de la position.', 'text-red-600');
+        }
+    }
+
+    function arreterPartage() {
+        if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+        partageActif = false;
+        const btn = document.getElementById('btn-partager-position');
+        btn.innerHTML = '<i class="fas fa-location-crosshairs mr-1"></i> ▶ Démarrer le partage GPS';
+        btn.classList.remove('bg-red-500', 'hover:bg-red-600');
+        btn.classList.add('bg-orange-500', 'hover:bg-orange-600');
+        setStatus('Partage GPS arrêté.');
+    }
+
+    function demarrerGeolocalisation() {
+        if (!navigator.geolocation) {
+            setStatus('La géolocalisation n\'est pas prise en charge par votre navigateur.', 'text-red-600');
+            return;
+        }
+        setStatus('Localisation en cours, autorisez la géolocalisation…');
+
+        // Envoi immédiat d'une position d'abord
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                updateMarker(lat, lng);
+                await envoyerPosition(lat, lng);
+            },
+            (err) => {
+                if (err.code === 1) {
+                    setStatus('Permission de géolocalisation refusée.', 'text-red-600');
+                } else if (err.code === 2) {
+                    setStatus('Position indisponible.', 'text-red-600');
+                } else {
+                    setStatus('La géolocalisation a expiré.', 'text-red-600');
+                }
+            },
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        );
+
+        // Puis suivi continu
+        watchId = navigator.geolocation.watchPosition(
+            async (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                updateMarker(lat, lng);
+                await envoyerPosition(lat, lng);
+            },
+            (err) => {
+                if (err.code === 1) {
+                    arreterPartage();
+                    setStatus('Permission de géolocalisation refusée. Utilisez le clic sur la carte.', 'text-red-600');
+                }
+            },
+            { enableHighAccuracy: true, maximumAge: 1000, timeout: 30000 }
+        );
+
+        partageActif = true;
+        const btn = document.getElementById('btn-partager-position');
+        btn.innerHTML = '<i class="fas fa-stop mr-1"></i> ■ Arrêter le partage GPS';
+        btn.classList.remove('bg-orange-500', 'hover:bg-orange-600');
+        btn.classList.add('bg-red-500', 'hover:bg-red-600');
+    }
+
+    document.getElementById('btn-partager-position')?.addEventListener('click', () => {
+        if (partageActif) {
+            arreterPartage();
+        } else {
+            demarrerGeolocalisation();
+        }
+    });
+
+    // ===== Fallback : clic sur la carte pour positionner le livreur =====
+    mapLivraison.on('click', async (e) => {
+        if (!partageActif) return;
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+        updateMarker(lat, lng);
+        await envoyerPosition(lat, lng);
+    });
+
+    // ===== Changement de statut (AJAX) =====
+    async function changerStatut(statut) {
+        if (!confirm(`Changer le statut en « ${statut} » ?`)) return;
+        try {
+            const formData = new FormData();
+            formData.append('statut', statut);
+            const response = await fetch(`/livraisons/${livraisonId}/statut/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrftoken },
+                body: formData
+            });
+            const data = await response.json();
+            if (data.success) {
+                alert(`Statut changé : ${data.statut_display}`);
+                location.reload();
+            } else {
+                alert(data.error || 'Impossible de changer le statut.');
+            }
+        } catch (e) {
+            alert('Erreur réseau');
+        }
+    }
+</script>
 {% endblock %}

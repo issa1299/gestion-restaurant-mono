@@ -23,4 +23,6 @@ urlpatterns = [
     path("temoignages/<int:pk>/modifier/", views.temoignage_modifier, name="temoignage_modifier"),
     path("temoignages/<int:pk>/supprimer/", views.temoignage_supprimer, name="temoignage_supprimer"),
     path("temoignages/<int:pk>/toggle/", views.temoignage_toggle, name="temoignage_toggle"),
+    path("commander/", views.commander_en_ligne, name="commander"),
+    path("commander/confirmation/<int:commande_id>/<str:token>/", views.confirmation_commande, name="confirmation_commande"),
 ]

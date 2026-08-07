@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.http import JsonResponse, Http404
 from apps.accounts.decorators import role_required
 from apps.notifications.utils import envoyer_notification_broadcast
 from .models import Reservation, ContactMessage, PhotoGalerie, Temoignage
@@ -337,3 +338,103 @@ def temoignage_toggle(request, pk):
     statut = "activé" if temoignage.actif else "désactivé"
     messages.success(request, f"Témoignage de « {temoignage.nom} » {statut}.")
     return redirect("restaurant:temoignages_gestion")
+
+
+def commander_en_ligne(request):
+    """Page publique de commande en ligne avec géolocalisation du client."""
+    from apps.menu.models import Categorie, Produit
+    from apps.commandes.models import Commande, LigneCommande
+    import json
+
+    categories = Categorie.objects.prefetch_related(
+        "produits"
+    ).filter(produits__disponible=True).distinct()
+
+    if request.method == "POST":
+        nom = request.POST.get("nom", "").strip()
+        telephone = request.POST.get("telephone", "").strip()
+        adresse = request.POST.get("adresse", "").strip()
+        latitude = request.POST.get("latitude", "").strip()
+        longitude = request.POST.get("longitude", "").strip()
+        produits_json = request.POST.get("produits_json", "[]")
+
+        if not nom or not telephone or not adresse:
+            messages.error(request, "Nom, téléphone et adresse sont requis.")
+            return redirect("restaurant:commander")
+
+        try:
+            produits_data = json.loads(produits_json)
+        except (json.JSONDecodeError, ValueError):
+            produits_data = []
+
+        if not produits_data:
+            messages.error(request, "Veuillez sélectionner au moins un article.")
+            return redirect("restaurant:commander")
+
+        # Créer la commande
+        commande = Commande.objects.create(
+            type=Commande.LIVRAISON,
+            statut=Commande.EN_ATTENTE,
+            adresse_livraison=adresse,
+            telephone_livraison=telephone,
+            nom_client_livraison=nom,
+            latitude_client=float(latitude) if latitude else None,
+            longitude_client=float(longitude) if longitude else None,
+        )
+
+        # Ajouter les lignes
+        for item in produits_data:
+            try:
+                produit = Produit.objects.get(pk=item["id"], disponible=True)
+                quantite = max(1, int(item.get("quantite", 1)))
+                LigneCommande.objects.create(
+                    commande=commande,
+                    produit=produit,
+                    quantite=quantite,
+                    prix=produit.prix,
+                )
+            except (Produit.DoesNotExist, KeyError, ValueError):
+                continue
+
+        # Vérifier qu'on a bien des lignes
+        if not commande.lignes.exists():
+            commande.delete()
+            messages.error(request, "Produits invalides. Veuillez réessayer.")
+            return redirect("restaurant:commander")
+
+        # Notifier le staff
+        envoyer_notification_broadcast("commandes", "nouvelle_commande", {
+            "id": commande.id,
+            "table": "Livraison",
+            "nom_client": nom,
+            "adresse": adresse,
+            "articles": [
+                {"nom": l.produit.nom, "quantite": l.quantite}
+                for l in commande.lignes.select_related("produit")
+            ],
+        })
+        envoyer_notification_broadcast("dashboard", "nouvelle_commande", {
+            "id": commande.id,
+            "nom_client": nom,
+        })
+
+        return redirect("restaurant:confirmation_commande", commande_id=commande.id)
+
+    return render(request, "site/commander.html", {
+        "categories": categories,
+    })
+
+
+def confirmation_commande(request, commande_id, token):
+    """Page de confirmation après commande en ligne — affiche le lien de suivi.
+    Protégée par le token secret de la commande.
+    """
+    from apps.commandes.models import Commande
+    commande = get_object_or_404(Commande, pk=commande_id)
+    if commande.token != token:
+        raise Http404("Lien de confirmation invalide.")
+    lien_suivi = request.build_absolute_uri(f"/livraisons/suivi/{commande.id}/{commande.token}/")
+    return render(request, "site/confirmation_commande.html", {
+        "commande": commande,
+        "lien_suivi": lien_suivi,
+    })

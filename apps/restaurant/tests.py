@@ -2,6 +2,9 @@ from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 
 from apps.restaurant.models import Temoignage
+from apps.menu.models import Categorie, Produit
+from apps.clients.models import Client as ClientModele
+from apps.commandes.models import Commande, LigneCommande
 
 User = get_user_model()
 
@@ -81,3 +84,34 @@ class TemoignageCRUDTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "Awa")
         self.assertNotContains(resp, "Caché")
+
+
+class ConfirmationCommandeTokenTests(TestCase):
+    """La page de confirmation est protégée par le token secret de la commande."""
+
+    def setUp(self):
+        self.categorie = Categorie.objects.create(nom="Plats")
+        self.produit = Produit.objects.create(
+            categorie=self.categorie, nom="Poulet", prix=2500,
+        )
+        self.client_modele = ClientModele.objects.create(nom="Awa", telephone="223")
+        self.commande = Commande.objects.create(
+            client=self.client_modele,
+            type=Commande.LIVRAISON,
+            statut=Commande.EN_ATTENTE,
+            adresse_livraison="Bamako",
+            telephone_livraison="223",
+        )
+        LigneCommande.objects.create(
+            commande=self.commande, produit=self.produit, quantite=1, prix=2500,
+        )
+
+    def test_confirmation_avec_token(self):
+        c = Client()
+        resp = c.get("/commander/confirmation/%d/%s/" % (self.commande.id, self.commande.token))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_confirmation_token_invalide_404(self):
+        c = Client()
+        resp = c.get("/commander/confirmation/%d/mauvais-token/" % self.commande.id)
+        self.assertEqual(resp.status_code, 404)

@@ -1,0 +1,236 @@
+﻿{% extends "site/base_site.html" %}
+
+{% block title %}Commander en ligne - {{ parametre.nom|default:"Restaurant" }}{% endblock %}
+
+{% block content %}
+<section class="relative overflow-hidden bg-gradient-to-br from-orange-500 to-amber-600 py-12">
+    <div class="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/10"></div>
+    <div class="relative max-w-7xl mx-auto px-4 text-center">
+        <span class="inline-flex items-center gap-2 bg-white/20 text-white text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full mb-3">
+            <i class="fas fa-truck-fast"></i> Livraison a domicile
+        </span>
+        <h1 class="text-3xl sm:text-5xl font-extrabold text-white">Commander en ligne</h1>
+        <p class="text-orange-100 mt-2 max-w-lg mx-auto">Choisissez vos plats, indiquez votre position et on vous livre !</p>
+    </div>
+</section>
+
+{% if messages %}
+<div class="max-w-5xl mx-auto px-4 pt-6">
+    {% for msg in messages %}
+    <div class="flex items-center gap-3 p-4 rounded-2xl mb-3 {% if msg.tags == 'error' %}bg-red-50 border border-red-200 text-red-700{% else %}bg-green-50 border border-green-200 text-green-700{% endif %}">
+        <i class="fas {% if msg.tags == 'error' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %}"></i>
+        {{ msg }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="lg:col-span-2 space-y-6">
+        {% for categorie in categories %}
+        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-4">
+                <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fas fa-tag"></i> {{ categorie.nom }}
+                </h2>
+            </div>
+            <div class="divide-y divide-gray-50">
+                {% for produit in categorie.produits.all %}
+                {% if produit.disponible %}
+                <div class="flex items-center gap-4 p-4 hover:bg-orange-50/50 transition-colors">
+                    <div class="w-16 h-16 rounded-2xl overflow-hidden bg-orange-100 flex items-center justify-center shrink-0">
+                        {% if produit.image %}
+                        <img src="{{ produit.image.url }}" alt="{{ produit.nom }}" class="w-full h-full object-cover">
+                        {% else %}
+                        <i class="fas fa-utensils text-orange-400 text-xl"></i>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-bold text-slate-800">{{ produit.nom }}</p>
+                        {% if produit.description %}
+                        <p class="text-xs text-slate-500 mt-0.5 line-clamp-1">{{ produit.description }}</p>
+                        {% endif %}
+                        <p class="text-orange-600 font-bold mt-1">{{ produit.prix }} FCFA</p>
+                    </div>
+                    <button type="button"
+                            onclick="ajouterAuPanier({{ produit.id }}, '{{ produit.nom|escapejs }}', {{ produit.prix }})"
+                            class="w-10 h-10 rounded-xl bg-orange-500 hover:bg-orange-600 active:scale-95 text-white flex items-center justify-center transition-all shadow-lg shadow-orange-200 shrink-0">
+                        <i class="fas fa-plus text-sm"></i>
+                    </button>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="bg-white rounded-3xl shadow-sm p-12 text-center text-slate-400">
+            <i class="fas fa-utensils text-4xl mb-3"></i>
+            <p>Le menu n'est pas encore disponible.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="lg:col-span-1">
+        <div class="sticky top-6 space-y-5">
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="bg-slate-800 px-5 py-4 flex items-center justify-between">
+                    <h2 class="font-bold text-white flex items-center gap-2">
+                        <i class="fas fa-shopping-cart text-orange-400"></i> Votre panier
+                    </h2>
+                    <span id="badge-panier" class="bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">0</span>
+                </div>
+                <div id="panier-vide" class="p-8 text-center text-slate-400 text-sm">
+                    <i class="fas fa-shopping-basket text-3xl mb-2 opacity-40"></i>
+                    <p>Votre panier est vide</p>
+                </div>
+                <div id="panier-items" class="divide-y divide-gray-50 hidden"></div>
+                <div id="panier-total-block" class="hidden border-t border-gray-100 px-5 py-4 flex justify-between items-center">
+                    <span class="font-bold text-slate-800">Total</span>
+                    <span id="panier-total" class="text-xl font-extrabold text-orange-600">0 FCFA</span>
+                </div>
+            </div>
+
+            <form id="form-commande" method="post" class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                {% csrf_token %}
+                <div class="bg-gradient-to-r from-slate-700 to-slate-800 px-5 py-4">
+                    <h2 class="font-bold text-white flex items-center gap-2">
+                        <i class="fas fa-user-circle text-orange-400"></i> Vos informations
+                    </h2>
+                </div>
+                <div class="p-5 space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1.5">Votre nom *</label>
+                        <input type="text" name="nom" required placeholder="Ex : Mamadou Diallo"
+                               class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1.5">Telephone *</label>
+                        <input type="tel" name="telephone" required placeholder="Ex : 76 123 45 67"
+                               class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1.5">Adresse de livraison *</label>
+                        <textarea name="adresse" required rows="2" placeholder="Ex : Quartier Almamya, rue 34..."
+                                  class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm resize-none transition"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1.5">
+                            Position GPS <span class="text-slate-400 font-normal normal-case">(recommande)</span>
+                        </label>
+                        <button type="button" id="btn-localiser" onclick="localiserClient()"
+                                class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-orange-300 text-orange-600 hover:bg-orange-50 hover:border-orange-400 transition text-sm font-semibold">
+                            <i class="fas fa-location-crosshairs"></i>
+                            <span id="btn-localiser-text">Me localiser automatiquement</span>
+                        </button>
+                        <div id="localisation-status" class="mt-2 text-xs hidden"></div>
+                        <div id="mini-map-container" class="mt-3 hidden">
+                            <div id="mini-map" class="w-full h-40 rounded-xl overflow-hidden border border-orange-200"></div>
+                            <p class="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                                <i class="fas fa-check-circle text-green-500"></i>
+                                Position enregistree. Le livreur vous trouvera facilement !
+                            </p>
+                        </div>
+                        <input type="hidden" name="latitude" id="input-lat">
+                        <input type="hidden" name="longitude" id="input-lng">
+                    </div>
+                    <input type="hidden" name="produits_json" id="input-produits-json" value="[]">
+                    <button type="submit"
+                            class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg shadow-orange-200 flex items-center justify-center gap-2 text-base">
+                        <i class="fas fa-check-circle"></i>
+                        Valider ma commande
+                    </button>
+                    <p class="text-center text-xs text-slate-400">Paiement a la livraison</p>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+let panier = [];
+let miniMap = null;
+let clientMarker = null;
+
+function ajouterAuPanier(id, nom, prix) {
+    const existant = panier.find(p => p.id === id);
+    if (existant) { existant.quantite++; } else { panier.push({ id, nom, prix: parseFloat(prix), quantite: 1 }); }
+    renderPanier();
+}
+
+function retirerDuPanier(id) {
+    const idx = panier.findIndex(p => p.id === id);
+    if (idx === -1) return;
+    if (panier[idx].quantite > 1) { panier[idx].quantite--; } else { panier.splice(idx, 1); }
+    renderPanier();
+}
+
+function renderPanier() {
+    const vide = document.getElementById('panier-vide');
+    const items = document.getElementById('panier-items');
+    const totalBlock = document.getElementById('panier-total-block');
+    const badge = document.getElementById('badge-panier');
+    const totalEl = document.getElementById('panier-total');
+    if (panier.length === 0) {
+        vide.classList.remove('hidden'); items.classList.add('hidden'); totalBlock.classList.add('hidden');
+        badge.textContent = '0'; document.getElementById('input-produits-json').value = '[]'; return;
+    }
+    vide.classList.add('hidden'); items.classList.remove('hidden'); totalBlock.classList.remove('hidden');
+    let total = 0, totalQte = 0;
+    items.innerHTML = '';
+    panier.forEach(item => {
+        total += item.prix * item.quantite; totalQte += item.quantite;
+        const div = document.createElement('div');
+        div.className = 'flex items-center gap-3 px-5 py-3';
+        div.innerHTML = `<div class="flex-1 min-w-0"><p class="text-sm font-semibold text-slate-800 truncate">${item.nom}</p><p class="text-xs text-orange-600 font-bold">${(item.prix * item.quantite).toLocaleString()} FCFA</p></div><div class="flex items-center gap-2 shrink-0"><button type="button" onclick="retirerDuPanier(${item.id})" class="w-7 h-7 rounded-full bg-red-100 text-red-500 hover:bg-red-500 hover:text-white transition flex items-center justify-center text-xs"><i class="fas fa-minus"></i></button><span class="w-6 text-center font-bold text-sm">${item.quantite}</span><button type="button" onclick="ajouterAuPanier(${item.id},'${item.nom.replace(/'/g,"\\'")}',${item.prix})" class="w-7 h-7 rounded-full bg-green-100 text-green-600 hover:bg-green-500 hover:text-white transition flex items-center justify-center text-xs"><i class="fas fa-plus"></i></button></div>`;
+        items.appendChild(div);
+    });
+    badge.textContent = totalQte;
+    totalEl.textContent = total.toLocaleString() + ' FCFA';
+    document.getElementById('input-produits-json').value = JSON.stringify(panier);
+}
+
+function localiserClient() {
+    const btn = document.getElementById('btn-localiser');
+    const statusEl = document.getElementById('localisation-status');
+    const btnText = document.getElementById('btn-localiser-text');
+    if (!navigator.geolocation) {
+        statusEl.className = 'mt-2 text-xs text-red-600'; statusEl.textContent = 'Geolocalisation non supportee.'; statusEl.classList.remove('hidden'); return;
+    }
+    btnText.textContent = 'Localisation en cours...'; btn.disabled = true;
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            const lat = pos.coords.latitude, lng = pos.coords.longitude;
+            document.getElementById('input-lat').value = lat;
+            document.getElementById('input-lng').value = lng;
+            btnText.textContent = 'Position enregistree !';
+            btn.style.borderColor = '#22c55e'; btn.style.color = '#16a34a'; btn.style.background = '#f0fdf4';
+            const container = document.getElementById('mini-map-container');
+            container.classList.remove('hidden'); statusEl.classList.add('hidden');
+            if (!miniMap) {
+                miniMap = L.map('mini-map', {zoomControl:false, attributionControl:false}).setView([lat,lng],16);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(miniMap);
+                const icon = L.divIcon({html:'<div style="background:#f97316;border:3px solid white;border-radius:50%;width:20px;height:20px;box-shadow:0 2px 8px rgba(0,0,0,0.3)"></div>',iconSize:[20,20],iconAnchor:[10,10]});
+                clientMarker = L.marker([lat,lng],{icon}).addTo(miniMap).bindPopup('Votre position').openPopup();
+            } else { miniMap.setView([lat,lng],16); clientMarker.setLatLng([lat,lng]); }
+        },
+        (err) => {
+            btnText.textContent = 'Me localiser automatiquement'; btn.disabled = false;
+            statusEl.className = 'mt-2 text-xs text-red-600';
+            let msg = 'Impossible d acces a votre position.';
+            if (err.code === 1) msg = 'Permission refusee. Autorisez la localisation dans votre navigateur.';
+            statusEl.textContent = msg; statusEl.classList.remove('hidden');
+        },
+        {enableHighAccuracy:true, timeout:15000}
+    );
+}
+
+document.getElementById('form-commande').addEventListener('submit', function(e) {
+    if (panier.length === 0) { e.preventDefault(); alert('Veuillez ajouter au moins un article !'); return; }
+    document.getElementById('input-produits-json').value = JSON.stringify(panier);
+});
+</script>
+{% endblock %}

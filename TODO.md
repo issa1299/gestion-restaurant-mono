@@ -1,30 +1,33 @@
-# Plan de travail - Améliorations Stock, Tables, Dashboard & Rapports
+# TODO — Suivi de Livraison en Temps Réel
 
-## ✅ Étape 1: Ajouter les routes manquantes dans config/urls.py
-- [x] Ajouter `path("stock/", include("apps.stock.urls"))`
-- [x] Ajouter `path("tables/", include("apps.tables.urls"))`
-- [x] Ajouter `path("rapports/", include("apps.rapports.urls"))`
+## Backend — Commandes en ligne (GPS client)
 
-## ✅ Étape 2: Corriger les liens morts dans sidebar.html
-- [x] Tables: `href="#"` → `{% url 'tables:liste' %}`
-- [x] Stock: `href="#"` → `{% url 'stock:liste' %}`
-- [x] Rapports: `href="#"` → `{% url 'rapports:index' %}`
+- [x] C. Corriger `apps/commandes/views.py` → `client_passer_commande`
+      - Stockage de `latitude_client` / `longitude_client` dans la commande
+      - Stockage de `nom_client_livraison` (nom du client guest/connecté)
+      - Normalisation robuste des coordonnées GPS (gestion None/vide)
 
-## ✅ Étape 3: Améliorer la vue dashboard (apps/dashboard/views.py)
-- [x] Ajouter des données réelles (CA, commandes, clients, tables)
-- [x] Ajouter ventes 7 derniers jours
-- [x] Ajouter stock faible
-- [x] Ajouter dernières commandes
+## Étapes restantes (templates uniquement — backend déjà implémenté)
 
-## ✅ Étape 4: Améliorer le template dashboard (templates/dashboard/index.html)
-- [x] Afficher les vraies données (CA, commandes, clients, tables)
-- [x] Ajouter graphique Chart.js des ventes
-- [x] Afficher les dernières commandes dynamiquement
-- [x] Afficher les alertes stock faible
+- [x] 1. Créer `templates/site/confirmation_commande.html`
+      - Confirmation visuelle commande N° + total
+      - Lien de suivi cliquable/copiable
+      - QR code optionnel
+      - Base `base_site.html`
 
-## ✅ Étape 5: Vérification et tests
-- [x] `python manage.py check` → 0 erreurs
-- [x] Routes ajoutées : stock/, tables/, rapports/
-- [x] Liens sidebar fonctionnels : Tables, Stock, Rapports
-- [x] Dashboard avec données réelles + graphique Chart.js
+- [x] 2. Refondre `templates/livraison/suivi.html`
+      - Carte Leaflet plein écran, 2 marqueurs (🏠 client + 🛵 livreur)
+      - Timeline de statut (En attente → En préparation → Prête → En livraison → Livrée)
+      - Polling AJAX toutes les 5s sur `api_position`
+      - Ligne de trajet dynamique
+      - Design premium style app mobile
 
+- [x] 3. Améliorer `templates/livraison/detail.html`
+      - 2 marqueurs : 🏠 client (fixe) + 🛵 livreur (mobile)
+      - Bouton "Démarrer le partage GPS" → géolocalisation continue (watchPosition, envoi 5s)
+      - Ligne de trajet sur la carte
+      - Boutons de changement de statut
+
+- [x] 4. Vérification
+      - `venv\Scripts\python.exe manage.py check` ✅
+      - `venv\Scripts\python.exe manage.py makemigrations --check` ✅

@@ -1,7 +1,10 @@
+import json
+
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.contrib import messages
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from apps.livraison.models import Livraison
 from apps.commandes.models import Commande
@@ -83,6 +86,64 @@ def creer_livraison(request, commande_id):
     )
 
     return JsonResponse({"success": True, "livraison_id": livraison.id})
+
+
+@role_required(["LIVREUR"])
+@require_POST
+def maj_position(request, pk):
+    """Met à jour la position GPS d'une livraison depuis l'appareil du livreur."""
+    livraison = get_object_or_404(Livraison, pk=pk)
+    try:
+        data = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"success": False, "message": "Données invalides"}, status=400)
+
+    latitude = data.get("latitude")
+    longitude = data.get("longitude")
+    if latitude is None or longitude is None:
+        return JsonResponse({"success": False, "message": "Latitude/longitude requises"}, status=400)
+
+    livraison.latitude = float(latitude)
+    livraison.longitude = float(longitude)
+    if livraison.statut == Livraison.EN_ATTENTE:
+        livraison.statut = Livraison.EN_COURS
+    if not livraison.livreur:
+        livraison.livreur = request.user
+    livraison.save(update_fields=["latitude", "longitude", "statut", "livreur", "updated_at"])
+
+    envoyer_notification_broadcast(
+        "livraison",
+        "position_livraison",
+        {
+            "livraison_id": livraison.id,
+            "commande_id": livraison.commande_id,
+            "latitude": livraison.latitude,
+            "longitude": livraison.longitude,
+            "statut": livraison.statut,
+        },
+    )
+
+    return JsonResponse({"success": True, "latitude": livraison.latitude, "longitude": livraison.longitude})
+
+
+def suivi_commande(request, commande_id, token):
+    """Page publique de suivi pour le client (protégée par token secret)."""
+    commande = get_object_or_404(Commande, pk=commande_id)
+    if commande.token != token:
+        raise Http404("Lien de suivi invalide.")
+    livraison = commande.livraisons.order_by("-created_at").first()
+    if not livraison:
+        return render(request, "livraison/suivi.html", {
+            "commande": commande,
+            "livraison": None,
+            "groupe": "livraison",
+        })
+
+    return render(request, "livraison/suivi.html", {
+        "commande": commande,
+        "livraison": livraison,
+        "groupe": "livraison",
+    })
 
 
 @role_required(["ADMIN", "LIVREUR"])
@@ -192,4 +253,38 @@ def changer_statut(request, pk):
         "ancien_statut": ancien_statut,
         "nouveau_statut": nouveau_statut,
         "statut_display": livraison.get_statut_display(),
+    })
+
+
+def api_position(request, commande_id, token):
+    """API publique JSON — retourne la position du livreur pour une commande.
+    Utilisée par le client pour le polling temps réel (sans WebSocket).
+    Protégée par le token secret de la commande.
+    """
+    commande = get_object_or_404(Commande, pk=commande_id)
+    if commande.token != token:
+        raise Http404("Lien de suivi invalide.")
+    livraison = commande.livraisons.order_by("-created_at").first()
+
+    if not livraison:
+        return JsonResponse({
+            "found": False,
+            "statut": "EN_ATTENTE",
+            "statut_display": "En attente",
+            "latitude": None,
+            "longitude": None,
+        })
+
+    return JsonResponse({
+        "found": True,
+        "livraison_id": livraison.id,
+        "statut": livraison.statut,
+        "statut_display": livraison.get_statut_display(),
+        "latitude": livraison.latitude,
+        "longitude": livraison.longitude,
+        "latitude_client": commande.latitude_client,
+        "longitude_client": commande.longitude_client,
+        "adresse": livraison.adresse,
+        "nom_client": commande.nom_client_livraison,
+        "telephone": livraison.telephone,
     })

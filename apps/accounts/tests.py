@@ -113,6 +113,21 @@ class AccessControlTests(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertIn("/livraisons/", resp.get("Location", ""))
 
+    def test_login_livreur_redirige_vers_livraisons(self):
+        user = User.objects.create_user(
+            username="liv_log",
+            email="liv_log@test.com",
+            password="Test12345",
+            role="LIVREUR",
+        )
+        resp = self.client.post(
+            "/accounts/login/",
+            {"username": user.username, "password": "Test12345"},
+            follow=False,
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("/livraisons/", resp.get("Location", ""))
+
     def test_anonyme_redirige_vers_login(self):
         c = Client()
         resp = c.get("/dashboard/")

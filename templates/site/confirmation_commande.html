@@ -1,0 +1,131 @@
+{% extends "site/base_site.html" %}
+{% load static %}
+
+{% block title %}Commande confirmée - {{ parametre.nom|default:"Restaurant" }}{% endblock %}
+
+{% block content %}
+<section class="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-green-600 py-12">
+    <div class="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/10"></div>
+    <div class="relative max-w-3xl mx-auto px-4 text-center">
+        <span class="inline-flex items-center gap-2 bg-white/20 text-white text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full mb-3">
+            <i class="fas fa-check-double"></i> Commande validée
+        </span>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-white">Merci {{ commande.nom_client_livraison|default:"cher client" }} !</h1>
+        <p class="text-emerald-100 mt-2">Votre commande N° {{ commande.id }} a bien été enregistrée.</p>
+    </div>
+</section>
+
+<div class="max-w-3xl mx-auto px-4 py-10">
+    <!-- Récapitulatif -->
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-slate-800 px-6 py-4 flex items-center justify-between">
+            <h2 class="font-bold text-white flex items-center gap-2">
+                <i class="fas fa-receipt text-orange-400"></i> Récapitulatif
+            </h2>
+            <span class="text-emerald-400 font-bold">N° {{ commande.id }}</span>
+        </div>
+        <div class="divide-y divide-gray-50">
+            {% for ligne in commande.lignes.all %}
+            <div class="flex items-center justify-between px-6 py-4">
+                <div class="flex items-center gap-3">
+                    <span class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-xs">{{ ligne.quantite }}x</span>
+                    <span class="font-semibold text-slate-800">{{ ligne.produit.nom }}</span>
+                </div>
+                <span class="font-bold text-slate-800">{{ ligne.sous_total }} FCFA</span>
+            </div>
+            {% empty %}
+            <p class="px-6 py-4 text-sm text-slate-400">Aucun article.</p>
+            {% endfor %}
+        </div>
+        <div class="bg-orange-50 px-6 py-4 flex items-center justify-between">
+            <span class="font-bold text-slate-800">Total à payer</span>
+            <span class="text-xl font-extrabold text-orange-600">{{ commande.total }} FCFA</span>
+        </div>
+    </div>
+
+    <!-- Détails livraison -->
+    {% if commande.type == "LIVRAISON" %}
+    <div class="mt-6 bg-white rounded-3xl shadow-sm border border-gray-100 p-6 space-y-3 text-sm">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-map-pin text-orange-500 w-5"></i>
+            <span class="text-slate-600">{{ commande.adresse_livraison|default:"Adresse non renseignée" }}</span>
+        </div>
+        <div class="flex items-center gap-3">
+            <i class="fas fa-phone text-orange-500 w-5"></i>
+            <span class="text-slate-600">{{ commande.telephone_livraison|default:"—" }}</span>
+        </div>
+        <div class="flex items-center gap-3">
+            <i class="fas fa-money-bill-wave text-orange-500 w-5"></i>
+            <span class="text-slate-600">Paiement à la livraison</span>
+        </div>
+    </div>
+    {% else %}
+    <div class="mt-6 bg-white rounded-3xl shadow-sm border border-gray-100 p-6 space-y-3 text-sm">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-store text-orange-500 w-5"></i>
+            <span class="text-slate-600">
+                {% if commande.type == "A_EMPORTER" %}Commande à emporter — Paiement au retrait{% else %}Commande enregistrée{% endif %}
+            </span>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Suivi en direct -->
+    {% if commande.type == "LIVRAISON" %}
+    <div class="mt-8 bg-gradient-to-br from-orange-500 to-amber-600 rounded-3xl p-8 text-center text-white overflow-hidden relative">
+        <div class="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10"></div>
+        <div class="relative">
+            <span class="inline-flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest mb-4">
+                <i class="fas fa-location-dot animate-pulse"></i> Suivi en direct
+            </span>
+            <h2 class="text-xl sm:text-2xl font-extrabold">Suivez votre livreur en temps réel</h2>
+            <p class="text-orange-100 mt-2 max-w-md mx-auto text-sm">
+                Cliquez sur le bouton ci-dessous pour voir la position de votre livreur sur la carte.
+            </p>
+            <a href="{{ lien_suivi }}"
+               class="mt-6 inline-flex items-center gap-2 bg-white hover:bg-orange-50 text-orange-600 font-bold px-8 py-4 rounded-full transition shadow-xl hover:scale-105 active:scale-95">
+                <i class="fas fa-map-marked-alt"></i> Suivre ma livraison
+            </a>
+            <div class="mt-6 flex items-center justify-center gap-3">
+                <code class="bg-white/15 backdrop-blur px-4 py-2 rounded-xl text-sm break-all max-w-full">{{ lien_suivi }}</code>
+                <button type="button" onclick="copierLien()"
+                        class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-sm font-semibold transition shrink-0">
+                    <i class="fas fa-copy mr-1"></i> Copier
+                </button>
+            </div>
+            <div class="mt-6">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data={{ lien_suivi|urlencode }}"
+                     alt="QR code de suivi" class="mx-auto rounded-2xl bg-white p-2">
+                <p class="text-orange-100 text-xs mt-2">Scannez ce QR code pour suivre votre commande</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="mt-8 text-center">
+        <a href="{% url 'restaurant:accueil' %}"
+           class="inline-flex items-center gap-2 text-orange-600 hover:text-orange-700 font-semibold text-sm transition">
+            <i class="fas fa-arrow-left"></i> Retour à l'accueil
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copierLien() {
+    const lien = "{{ lien_suivi|escapejs }}";
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(lien).then(() => alert('Lien copié !'));
+    } else {
+        const ta = document.createElement('textarea');
+        ta.value = lien;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        alert('Lien copié !');
+    }
+}
+</script>
+{% endblock %}

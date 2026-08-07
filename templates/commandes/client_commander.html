@@ -282,10 +282,16 @@
         </div>
         <h2 class="text-2xl font-extrabold mt-4 text-slate-800" id="modal-titre">Commande envoyée !</h2>
         <p class="text-gray-500 mt-2 text-sm" id="modal-message">Votre commande a été créée avec succès.</p>
-        <button onclick="nouvelleCommande()"
-                class="w-full mt-5 bg-orange-600 hover:bg-orange-700 text-white py-3 rounded-xl font-bold transition">
-            <i class="fas fa-plus mr-2"></i>Nouvelle commande
-        </button>
+        <div class="mt-5 space-y-2">
+            <button id="btn-suivi-commande"
+                    class="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 rounded-xl font-bold transition">
+                <i class="fas fa-location-dot mr-2"></i>Voir le suivi
+            </button>
+            <button onclick="nouvelleCommande()"
+                    class="w-full bg-gray-100 hover:bg-gray-200 text-slate-700 py-3 rounded-xl font-bold transition">
+                <i class="fas fa-plus mr-2"></i>Nouvelle commande
+            </button>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -473,11 +479,13 @@ async function validerCommande() {
     document.getElementById("btn-valider").innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Envoi...';
 
     try {
+        const csrfToken = getCSRFToken() || getCookie('csrftoken');
         const response = await fetch("{% url 'commandes:client_passer_commande' %}", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "X-CSRFToken": getCSRFToken()
+                "X-CSRFToken": csrfToken,
+                "X-Requested-With": "XMLHttpRequest"
             },
             body: JSON.stringify({
                 panier: panier.map(p => ({ id: p.id, qte: p.qte })),
@@ -497,13 +505,17 @@ async function validerCommande() {
             afficherPanier();
             fermerPanier();
             document.getElementById("modal-titre").textContent = "Commande N° " + data.commande_id;
-            document.getElementById("modal-message").textContent = "Votre commande a été envoyée. Un serveur s'occupe de vous.";
+            document.getElementById("modal-message").textContent = "Votre commande a été envoyée. Vous pouvez suivre votre livraison dès maintenant.";
             document.getElementById("modalConfirmation").classList.remove("hidden");
             document.getElementById("modalConfirmation").classList.add("flex");
+            document.getElementById("btn-suivi-commande").onclick = function() {
+                window.location.href = `/livraisons/suivi/${data.commande_id}/${data.token}/`;
+            };
         } else {
             alert(data.message || "Erreur lors de la création de la commande.");
         }
     } catch (error) {
+        console.error(error);
         alert("Erreur de connexion. Veuillez réessayer.");
     } finally {
         document.getElementById("btn-valider").disabled = false;
@@ -520,6 +532,11 @@ function nouvelleCommande() {
 function getCSRFToken() {
     const match = document.cookie.match(/csrftoken=([^;]+)/);
     return match ? match[1] : "";
+}
+
+function getCookie(name) {
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    return match ? decodeURIComponent(match[2]) : '';
 }
 
 // Initialisation
