@@ -155,6 +155,11 @@ let panier = JSON.parse(localStorage.getItem("panier")) || [];
 let miniMap = null;
 let clientMarker = null;
 
+const nomSauve = localStorage.getItem("panier_nom");
+if (nomSauve) { const el = document.querySelector('input[name="nom"]'); if (el) el.value = nomSauve; }
+const telSauve = localStorage.getItem("panier_tel");
+if (telSauve) { const el = document.querySelector('input[name="telephone"]'); if (el) el.value = telSauve; }
+
 function ajouterAuPanier(id, nom, prix) {
     const existant = panier.find(p => p.id === id);
     if (existant) { existant.qte++; } else { panier.push({ id, nom, prix: parseFloat(prix), qte: 1 }); }

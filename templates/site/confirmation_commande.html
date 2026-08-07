@@ -128,6 +128,8 @@ function copierLien() {
     }
 }
 localStorage.removeItem("panier");
+localStorage.removeItem("panier_nom");
+localStorage.removeItem("panier_tel");
 window.dispatchEvent(new Event("panier-maj"));
 </script>
 {% endblock %}

@@ -141,11 +141,11 @@
                 </nav>
 
                 <div class="flex items-center gap-2">
-                    <a href="{% url 'menu:accueil' %}" title="Mon panier"
-                       class="relative w-10 h-10 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center transition hover:bg-orange-100 hover:scale-105 active:scale-95">
+                    <button type="button" onclick="ouvrirPanier()" title="Mon panier"
+                            class="relative w-10 h-10 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center transition hover:bg-orange-100 hover:scale-105 active:scale-95">
                         <i class="fas fa-shopping-cart"></i>
                         <span id="navbar-badge-panier" class="hidden absolute -top-1 -right-1 bg-orange-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow">0</span>
-                    </a>
+                    </button>
                     <button id="btn-burger" onclick="document.getElementById('nav-mobile').classList.toggle('open')"
                             class="md:hidden w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700 transition hover:bg-orange-100">
                         <i class="fas fa-bars"></i>
@@ -231,6 +231,54 @@
         </div>
     </footer>
 
+    <!-- ===== MODAL PANIER ===== -->
+    <div id="panier-modal" class="hidden fixed inset-0 z-[100] flex items-end sm:items-center justify-center">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="fermerPanier()"></div>
+        <div class="relative w-full sm:max-w-lg bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="bg-slate-800 px-5 py-4 flex items-center justify-between shrink-0">
+                <h2 class="font-bold text-white flex items-center gap-2">
+                    <i class="fas fa-shopping-cart text-orange-400"></i> Votre panier
+                </h2>
+                <div class="flex items-center gap-2">
+                    <span id="modal-badge" class="bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">0</span>
+                    <button type="button" onclick="fermerPanier()" class="w-8 h-8 rounded-lg bg-white/10 text-white hover:bg-white/20 flex items-center justify-center transition">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="overflow-y-auto p-5 space-y-2 flex-1">
+                <div id="modal-panier-vide" class="text-center text-slate-400 py-8">
+                    <i class="fas fa-shopping-basket text-3xl mb-2 opacity-40"></i>
+                    <p>Votre panier est vide</p>
+                </div>
+                <div id="modal-panier-items" class="divide-y divide-gray-100 hidden"></div>
+                <div id="modal-total-block" class="hidden flex justify-between items-center pt-3 border-t border-gray-100">
+                    <span class="font-bold text-slate-800">Total</span>
+                    <span id="modal-total" class="text-xl font-extrabold text-orange-600">0 FCFA</span>
+                </div>
+                <div id="modal-infos" class="hidden space-y-3 pt-2">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1">Votre nom *</label>
+                        <input id="modal-nom" type="text" placeholder="Ex : Mamadou Diallo"
+                               class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1">Telephone *</label>
+                        <input id="modal-tel" type="tel" placeholder="Ex : 76 123 45 67"
+                               class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm transition">
+                    </div>
+                </div>
+            </div>
+            <div class="p-5 border-t border-gray-100 shrink-0">
+                <button type="button" id="modal-valider" onclick="validerPanierModal()"
+                        class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg shadow-orange-200 flex items-center justify-center gap-2">
+                    <i class="fas fa-arrow-right"></i> Continuer vers la commande
+                </button>
+            </div>
+        </div>
+    </div>
+
+
     <!-- Apparition au scroll -->
     <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -251,23 +299,91 @@
                     dropdown.classList.add("hidden");
                 }
             });
-
-            // ===== Badge panier dans la navbar =====
-            function majNavbarPanier() {
-                const badge = document.getElementById("navbar-badge-panier");
-                if (!badge) return;
-                let total = 0;
-                try {
-                    const panier = JSON.parse(localStorage.getItem("panier")) || [];
-                    panier.forEach(p => { total += (p.qte || p.quantite || 0); });
-                } catch (e) {}
-                badge.textContent = total;
-                badge.classList.toggle("hidden", total === 0);
-            }
-            majNavbarPanier();
-            window.addEventListener("storage", majNavbarPanier);
-            window.addEventListener("panier-maj", majNavbarPanier);
         });
+    </script>
+
+    <!-- ===== PANIER : badge + boite de dialogue ===== -->
+    <script>
+        let panierModal = [];
+
+        function majNavbarPanier() {
+            const badge = document.getElementById("navbar-badge-panier");
+            if (!badge) return;
+            let total = 0;
+            try {
+                const p = JSON.parse(localStorage.getItem("panier")) || [];
+                p.forEach(it => { total += (it.qte || it.quantite || 0); });
+            } catch (e) {}
+            badge.textContent = total;
+            badge.classList.toggle("hidden", total === 0);
+        }
+
+        function ouvrirPanier() {
+            try { panierModal = JSON.parse(localStorage.getItem("panier")) || []; } catch (e) { panierModal = []; }
+            renderPanierModal();
+            document.getElementById("panier-modal").classList.remove("hidden");
+            document.body.style.overflow = "hidden";
+        }
+
+        function fermerPanier() {
+            document.getElementById("panier-modal").classList.add("hidden");
+            document.body.style.overflow = "";
+        }
+
+        function changerQteModal(id, delta) {
+            const item = panierModal.find(p => p.id === id);
+            if (!item) return;
+            item.qte += delta;
+            if (item.qte <= 0) { panierModal = panierModal.filter(p => p.id !== id); }
+            localStorage.setItem("panier", JSON.stringify(panierModal));
+            window.dispatchEvent(new Event("panier-maj"));
+            renderPanierModal();
+            majNavbarPanier();
+        }
+
+        function renderPanierModal() {
+            const vide = document.getElementById("modal-panier-vide");
+            const items = document.getElementById("modal-panier-items");
+            const totalBlock = document.getElementById("modal-total-block");
+            const infos = document.getElementById("modal-infos");
+            const badge = document.getElementById("modal-badge");
+            const totalEl = document.getElementById("modal-total");
+            if (!items) return;
+            if (panierModal.length === 0) {
+                vide.classList.remove("hidden"); items.classList.add("hidden"); totalBlock.classList.add("hidden"); infos.classList.add("hidden");
+                badge.textContent = "0"; totalEl.textContent = "0 FCFA";
+                return;
+            }
+            vide.classList.add("hidden"); items.classList.remove("hidden"); totalBlock.classList.remove("hidden"); infos.classList.remove("hidden");
+            let total = 0, qte = 0;
+            items.innerHTML = "";
+            panierModal.forEach(item => {
+                total += item.prix * item.qte; qte += item.qte;
+                const div = document.createElement("div");
+                div.className = "flex items-center gap-3 py-3";
+                div.innerHTML = `<div class="flex-1 min-w-0"><p class="text-sm font-semibold text-slate-800 truncate">${item.nom}</p><p class="text-xs text-orange-600 font-bold">${(item.prix * item.qte).toLocaleString()} FCFA</p></div><div class="flex items-center gap-2 shrink-0"><button type="button" onclick="changerQteModal(${item.id},-1)" class="w-7 h-7 rounded-full bg-red-100 text-red-500 hover:bg-red-500 hover:text-white transition flex items-center justify-center text-xs"><i class="fas fa-minus"></i></button><span class="w-6 text-center font-bold text-sm">${item.qte}</span><button type="button" onclick="changerQteModal(${item.id},1)" class="w-7 h-7 rounded-full bg-green-100 text-green-600 hover:bg-green-500 hover:text-white transition flex items-center justify-center text-xs"><i class="fas fa-plus"></i></button></div>`;
+                items.appendChild(div);
+            });
+            badge.textContent = qte;
+            totalEl.textContent = total.toLocaleString() + " FCFA";
+        }
+
+        function validerPanierModal() {
+            if (panierModal.length === 0) { alert("Votre panier est vide."); return; }
+            const nom = document.getElementById("modal-nom").value.trim();
+            const tel = document.getElementById("modal-tel").value.trim();
+            if (!nom) { alert("Veuillez entrer votre nom."); return; }
+            if (!tel) { alert("Veuillez entrer votre numéro de téléphone."); return; }
+            localStorage.setItem("panier", JSON.stringify(panierModal));
+            localStorage.setItem("panier_nom", nom);
+            localStorage.setItem("panier_tel", tel);
+            window.location.href = "{% url 'restaurant:commander' %}";
+        }
+
+        majNavbarPanier();
+        window.addEventListener("storage", majNavbarPanier);
+        window.addEventListener("panier-maj", majNavbarPanier);
+        document.addEventListener("keydown", (e) => { if (e.key === "Escape") fermerPanier(); });
     </script>
 
     {% block extra_js %}{% endblock %}
