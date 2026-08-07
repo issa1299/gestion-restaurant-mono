@@ -418,7 +418,7 @@ def commander_en_ligne(request):
             "nom_client": nom,
         })
 
-        return redirect("restaurant:confirmation_commande", commande_id=commande.id)
+        return redirect("restaurant:confirmation_commande", commande_id=commande.id, token=commande.token)
 
     return render(request, "site/commander.html", {
         "categories": categories,
