@@ -77,6 +77,7 @@
             <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 text-xs text-slate-500 flex items-center gap-4 flex-wrap">
                 <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-orange-500 inline-block"></span> Votre position</span>
                 <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span> Votre livreur</span>
+                <span class="flex items-center gap-1.5"><span class="w-6 h-1 rounded-full bg-orange-500 inline-block"></span> Itinéraire</span>
                 <span id="distance-info" class="ml-auto font-semibold text-slate-600"></span>
             </div>
         </div>
@@ -175,22 +176,23 @@
         } else {
             livreurMarker.setLatLng([lat, lng]);
         }
-        drawTrajet();
+        chargerRoute(lat, lng);
     }
 
-    // Ligne de trajet
-    let trajet = null;
-    function drawTrajet() {
-        if (trajet) { map.removeLayer(trajet); trajet = null; }
-        if (livreurMarker && clientMarker) {
-            const livreur = livreurMarker.getLatLng();
-            const client = clientMarker.getLatLng();
-            trajet = L.polyline([livreur, client], { color: '#f97316', weight: 3, dashArray: '6,6' }).addTo(map);
-            updateDistance(livreur, client);
-        }
-    }
+    // ===== Itinéraire routier (comme Google Maps) via OSRM =====
+    let routeLayer = null;
+    let fallbackLayer = null;
+    let dernierOriginRoute = null;
 
-    // ===== Distance =====
+    function formaterDistance(m) {
+        const km = m / 1000;
+        return km < 1 ? `${Math.round(m)} m` : `${km.toFixed(1)} km`;
+    }
+    function formaterDuree(s) {
+        const min = Math.round(s / 60);
+        if (min < 60) return `${min} min`;
+        return `${Math.floor(min / 60)} h ${min % 60} min`;
+    }
     function haversine(lat1, lng1, lat2, lng2) {
         const R = 6371;
         const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -198,10 +200,51 @@
         const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     }
-    function updateDistance(livreur, client) {
-        const km = haversine(livreur.lat, livreur.lng, client.lat, client.lng);
+
+    async function chargerRoute(livreurLat, livreurLng) {
+        if (!clientMarker) return;
+        // Ne recalcule l'itinéraire que si le livreur a bougé de plus de ~80 m
+        if (dernierOriginRoute &&
+            haversine(dernierOriginRoute[0], dernierOriginRoute[1], livreurLat, livreurLng) < 0.08) {
+            return;
+        }
+        const client = clientMarker.getLatLng();
+        const url = `https://router.project-osrm.org/route/v1/driving/${livreurLng},${livreurLat};${client.lng},${client.lat}?overview=full&geometries=geojson`;
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            if (data.code === 'Ok' && data.routes && data.routes.length) {
+                dernierOriginRoute = [livreurLat, livreurLng];
+                if (fallbackLayer) { map.removeLayer(fallbackLayer); fallbackLayer = null; }
+                const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                if (!routeLayer) {
+                    routeLayer = L.polyline(coords, { color: '#f97316', weight: 5, opacity: 0.85 }).addTo(map);
+                    map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] });
+                } else {
+                    routeLayer.setLatLngs(coords);
+                }
+                const el = document.getElementById('distance-info');
+                el.textContent = `Itinéraire : ${formaterDistance(data.routes[0].distance)} · ${formaterDuree(data.routes[0].duration)}`;
+            } else {
+                fallbackTrajet(livreurLat, livreurLng);
+            }
+        } catch (e) {
+            fallbackTrajet(livreurLat, livreurLng);
+        }
+    }
+
+    function fallbackTrajet(livreurLat, livreurLng) {
+        if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
+        if (!clientMarker) return;
+        const client = clientMarker.getLatLng();
+        if (!fallbackLayer) {
+            fallbackLayer = L.polyline([[livreurLat, livreurLng], client], { color: '#f97316', weight: 3, dashArray: '6,6' }).addTo(map);
+        } else {
+            fallbackLayer.setLatLngs([[livreurLat, livreurLng], client]);
+        }
         const el = document.getElementById('distance-info');
-        el.textContent = km < 1 ? `À ${Math.round(km*1000)} m` : `À ${km.toFixed(1)} km`;
+        const km = haversine(livreurLat, livreurLng, client.lat, client.lng);
+        el.textContent = km < 1 ? `À ${Math.round(km*1000)} m (vol d'oiseau)` : `À ${km.toFixed(1)} km (vol d'oiseau)`;
     }
 
     // ===== Timeline =====

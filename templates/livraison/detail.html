@@ -195,7 +195,6 @@ const livraisonId = {{ livraison.id }};
 
     // Marqueur livreur (mobile)
     let markerLivraison = null;
-    let trajetLivraison = null;
     function updateMarker(lat, lng) {
         if (!lat || !lng) return;
         if (!markerLivraison) {
@@ -204,27 +203,74 @@ const livraisonId = {{ livraison.id }};
         } else {
             markerLivraison.setLatLng([lat, lng]);
         }
-        drawTrajetLivraison();
+        chargerRouteLiv(lat, lng);
     }
 
-    function drawTrajetLivraison() {
-        if (trajetLivraison) { mapLivraison.removeLayer(trajetLivraison); trajetLivraison = null; }
-        if (markerLivraison && clientMarkerLiv) {
-            const livreur = markerLivraison.getLatLng();
-            const client = clientMarkerLiv.getLatLng();
-            trajetLivraison = L.polyline([livreur, client], { color: '#f97316', weight: 3, dashArray: '6,6' }).addTo(mapLivraison);
-            const km = haversine(livreur.lat, livreur.lng, client.lat, client.lng);
-            document.getElementById('distance-livraison').textContent =
-                km < 1 ? `À ${Math.round(km*1000)} m du client` : `À ${km.toFixed(1)} km du client`;
-        }
-    }
+    // ===== Itinéraire routier (comme Google Maps) via OSRM =====
+    let routeLayerLiv = null;
+    let fallbackLayerLiv = null;
+    let dernierOriginLiv = null;
 
+    function formaterDistanceLiv(m) {
+        const km = m / 1000;
+        return km < 1 ? `${Math.round(m)} m` : `${km.toFixed(1)} km`;
+    }
+    function formaterDureeLiv(s) {
+        const min = Math.round(s / 60);
+        if (min < 60) return `${min} min`;
+        return `${Math.floor(min / 60)} h ${min % 60} min`;
+    }
     function haversine(lat1, lng1, lat2, lng2) {
         const R = 6371;
         const dLat = (lat2 - lat1) * Math.PI / 180;
         const dLng = (lng2 - lng1) * Math.PI / 180;
         const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    async function chargerRouteLiv(lat, lng) {
+        if (!clientMarkerLiv) return;
+        if (dernierOriginLiv &&
+            haversine(dernierOriginLiv[0], dernierOriginLiv[1], lat, lng) < 0.08) {
+            return;
+        }
+        const client = clientMarkerLiv.getLatLng();
+        const url = `https://router.project-osrm.org/route/v1/driving/${lng},${lat};${client.lng},${client.lat}?overview=full&geometries=geojson`;
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            if (data.code === 'Ok' && data.routes && data.routes.length) {
+                dernierOriginLiv = [lat, lng];
+                if (fallbackLayerLiv) { mapLivraison.removeLayer(fallbackLayerLiv); fallbackLayerLiv = null; }
+                const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                if (!routeLayerLiv) {
+                    routeLayerLiv = L.polyline(coords, { color: '#f97316', weight: 5, opacity: 0.85 }).addTo(mapLivraison);
+                    mapLivraison.fitBounds(routeLayerLiv.getBounds(), { padding: [40, 40] });
+                } else {
+                    routeLayerLiv.setLatLngs(coords);
+                }
+                document.getElementById('distance-livraison').textContent =
+                    `🛵 ${formaterDureeLiv(data.routes[0].duration)} · ${formaterDistanceLiv(data.routes[0].distance)} du client`;
+            } else {
+                fallbackLiv(lat, lng);
+            }
+        } catch (e) {
+            fallbackLiv(lat, lng);
+        }
+    }
+
+    function fallbackLiv(lat, lng) {
+        if (routeLayerLiv) { mapLivraison.removeLayer(routeLayerLiv); routeLayerLiv = null; }
+        if (!clientMarkerLiv) return;
+        const client = clientMarkerLiv.getLatLng();
+        if (!fallbackLayerLiv) {
+            fallbackLayerLiv = L.polyline([[lat, lng], client], { color: '#f97316', weight: 3, dashArray: '6,6' }).addTo(mapLivraison);
+        } else {
+            fallbackLayerLiv.setLatLngs([[lat, lng], client]);
+        }
+        const km = haversine(lat, lng, client.lat, client.lng);
+        document.getElementById('distance-livraison').textContent =
+            km < 1 ? `À ${Math.round(km*1000)} m du client (vol d'oiseau)` : `À ${km.toFixed(1)} km du client (vol d'oiseau)`;
     }
 
     {% if livraison.latitude and livraison.longitude %}
