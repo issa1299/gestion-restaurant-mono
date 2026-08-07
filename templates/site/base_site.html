@@ -141,6 +141,11 @@
                 </nav>
 
                 <div class="flex items-center gap-2">
+                    <a href="{% url 'menu:accueil' %}" title="Mon panier"
+                       class="relative w-10 h-10 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center transition hover:bg-orange-100 hover:scale-105 active:scale-95">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span id="navbar-badge-panier" class="hidden absolute -top-1 -right-1 bg-orange-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow">0</span>
+                    </a>
                     <button id="btn-burger" onclick="document.getElementById('nav-mobile').classList.toggle('open')"
                             class="md:hidden w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700 transition hover:bg-orange-100">
                         <i class="fas fa-bars"></i>
@@ -246,6 +251,22 @@
                     dropdown.classList.add("hidden");
                 }
             });
+
+            // ===== Badge panier dans la navbar =====
+            function majNavbarPanier() {
+                const badge = document.getElementById("navbar-badge-panier");
+                if (!badge) return;
+                let total = 0;
+                try {
+                    const panier = JSON.parse(localStorage.getItem("panier")) || [];
+                    panier.forEach(p => { total += (p.qte || p.quantite || 0); });
+                } catch (e) {}
+                badge.textContent = total;
+                badge.classList.toggle("hidden", total === 0);
+            }
+            majNavbarPanier();
+            window.addEventListener("storage", majNavbarPanier);
+            window.addEventListener("panier-maj", majNavbarPanier);
         });
     </script>
 

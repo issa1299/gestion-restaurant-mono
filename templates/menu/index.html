@@ -212,7 +212,7 @@ function filtrerProduits() {
 }
 
 /* ==================== PANIER CLIENT ==================== */
-let panier = JSON.parse(localStorage.getItem("panier_menu")) || [];
+let panier = JSON.parse(localStorage.getItem("panier")) || [];
 let modePanier = "LIVRAISON";
 let miniMap = null;
 let clientMarker = null;
@@ -251,7 +251,8 @@ function viderPanier() {
 }
 
 function sauvegarderPanier() {
-    localStorage.setItem("panier_menu", JSON.stringify(panier));
+    localStorage.setItem("panier", JSON.stringify(panier));
+    window.dispatchEvent(new Event("panier-maj"));
 }
 
 function majPanier() {

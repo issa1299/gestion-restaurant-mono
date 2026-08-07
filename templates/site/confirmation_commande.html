@@ -127,5 +127,7 @@ function copierLien() {
         alert('Lien copié !');
     }
 }
+localStorage.removeItem("panier");
+window.dispatchEvent(new Event("panier-maj"));
 </script>
 {% endblock %}

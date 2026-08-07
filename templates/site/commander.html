@@ -151,20 +151,20 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-let panier = [];
+let panier = JSON.parse(localStorage.getItem("panier")) || [];
 let miniMap = null;
 let clientMarker = null;
 
 function ajouterAuPanier(id, nom, prix) {
     const existant = panier.find(p => p.id === id);
-    if (existant) { existant.quantite++; } else { panier.push({ id, nom, prix: parseFloat(prix), quantite: 1 }); }
+    if (existant) { existant.qte++; } else { panier.push({ id, nom, prix: parseFloat(prix), qte: 1 }); }
     renderPanier();
 }
 
 function retirerDuPanier(id) {
     const idx = panier.findIndex(p => p.id === id);
     if (idx === -1) return;
-    if (panier[idx].quantite > 1) { panier[idx].quantite--; } else { panier.splice(idx, 1); }
+    if (panier[idx].qte > 1) { panier[idx].qte--; } else { panier.splice(idx, 1); }
     renderPanier();
 }
 
@@ -176,22 +176,29 @@ function renderPanier() {
     const totalEl = document.getElementById('panier-total');
     if (panier.length === 0) {
         vide.classList.remove('hidden'); items.classList.add('hidden'); totalBlock.classList.add('hidden');
-        badge.textContent = '0'; document.getElementById('input-produits-json').value = '[]'; return;
+        badge.textContent = '0'; document.getElementById('input-produits-json').value = '[]';
+        localStorage.setItem('panier', JSON.stringify(panier));
+        window.dispatchEvent(new Event('panier-maj'));
+        return;
     }
     vide.classList.add('hidden'); items.classList.remove('hidden'); totalBlock.classList.remove('hidden');
     let total = 0, totalQte = 0;
     items.innerHTML = '';
     panier.forEach(item => {
-        total += item.prix * item.quantite; totalQte += item.quantite;
+        total += item.prix * item.qte; totalQte += item.qte;
         const div = document.createElement('div');
         div.className = 'flex items-center gap-3 px-5 py-3';
-        div.innerHTML = `<div class="flex-1 min-w-0"><p class="text-sm font-semibold text-slate-800 truncate">${item.nom}</p><p class="text-xs text-orange-600 font-bold">${(item.prix * item.quantite).toLocaleString()} FCFA</p></div><div class="flex items-center gap-2 shrink-0"><button type="button" onclick="retirerDuPanier(${item.id})" class="w-7 h-7 rounded-full bg-red-100 text-red-500 hover:bg-red-500 hover:text-white transition flex items-center justify-center text-xs"><i class="fas fa-minus"></i></button><span class="w-6 text-center font-bold text-sm">${item.quantite}</span><button type="button" onclick="ajouterAuPanier(${item.id},'${item.nom.replace(/'/g,"\\'")}',${item.prix})" class="w-7 h-7 rounded-full bg-green-100 text-green-600 hover:bg-green-500 hover:text-white transition flex items-center justify-center text-xs"><i class="fas fa-plus"></i></button></div>`;
+        div.innerHTML = `<div class="flex-1 min-w-0"><p class="text-sm font-semibold text-slate-800 truncate">${item.nom}</p><p class="text-xs text-orange-600 font-bold">${(item.prix * item.qte).toLocaleString()} FCFA</p></div><div class="flex items-center gap-2 shrink-0"><button type="button" onclick="retirerDuPanier(${item.id})" class="w-7 h-7 rounded-full bg-red-100 text-red-500 hover:bg-red-500 hover:text-white transition flex items-center justify-center text-xs"><i class="fas fa-minus"></i></button><span class="w-6 text-center font-bold text-sm">${item.qte}</span><button type="button" onclick="ajouterAuPanier(${item.id},'${item.nom.replace(/'/g,"\\'")}',${item.prix})" class="w-7 h-7 rounded-full bg-green-100 text-green-600 hover:bg-green-500 hover:text-white transition flex items-center justify-center text-xs"><i class="fas fa-plus"></i></button></div>`;
         items.appendChild(div);
     });
     badge.textContent = totalQte;
     totalEl.textContent = total.toLocaleString() + ' FCFA';
-    document.getElementById('input-produits-json').value = JSON.stringify(panier);
+    document.getElementById('input-produits-json').value = JSON.stringify(panier.map(p => ({ id: p.id, quantite: p.qte })));
+    localStorage.setItem('panier', JSON.stringify(panier));
+    window.dispatchEvent(new Event('panier-maj'));
 }
+
+renderPanier();
 
 function localiserClient() {
     const btn = document.getElementById('btn-localiser');
