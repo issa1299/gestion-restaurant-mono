@@ -36,29 +36,31 @@
                 </h2>
                 <span class="bg-white/20 text-white text-xs font-bold px-3 py-1 rounded-full">{{ categorie.produits.count }} article(s)</span>
             </div>
-            <div class="divide-y divide-gray-50">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
                 {% for produit in categorie.produits.all %}
                 {% if produit.disponible %}
-                <div class="produit-ligne flex items-center gap-4 p-4 hover:bg-orange-50/50 transition-colors">
-                    <div class="w-16 h-16 rounded-2xl overflow-hidden bg-orange-100 flex items-center justify-center shrink-0">
+                <div class="produit-ligne bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col">
+                    <div class="relative h-32 sm:h-36 bg-orange-100 overflow-hidden">
                         {% if produit.image %}
                         <img src="{{ produit.image.url }}" alt="{{ produit.nom }}" class="w-full h-full object-cover">
                         {% else %}
-                        <i class="fas fa-utensils text-orange-400 text-xl"></i>
+                        <div class="w-full h-full flex items-center justify-center">
+                            <i class="fas fa-utensils text-orange-400 text-3xl"></i>
+                        </div>
                         {% endif %}
+                        <button type="button"
+                                onclick="ajouterAuPanier({{ produit.id }}, '{{ produit.nom|escapejs }}', {{ produit.prix }})"
+                                class="absolute bottom-2 right-2 w-9 h-9 rounded-full bg-orange-500 hover:bg-orange-600 active:scale-95 text-white flex items-center justify-center transition-all shadow-lg shadow-orange-200">
+                            <i class="fas fa-plus text-sm"></i>
+                        </button>
                     </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="font-bold text-slate-800">{{ produit.nom }}</p>
+                    <div class="p-3 flex flex-col flex-1">
+                        <p class="font-bold text-slate-800 text-sm leading-snug">{{ produit.nom }}</p>
                         {% if produit.description %}
-                        <p class="text-xs text-slate-500 mt-0.5 line-clamp-1">{{ produit.description }}</p>
+                        <p class="text-xs text-slate-500 mt-1 line-clamp-2">{{ produit.description }}</p>
                         {% endif %}
-                        <p class="text-orange-600 font-bold mt-1">{{ produit.prix }} FCFA</p>
+                        <p class="text-orange-600 font-bold mt-auto pt-2">{{ produit.prix }} FCFA</p>
                     </div>
-                    <button type="button"
-                            onclick="ajouterAuPanier({{ produit.id }}, '{{ produit.nom|escapejs }}', {{ produit.prix }})"
-                            class="w-10 h-10 rounded-xl bg-orange-500 hover:bg-orange-600 active:scale-95 text-white flex items-center justify-center transition-all shadow-lg shadow-orange-200 shrink-0">
-                        <i class="fas fa-plus text-sm"></i>
-                    </button>
                 </div>
                 {% endif %}
                 {% endfor %}
