@@ -71,7 +71,8 @@ def creer_livraison(request, commande_id):
         commande=commande,
         adresse=commande.adresse_livraison or "",
         telephone=commande.telephone_livraison or "",
-        statut=Livraison.EN_ATTENTE,
+        statut=Livraison.EN_COURS,
+        livreur=request.user,
     )
 
     envoyer_notification_broadcast(
