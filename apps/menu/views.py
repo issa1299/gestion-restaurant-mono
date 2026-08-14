@@ -44,7 +44,7 @@ def categorie(request, categorie_id):
     })
 
 
-@role_required(["VENDEUR"])
+@role_required(["ADMIN", "GERANT", "VENDEUR"], ecriture_autorisee=True)
 def ajouter_categorie(request):
     """Ajouter une nouvelle catégorie"""
     if request.method == "POST":
@@ -69,7 +69,7 @@ def ajouter_categorie(request):
     return render(request, "menu/categorie_form.html", {"edition": False})
 
 
-@role_required(["VENDEUR"])
+@role_required(["ADMIN", "GERANT", "VENDEUR"], ecriture_autorisee=True)
 def modifier_categorie(request, pk):
     """Modifier une catégorie"""
     categorie = get_object_or_404(Categorie, pk=pk)
@@ -98,7 +98,7 @@ def modifier_categorie(request, pk):
     })
 
 
-@role_required(["VENDEUR"])
+@role_required(["ADMIN", "GERANT", "VENDEUR"], ecriture_autorisee=True)
 def supprimer_categorie(request, pk):
     """Supprimer une catégorie"""
     categorie = get_object_or_404(Categorie, pk=pk)
@@ -112,7 +112,7 @@ def supprimer_categorie(request, pk):
     return JsonResponse({"success": False, "error": "Méthode non autorisée."}, status=405)
 
 
-@role_required(["VENDEUR"])
+@role_required(["ADMIN", "GERANT", "VENDEUR"], ecriture_autorisee=True)
 def ajouter_produit(request):
     """Ajouter un nouveau produit au menu"""
     categories = Categorie.objects.all()
@@ -177,7 +177,7 @@ def ajouter_produit(request):
     })
 
 
-@role_required(["VENDEUR"])
+@role_required(["ADMIN", "GERANT", "VENDEUR"], ecriture_autorisee=True)
 def modifier_produit(request, pk):
     """Modifier un produit"""
     produit = get_object_or_404(Produit, pk=pk)
@@ -218,7 +218,7 @@ def modifier_produit(request, pk):
     })
 
 
-@role_required(["VENDEUR"])
+@role_required(["ADMIN", "GERANT", "VENDEUR"], ecriture_autorisee=True)
 def supprimer_produit(request, pk):
     """Supprimer un produit"""
     produit = get_object_or_404(Produit, pk=pk)
