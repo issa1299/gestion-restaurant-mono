@@ -230,3 +230,21 @@ def supprimer_produit(request, pk):
         return JsonResponse({"success": True})
 
     return JsonResponse({"success": False, "error": "Méthode non autorisée."}, status=405)
+
+
+@role_required(["ADMIN", "GERANT", "VENDEUR"], ecriture_autorisee=True)
+def toggle_disponible_produit(request, pk):
+    """Active / désactive la disponibilité d'un produit (toggle rapide)."""
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "Méthode non autorisée."}, status=405)
+
+    produit = get_object_or_404(Produit, pk=pk)
+    produit.disponible = not produit.disponible
+    produit.save()
+
+    return JsonResponse({
+        "success": True,
+        "id": produit.id,
+        "disponible": produit.disponible,
+        "nom": produit.nom,
+    })
