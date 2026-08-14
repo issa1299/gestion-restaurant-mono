@@ -33,7 +33,7 @@ def _obtenir_periode(request):
 
 @login_required
 def index(request):
-    if request.user.role not in ["ADMIN"]:
+    if request.user.role not in ["ADMIN", "GERANT"]:
         return render(request, "base/403.html", status=403)
 
     date_debut, date_fin = _obtenir_periode(request)
@@ -111,7 +111,7 @@ def index(request):
 @login_required
 def export_csv(request):
     """Exporte les ventes de la période en CSV."""
-    if request.user.role not in ["ADMIN"]:
+    if request.user.role not in ["ADMIN", "GERANT"]:
         return render(request, "base/403.html", status=403)
 
     date_debut, date_fin = _obtenir_periode(request)

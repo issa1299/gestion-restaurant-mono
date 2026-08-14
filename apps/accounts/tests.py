@@ -3,28 +3,28 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-ROLES = ["ADMIN", "CAISSIER", "SERVEUR", "CUISINIER", "VENDEUR", "LIVREUR", "CLIENT"]
+ROLES = ["ADMIN", "GERANT", "CAISSIER", "SERVEUR", "CUISINIER", "VENDEUR", "LIVREUR", "CLIENT"]
 
 # URL -> rôles autorisés (200 attendu), sinon 302 (redirection) attendue
 ACCESS_MATRIX = {
-    "/dashboard/": {"ADMIN", "SERVEUR", "CUISINIER", "CAISSIER"},
-    "/accounts/users/": {"ADMIN"},
-    "/clients/": {"ADMIN", "CAISSIER"},
-    "/commandes/": {"ADMIN", "SERVEUR", "CUISINIER"},
-    "/cuisine/": {"ADMIN", "CUISINIER"},
-    "/livraisons/": {"ADMIN", "LIVREUR"},
-    "/menu/gestion/": {"ADMIN", "VENDEUR"},
-    "/stock/": {"ADMIN", "VENDEUR"},
-    "/stock/historique/": {"ADMIN", "VENDEUR"},
-    "/fournisseurs/": {"ADMIN", "VENDEUR"},
-    "/fournisseurs/approvisionnements/": {"ADMIN", "VENDEUR"},
-    "/tables/": {"ADMIN", "SERVEUR"},
-    "/rapports/": {"ADMIN"},
-    "/parametres/": {"ADMIN"},
-    "/ventes/": {"CAISSIER"},
-    "/ventes/historique/": {"ADMIN", "CAISSIER"},
-    "/galerie/gestion/": {"ADMIN"},
-    "/temoignages/gestion/": {"ADMIN"},
+    "/dashboard/": {"ADMIN", "GERANT", "SERVEUR", "CUISINIER", "CAISSIER"},
+    "/accounts/users/": {"ADMIN", "GERANT"},
+    "/clients/": {"ADMIN", "GERANT", "CAISSIER"},
+    "/commandes/": {"ADMIN", "GERANT", "SERVEUR", "CUISINIER"},
+    "/cuisine/": {"ADMIN", "GERANT", "CUISINIER"},
+    "/livraisons/": {"ADMIN", "GERANT", "LIVREUR"},
+    "/menu/gestion/": {"ADMIN", "GERANT", "VENDEUR"},
+    "/stock/": {"ADMIN", "GERANT", "VENDEUR"},
+    "/stock/historique/": {"ADMIN", "GERANT", "VENDEUR"},
+    "/fournisseurs/": {"ADMIN", "GERANT", "VENDEUR"},
+    "/fournisseurs/approvisionnements/": {"ADMIN", "GERANT", "VENDEUR"},
+    "/tables/": {"ADMIN", "GERANT", "SERVEUR"},
+    "/rapports/": {"ADMIN", "GERANT"},
+    "/parametres/": {"ADMIN", "GERANT"},
+    "/ventes/": {"ADMIN", "GERANT", "CAISSIER"},
+    "/ventes/historique/": {"ADMIN", "GERANT", "CAISSIER"},
+    "/galerie/gestion/": {"ADMIN", "GERANT"},
+    "/temoignages/gestion/": {"ADMIN", "GERANT"},
 }
 
 
@@ -84,7 +84,6 @@ class AccessControlTests(TestCase):
             "/stock/1/mouvement/",
             "/fournisseurs/ajouter/",
             "/fournisseurs/approvisionnements/ajouter/",
-            "/ventes/",
             "/ventes/1/annuler/",
             "/clients/ajouter/",
             "/commandes/ajouter/",
@@ -113,6 +112,27 @@ class AccessControlTests(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertIn("/livraisons/", resp.get("Location", ""))
 
+    def test_login_gerant_redirige_vers_dashboard(self):
+        user = User.objects.create_user(
+            username="ger_log",
+            email="ger_log@test.com",
+            password="Test12345",
+            role="GERANT",
+        )
+        resp = self.client.post(
+            "/accounts/login/",
+            {"username": user.username, "password": "Test12345"},
+            follow=False,
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("/dashboard/", resp.get("Location", ""))
+
+    def test_gerant_voit_statistiques_du_dashboard(self):
+        resp = self._get("GERANT", "/dashboard/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Chiffre d'affaires")
+        self.assertContains(resp, "Chiffre d'affaires par type")
+
     def test_login_livreur_redirige_vers_livraisons(self):
         user = User.objects.create_user(
             username="liv_log",
@@ -133,6 +153,41 @@ class AccessControlTests(TestCase):
         resp = c.get("/dashboard/")
         self.assertEqual(resp.status_code, 302)
         self.assertIn("/accounts/login/", resp.get("Location", ""))
+
+    def test_superuser_admin_bloque_en_ecriture(self):
+        """Même un superuser avec le rôle ADMIN/GÉRANT est bloqué en écriture."""
+        super_admin = User.objects.create_user(
+            username="super_adm", email="super_adm@test.com",
+            password="Test12345", role="ADMIN", is_superuser=True,
+        )
+        c = Client()
+        c.force_login(super_admin)
+        # POST bloqué sur une vue d'écriture réservée (ex: ajouter un client = CAISSIER)
+        resp = c.post("/clients/ajouter/", {
+            "nom": "Bloqué", "telephone": "000",
+        })
+        self.assertIn(resp.status_code, (302, 403, 404, 405))
+        from apps.clients.models import Client as ClientModele
+        self.assertFalse(ClientModele.objects.filter(nom="Bloqué").exists())
+
+    def test_gerant_lecture_seule_sauf_gestion_utilisateurs(self):
+        """Le Gérant lit tout mais ne crée/modifie/supprime que les utilisateurs."""
+        gerant = self.users["GERANT"]
+        c = Client()
+        c.force_login(gerant)
+        # Lecture autorisée
+        r = c.get("/dashboard/")
+        self.assertEqual(r.status_code, 200)
+        # Écriture métier bloquée (ajout d'un client réservé au caissier)
+        r = c.post("/clients/ajouter/", {"nom": "X", "telephone": "1"})
+        self.assertIn(r.status_code, (302, 403, 404, 405))
+        # Gestion des utilisateurs autorisée
+        r = c.post("/accounts/users/create/", {
+            "username": "nv_ger",
+            "password": "Motdepasse123",
+            "password_confirm": "Motdepasse123",
+        })
+        self.assertIn(r.status_code, (200, 302))
 
 
 class UserManagementTests(TestCase):

@@ -12,7 +12,7 @@ from apps.clients.models import Client
 from apps.notifications.utils import notifier_changement_statut_commande, notifier_nouvelle_commande
 
 
-@role_required(["ADMIN", "SERVEUR", "CUISINIER"])
+@role_required(["ADMIN", "GERANT", "SERVEUR", "CUISINIER"])
 def index(request):
     """Liste des commandes"""
     commandes = Commande.objects.all().prefetch_related("lignes__produit", "client", "table", "serveur")
@@ -72,7 +72,10 @@ def ajouter(request):
             messages.success(request, f"Commande N° {commande.id} créée avec succès.")
             return redirect('commandes:liste')
     else:
-        form = CommandeForm()
+        user = request.user
+        form = CommandeForm(
+            initial={"serveur": user.pk if user.is_authenticated and getattr(user, "role", None) == "SERVEUR" else None}
+        )
         formset = LigneCommandeFormSet()
 
     return render(request, "commandes/ajouter.html", {
@@ -84,7 +87,7 @@ def ajouter(request):
     })
 
 
-@role_required(["ADMIN", "SERVEUR", "CUISINIER"])
+@role_required(["ADMIN", "GERANT", "SERVEUR", "CUISINIER"])
 def detail(request, pk):
     """Détail d'une commande"""
     commande = get_object_or_404(

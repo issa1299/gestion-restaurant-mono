@@ -37,6 +37,8 @@ class ContactMessage(models.Model):
     sujet = models.CharField(max_length=200, blank=True, default="")
     message = models.TextField()
     lu = models.BooleanField(default=False)
+    reponse = models.TextField(blank=True, default="")
+    repondu_le = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

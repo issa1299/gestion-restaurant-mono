@@ -13,6 +13,13 @@ def setup_permissions():
             "view",
         ],
 
+        "Gérant": [
+            "add",
+            "change",
+            "delete",
+            "view",
+        ],
+
         "Caissier": [
             "view",
             "add",

@@ -17,6 +17,16 @@ urlpatterns = [
         views.enregistrer_vente,
         name="enregistrer_vente"
     ),
+    path(
+        "commandes/creer/",
+        views.creer_commande,
+        name="creer_commande"
+    ),
+    path(
+        "commandes/encaisser/",
+        views.encaisser_commande,
+        name="encaisser_commande"
+    ),
 
 
     path(

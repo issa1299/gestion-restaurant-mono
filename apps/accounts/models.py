@@ -5,6 +5,7 @@ from .managers import CustomUserManager
 
 class Role(models.TextChoices):
     ADMIN = "ADMIN", "Administrateur"
+    GERANT = "GERANT", "Gérant"
     CAISSIER = "CAISSIER", "Caissier"
     SERVEUR = "SERVEUR", "Serveur"
     CUISINIER = "CUISINIER", "Cuisinier"

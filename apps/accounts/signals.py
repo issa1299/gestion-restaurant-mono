@@ -8,6 +8,7 @@ def create_roles(sender, **kwargs):
 
     roles = [
         "Administrateur",
+        "Gérant",
         "Caissier",
         "Serveur",
         "Cuisinier",

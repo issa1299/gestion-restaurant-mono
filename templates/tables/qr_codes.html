@@ -1,0 +1,49 @@
+﻿{% extends "base/base.html" %}
+{% block title %}QR codes des tables â€” RestaurantPro{% endblock %}
+
+{% block content %}
+<div class="space-y-4 sm:space-y-6">
+
+    <!-- En-tÃªte -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-800">
+                <i class="fas fa-qrcode text-orange-500 mr-2 sm:mr-3"></i>QR codes des tables
+            </h1>
+            <p class="text-gray-500 text-sm mt-0.5">{{ tables|length }} table{{ tables|length|pluralize }}</p>
+        </div>
+        <a href="{% url 'tables:liste' %}"
+           class="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl font-semibold text-sm transition shadow-md w-full sm:w-auto justify-center">
+            <i class="fas fa-arrow-left"></i> Retour au plan de salle
+        </a>
+    </div>
+
+    {% if tables %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+        {% for table, lien in liens %}
+        <div class="bg-white rounded-xl sm:rounded-2xl shadow-md overflow-hidden border border-slate-100">
+            <div class="p-5 text-center">
+                <p class="font-bold text-slate-800 text-lg">Table {{ table.numero }}</p>
+                <p class="text-xs text-gray-500 mb-3">{{ table.capacite }} places</p>
+                <img src="{% url 'tables:telecharger_qr' table.id %}" alt="QR Table {{ table.numero }}"
+                     class="mx-auto w-40 h-40 sm:w-48 sm:h-48 object-contain rounded-xl border border-gray-200 bg-white">
+                <p class="text-[10px] text-gray-400 mt-3 break-all">{{ lien }}</p>
+            </div>
+            <div class="border-t p-3 sm:p-4 bg-slate-50">
+                <a href="{% url 'tables:telecharger_qr' table.id %}" download
+                   class="flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2.5 rounded-xl text-sm transition">
+                    <i class="fas fa-download"></i> TÃ©lÃ©charger le QR code
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-xl sm:rounded-2xl shadow p-10 sm:p-16 text-center text-gray-400">
+        <i class="fas fa-qrcode text-4xl sm:text-6xl mb-4 block text-gray-300"></i>
+        <p class="text-lg sm:text-xl">Aucune table configurÃ©e</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

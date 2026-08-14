@@ -4,7 +4,7 @@ from django.utils import timezone
 from apps.accounts.decorators import role_required
 from .models import Client
 
-@role_required(["ADMIN", "CAISSIER"])
+@role_required(["ADMIN", "GERANT", "CAISSIER"])
 def liste_clients(request):
     q = request.GET.get("q")
     clients = Client.objects.all()
@@ -106,7 +106,7 @@ def supprimer_client(request, pk):
 
     return redirect("clients:list")
 
-@role_required(["ADMIN", "CAISSIER"])
+@role_required(["ADMIN", "GERANT", "CAISSIER"])
 def detail_client(request, pk):
 
     client = get_object_or_404(Client, pk=pk)

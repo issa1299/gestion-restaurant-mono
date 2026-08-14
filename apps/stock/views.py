@@ -6,7 +6,7 @@ from .models import Stock, MouvementStock
 from apps.menu.models import Produit
 
 
-@role_required(["ADMIN", "VENDEUR"])
+@role_required(["ADMIN", "GERANT", "VENDEUR"])
 def liste_stock(request):
     stocks = Stock.objects.select_related("produit__categorie").all()
 
@@ -36,7 +36,7 @@ def liste_stock(request):
     })
 
 
-@role_required(["ADMIN", "VENDEUR"])
+@role_required(["ADMIN", "GERANT", "VENDEUR"])
 def detail_stock(request, stock_id):
     stock = get_object_or_404(Stock.objects.select_related("produit__categorie"), id=stock_id)
     mouvements = stock.produit.mouvements_stock.select_related("utilisateur")[:50]
@@ -121,7 +121,7 @@ def ajouter_mouvement(request, stock_id):
     return render(request, "stock/mouvement.html", {"stock": stock})
 
 
-@role_required(["ADMIN", "VENDEUR"])
+@role_required(["ADMIN", "GERANT", "VENDEUR"])
 def historique_mouvements(request):
     mouvements = MouvementStock.objects.select_related(
         "produit", "utilisateur"

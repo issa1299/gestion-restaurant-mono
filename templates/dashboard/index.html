@@ -1,4 +1,4 @@
-{% extends "base/base.html" %}
+﻿{% extends "base/base.html" %}
 {% block title %}Dashboard - RestaurantPro{% endblock %}
 
 {% block content %}
@@ -7,211 +7,315 @@
 <div class="space-y-4 sm:space-y-6">
 
     <!-- Titre -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
         <div>
-            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Tableau de bord</h1>
-            <p class="text-gray-500 text-sm mt-0.5">Bienvenue dans votre espace de gestion du restaurant.</p>
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">Tableau de bord</h1>
+            <p class="text-slate-500 text-sm mt-0.5">Vue gestionnaire Â· {{ label_periode }}</p>
         </div>
-        <button class="bg-orange-500 text-white px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl hover:bg-orange-600 transition text-sm font-semibold w-full sm:w-auto">
-            <i class="fas fa-plus mr-2"></i>Nouvelle commande
-        </button>
+
+        <!-- SÃ©lecteur de pÃ©riode -->
+        <div class="flex flex-wrap gap-1.5 bg-white rounded-xl p-1.5 border border-slate-200 shadow-sm" id="periode-selector">
+            {% for code, lbl in periodes %}
+            <button onclick="changerPeriode('{{ code }}')" data-periode="{{ code }}"
+                    class="periode-btn px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border-2
+                    {% if periode == code %}border-orange-500 bg-orange-50 text-orange-700{% else %}border-transparent text-slate-500 hover:bg-slate-100{% endif %}">
+                {{ lbl }}
+            </button>
+            {% endfor %}
+        </div>
     </div>
 
-    <!-- Cartes statistiques -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-6">
+    {% if est_gerant %}
+    <!-- Cartes statistiques gÃ©rant -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-5">
 
-        <div class="bg-white rounded-xl sm:rounded-2xl shadow p-4 sm:p-6">
-            <div class="flex justify-between items-center">
-                <div class="min-w-0">
-                    <p class="text-gray-500 text-xs sm:text-sm">Chiffre d'affaires</p>
-                    <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mt-1 sm:mt-2 truncate">{{ ca_total|default:0 }} FCFA</h2>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="p-4 sm:p-5">
+                <div class="flex items-center justify-between">
+                    <p class="text-slate-500 text-xs sm:text-sm">Chiffre d'affaires</p>
+                    <span class="w-9 h-9 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center"><i class="fas fa-money-bill-wave"></i></span>
                 </div>
-                <div class="bg-orange-100 text-orange-500 p-3 sm:p-4 rounded-xl shrink-0">
-                    <i class="fas fa-money-bill-wave text-lg sm:text-2xl"></i>
-                </div>
+                <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 mt-2 truncate">{{ ca_total|floatformat:0 }} FCFA</h2>
+                <p class="text-xs text-slate-400 mt-1">{{ label_periode }}</p>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl sm:rounded-2xl shadow p-4 sm:p-6">
-            <div class="flex justify-between items-center">
-                <div class="min-w-0">
-                    <p class="text-gray-500 text-xs sm:text-sm">Commandes aujourd'hui</p>
-                    <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mt-1 sm:mt-2">{{ commandes_ajourdhui|default:0 }}</h2>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="p-4 sm:p-5">
+                <div class="flex items-center justify-between">
+                    <p class="text-slate-500 text-xs sm:text-sm">Commandes</p>
+                    <span class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center"><i class="fas fa-clipboard-list"></i></span>
                 </div>
-                <div class="bg-blue-100 text-blue-500 p-3 sm:p-4 rounded-xl shrink-0">
-                    <i class="fas fa-clipboard-list text-lg sm:text-2xl"></i>
-                </div>
+                <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">{{ nb_commandes }}</h2>
+                <p class="text-xs text-slate-400 mt-1">sur la pÃ©riode</p>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl sm:rounded-2xl shadow p-4 sm:p-6">
-            <div class="flex justify-between items-center">
-                <div class="min-w-0">
-                    <p class="text-gray-500 text-xs sm:text-sm">Clients</p>
-                    <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mt-1 sm:mt-2">{{ total_clients|default:0 }}</h2>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="p-4 sm:p-5">
+                <div class="flex items-center justify-between">
+                    <p class="text-slate-500 text-xs sm:text-sm">Ticket moyen</p>
+                    <span class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center"><i class="fas fa-receipt"></i></span>
                 </div>
-                <div class="bg-green-100 text-green-500 p-3 sm:p-4 rounded-xl shrink-0">
-                    <i class="fas fa-users text-lg sm:text-2xl"></i>
-                </div>
+                <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 mt-2 truncate">{{ ticket_moyen|floatformat:0 }} FCFA</h2>
+                <p class="text-xs text-slate-400 mt-1">par commande</p>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl sm:rounded-2xl shadow p-4 sm:p-6">
-            <div class="flex justify-between items-center">
-                <div class="min-w-0">
-                    <p class="text-gray-500 text-xs sm:text-sm">Tables occupées</p>
-                    <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mt-1 sm:mt-2">{{ tables_occupees|default:0 }}</h2>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="p-4 sm:p-5">
+                <div class="flex items-center justify-between">
+                    <p class="text-slate-500 text-xs sm:text-sm">Tables occupÃ©es</p>
+                    <span class="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center"><i class="fas fa-chair"></i></span>
                 </div>
-                <div class="bg-purple-100 text-purple-500 p-3 sm:p-4 rounded-xl shrink-0">
-                    <i class="fas fa-chair text-lg sm:text-2xl"></i>
-                </div>
+                <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">{{ tables_occupees }}</h2>
+                <p class="text-xs text-slate-400 mt-1">{{ total_clients }} clients enregistrÃ©s</p>
             </div>
         </div>
 
     </div>
 
-    <!-- Partie inférieure -->
-    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+    <!-- RÃ©partition : graphique + CA par type + top produits -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-5">
 
-        <!-- Graphique -->
-        <div class="xl:col-span-2 bg-white rounded-xl sm:rounded-2xl shadow p-4 sm:p-6">
-            <h2 class="text-lg sm:text-xl font-semibold text-gray-800 mb-4">Ventes des 7 derniers jours</h2>
-            <div class="relative h-48 sm:h-64">
-                <canvas id="ventesChart"></canvas>
+        <!-- Graphique Ventes -->
+        <div class="xl:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="p-4 sm:p-5">
+                <h2 class="text-base sm:text-lg font-bold text-slate-800 mb-4">Ventes des 7 derniers jours</h2>
+                <div class="relative h-48 sm:h-64">
+                    <canvas id="ventesChart"></canvas>
+                </div>
             </div>
         </div>
 
-        <!-- Commandes récentes -->
-        <div class="bg-white rounded-xl sm:rounded-2xl shadow p-4 sm:p-6">
-            <h2 class="text-lg sm:text-xl font-semibold text-gray-800 mb-4">Dernières commandes</h2>
-            {% if dernieres_commandes %}
+        <!-- CA par type -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="p-4 sm:p-5">
+                <h2 class="text-base sm:text-lg font-bold text-slate-800 mb-4">Chiffre d'affaires par type</h2>
+                {% if nb_commandes %}
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3">
+                        <span class="w-9 h-9 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center shrink-0"><i class="fas fa-utensils text-sm"></i></span>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold text-slate-700">Sur place</p>
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-orange-500 rounded-full" style="width: {% widthratio ca_par_type.SUR_PLACE ca_types_total 100 %}%"></div>
+                                </div>
+                                <span class="text-xs font-bold text-slate-600 shrink-0">{{ ca_par_type.SUR_PLACE|floatformat:0 }} F</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="w-9 h-9 rounded-lg bg-red-50 text-red-500 flex items-center justify-center shrink-0"><i class="fas fa-bag-shopping text-sm"></i></span>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold text-slate-700">Ã€ emporter</p>
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-red-500 rounded-full" style="width: {% widthratio ca_par_type.A_EMPORTER ca_types_total 100 %}%"></div>
+                                </div>
+                                <span class="text-xs font-bold text-slate-600 shrink-0">{{ ca_par_type.A_EMPORTER|floatformat:0 }} F</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0"><i class="fas fa-truck text-sm"></i></span>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold text-slate-700">Livraison</p>
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-emerald-500 rounded-full" style="width: {% widthratio ca_par_type.LIVRAISON ca_types_total 100 %}%"></div>
+                                </div>
+                                <span class="text-xs font-bold text-slate-600 shrink-0">{{ ca_par_type.LIVRAISON|floatformat:0 }} F</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-center text-slate-400 py-8 text-sm">Aucun chiffre sur cette pÃ©riode</p>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Top produits + derniÃ¨res commandes -->
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-5">
+
+        <!-- Top produits -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="p-4 sm:p-5">
+                <h2 class="text-base sm:text-lg font-bold text-slate-800 mb-4">Top produits vendus</h2>
+                {% if top_produits %}
+                <div class="space-y-3">
+                    {% for p in top_produits %}
+                    <div class="flex items-center gap-3 p-2 sm:p-3 bg-slate-50 rounded-xl">
+                        <span class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-500 font-bold flex items-center justify-center shrink-0">{{ forloop.counter }}</span>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-semibold text-slate-700 text-sm truncate">{{ p.produit__nom }}</p>
+                            <p class="text-xs text-slate-400">{{ p.quantite_totale }} vendu(s)</p>
+                        </div>
+                        <span class="text-sm font-bold text-orange-600 shrink-0">{{ p.ca_produit|floatformat:0 }} F</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-center text-slate-400 py-8 text-sm">Aucun produit vendu sur cette pÃ©riode</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Commandes rÃ©centes -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="p-4 sm:p-5">
+                <h2 class="text-base sm:text-lg font-bold text-slate-800 mb-4">DerniÃ¨res commandes</h2>
+                {% if dernieres_commandes %}
                 <div class="space-y-3">
                     {% for cmd in dernieres_commandes %}
-                    <div class="flex justify-between items-center p-2 sm:p-3 bg-slate-50 rounded-lg">
+                    <div class="flex justify-between items-center p-2 sm:p-3 bg-slate-50 rounded-xl">
                         <div class="min-w-0">
-                            <p class="font-semibold text-gray-800 text-sm">#{{ cmd.id }}</p>
-                            <p class="text-xs text-gray-500">{{ cmd.created_at|date:"H:i" }}</p>
+                            <p class="font-semibold text-slate-800 text-sm">NÂ° {{ cmd.id }}
+                                <span class="text-[10px] uppercase tracking-wide text-slate-400 ml-1">{{ cmd.get_type_display }}</span>
+                            </p>
+                            <p class="text-xs text-slate-500">{{ cmd.created_at|date:"H:i d/m" }} Â· {{ cmd.total|floatformat:0 }} F</p>
                         </div>
                         <span class="text-xs px-2 py-1 rounded-full font-semibold shrink-0
                             {% if cmd.statut == 'EN_ATTENTE' %}bg-orange-100 text-orange-700
                             {% elif cmd.statut == 'EN_PREPARATION' %}bg-blue-100 text-blue-700
                             {% elif cmd.statut == 'PRETE' %}bg-green-100 text-green-700
                             {% elif cmd.statut == 'LIVREE' %}bg-emerald-100 text-emerald-700
-                            {% else %}bg-gray-100 text-gray-700{% endif %}">
+                            {% else %}bg-red-100 text-red-700{% endif %}">
                             {{ cmd.get_statut_display }}
                         </span>
                     </div>
                     {% endfor %}
                 </div>
-            {% else %}
-                <div class="text-center text-gray-400 py-6 sm:py-10 text-sm">Aucune commande</div>
-            {% endif %}
+                {% else %}
+                <p class="text-center text-slate-400 py-8 text-sm">Aucune commande</p>
+                {% endif %}
+            </div>
         </div>
 
     </div>
 
     <!-- Alertes -->
-    <div class="bg-white rounded-xl sm:rounded-2xl shadow p-4 sm:p-6">
-        <h2 class="text-lg sm:text-xl font-semibold text-gray-800 mb-4">Alertes système</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-            <div class="bg-yellow-50 border border-yellow-200 p-3 sm:p-4 rounded-xl">
-                <i class="fas fa-box text-yellow-500 mr-2"></i>
-                <span class="text-sm">Stock faible: {{ stock_faible_count }} article(s)</span>
-            </div>
-            <div class="bg-red-50 border border-red-200 p-3 sm:p-4 rounded-xl">
-                <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
-                <span class="text-sm">Rupture: {{ stock_rupture_count }} article(s)</span>
-            </div>
-            <div class="bg-blue-50 border border-blue-200 p-3 sm:p-4 rounded-xl">
-                <i class="fas fa-bell text-blue-500 mr-2"></i>
-                <span class="text-sm">Notifications</span>
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="p-4 sm:p-5">
+            <h2 class="text-base sm:text-lg font-bold text-slate-800 mb-4">Alertes systÃ¨me</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <a href="{% url 'stock:liste' %}" class="bg-yellow-50 border border-slate-100 p-3 sm:p-4 rounded-xl transition">
+                    <i class="fas fa-box text-yellow-500 mr-2"></i>
+                    <span class="text-sm text-slate-700">Stock faible : <b>{{ stock_faible_count }}</b></span>
+                </a>
+                <a href="{% url 'stock:liste' %}" class="bg-red-50 border border-slate-100 p-3 sm:p-4 rounded-xl transition">
+                    <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+                    <span class="text-sm text-slate-700">Rupture : <b>{{ stock_rupture_count }}</b></span>
+                </a>
+                <div class="bg-blue-50 border border-slate-100 p-3 sm:p-4 rounded-xl">
+                    <i class="fas fa-bell text-blue-500 mr-2"></i>
+                    <span class="text-sm text-slate-700">RÃ©servations : <b>{{ reservations_count }}</b> Â· Messages : <b>{{ messages_non_lus_count }}</b></span>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Réservations & Messages -->
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
-
-        <!-- Réservations à confirmer -->
-        <div class="bg-white rounded-xl sm:rounded-2xl shadow p-4 sm:p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-lg sm:text-xl font-semibold text-gray-800">Réservations à confirmer</h2>
-                <span class="text-xs px-2.5 py-1 rounded-full font-semibold bg-purple-100 text-purple-700">{{ reservations_count }}</span>
+    {% else %}
+    <!-- Vue simple pour les autres rÃ´les -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-5">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="p-4 sm:p-5">
+                <p class="text-slate-500 text-xs sm:text-sm">Chiffre d'affaires</p>
+                <h2 class="text-2xl font-bold text-slate-900 mt-1">{{ ca_total|floatformat:0 }} FCFA</h2>
             </div>
-            {% if reservations_recentes %}
-                <div class="space-y-3">
-                    {% for res in reservations_recentes %}
-                    <div class="p-3 sm:p-4 bg-slate-50 rounded-xl">
-                        <div class="flex justify-between items-start gap-2">
-                            <div class="min-w-0">
-                                <p class="font-semibold text-gray-800 text-sm"><i class="fas fa-user text-purple-500 mr-1"></i>{{ res.nom }}</p>
-                                <p class="text-xs text-gray-500 mt-0.5">
-                                    <i class="fas fa-calendar-day mr-1"></i>{{ res.date|date:"d/m/Y" }} à {{ res.heure|time:"H:i" }}
-                                    · <i class="fas fa-users mr-1"></i>{{ res.nombre_personnes }} pers.
-                                </p>
-                                {% if res.telephone %}<p class="text-xs text-gray-500 mt-0.5"><i class="fas fa-phone mr-1"></i>{{ res.telephone }}</p>{% endif %}
-                            </div>
-                            <div class="flex gap-1.5 shrink-0">
-                                <form method="post" action="{% url 'restaurant:changer_statut_reservation' res.id %}">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="statut" value="CONFIRMEE">
-                                    <button type="submit" title="Confirmer"
-                                            class="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center hover:bg-green-600 hover:text-white transition">
-                                        <i class="fas fa-check text-xs"></i>
-                                    </button>
-                                </form>
-                                <form method="post" action="{% url 'restaurant:changer_statut_reservation' res.id %}">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="statut" value="ANNULEE">
-                                    <button type="submit" title="Annuler"
-                                            class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-600 hover:text-white transition">
-                                        <i class="fas fa-times text-xs"></i>
-                                    </button>
-                                </form>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="p-4 sm:p-5">
+                <p class="text-slate-500 text-xs sm:text-sm">Commandes aujourd'hui</p>
+                <h2 class="text-2xl font-bold text-slate-900 mt-1">{{ commandes_ajourdhui }}</h2>
+            </div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="p-4 sm:p-5">
+                <p class="text-slate-500 text-xs sm:text-sm">Clients</p>
+                <h2 class="text-2xl font-bold text-slate-900 mt-1">{{ total_clients }}</h2>
+            </div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="p-4 sm:p-5">
+                <p class="text-slate-500 text-xs sm:text-sm">Tables occupÃ©es</p>
+                <h2 class="text-2xl font-bold text-slate-900 mt-1">{{ tables_occupees }}</h2>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- RÃ©servations & Messages (gÃ©rables par le gÃ©rant) -->
+    {% if est_gerant %}
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-5">
+
+        <!-- RÃ©servations Ã  confirmer -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="p-4 sm:p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-base sm:text-lg font-bold text-slate-800">RÃ©servations Ã  confirmer</h2>
+                    <span class="text-xs px-2.5 py-1 rounded-full font-semibold bg-purple-100 text-purple-700">{{ reservations_count }}</span>
+                </div>
+                {% if reservations_recentes %}
+                    <div class="space-y-3">
+                        {% for res in reservations_recentes %}
+                        <div class="p-3 sm:p-4 bg-slate-50 rounded-xl">
+                            <div class="flex justify-between items-start gap-2">
+                                <div class="min-w-0">
+                                    <p class="font-semibold text-slate-800 text-sm"><i class="fas fa-user text-purple-500 mr-1"></i>{{ res.nom }}</p>
+                                    <p class="text-xs text-slate-500 mt-0.5">
+                                        <i class="fas fa-calendar-day mr-1"></i>{{ res.date|date:"d/m/Y" }} Ã  {{ res.heure|time:"H:i" }}
+                                        Â· <i class="fas fa-users mr-1"></i>{{ res.nombre_personnes }} pers.
+                                    </p>
+                                    {% if res.telephone %}<p class="text-xs text-slate-500 mt-0.5"><i class="fas fa-phone mr-1"></i>{{ res.telephone }}</p>{% endif %}
+                                </div>
+                                <div class="shrink-0">
+                                    <span class="text-[10px] px-2 py-1 rounded-full bg-slate-200 text-slate-500 font-semibold">Lecture seule</span>
+                                </div>
                             </div>
                         </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="text-center text-gray-400 py-6 sm:py-10 text-sm">Aucune réservation en attente</div>
-            {% endif %}
+                {% else %}
+                    <p class="text-center text-slate-400 py-8 text-sm">Aucune rÃ©servation en attente</p>
+                {% endif %}
+            </div>
         </div>
 
         <!-- Messages non lus -->
-        <div class="bg-white rounded-xl sm:rounded-2xl shadow p-4 sm:p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-lg sm:text-xl font-semibold text-gray-800">Messages non lus</h2>
-                <span class="text-xs px-2.5 py-1 rounded-full font-semibold bg-blue-100 text-blue-700">{{ messages_non_lus_count }}</span>
-            </div>
-            {% if messages_non_lus %}
-                <div class="space-y-3">
-                    {% for msg in messages_non_lus %}
-                    <div class="p-3 sm:p-4 bg-slate-50 rounded-xl">
-                        <div class="flex justify-between items-start gap-2">
-                            <div class="min-w-0">
-                                <p class="font-semibold text-gray-800 text-sm"><i class="fas fa-envelope text-blue-500 mr-1"></i>{{ msg.nom }}</p>
-                                <p class="text-xs text-gray-500 mt-0.5">{{ msg.email }}</p>
-                                {% if msg.sujet %}<p class="text-xs text-gray-600 mt-1 font-medium">{{ msg.sujet }}</p>{% endif %}
-                                <p class="text-xs text-gray-500 mt-0.5 line-clamp-2">{{ msg.message }}</p>
-                            </div>
-                            <form method="post" action="{% url 'restaurant:marquer_message_lu' msg.id %}">
-                                {% csrf_token %}
-                                <button type="submit" title="Marquer comme lu"
-                                        class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition shrink-0">
-                                    <i class="fas fa-check text-xs"></i>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                    {% endfor %}
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="p-4 sm:p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-base sm:text-lg font-bold text-slate-800">Messages non lus</h2>
+                    <span class="text-xs px-2.5 py-1 rounded-full font-semibold bg-blue-100 text-blue-700">{{ messages_non_lus_count }}</span>
                 </div>
-            {% else %}
-                <div class="text-center text-gray-400 py-6 sm:py-10 text-sm">Aucun message non lu</div>
-            {% endif %}
+                {% if messages_non_lus %}
+                    <div class="space-y-3">
+                        {% for msg in messages_non_lus %}
+                        <div class="p-3 sm:p-4 bg-slate-50 rounded-xl">
+                            <div class="flex justify-between items-start gap-2">
+                                <div class="min-w-0">
+                                    <p class="font-semibold text-slate-800 text-sm"><i class="fas fa-envelope text-blue-500 mr-1"></i>{{ msg.nom }}</p>
+                                    <p class="text-xs text-slate-500 mt-0.5">{{ msg.email }}</p>
+                                    {% if msg.sujet %}<p class="text-xs text-slate-600 mt-1 font-medium">{{ msg.sujet }}</p>{% endif %}
+                                    <p class="text-xs text-slate-500 mt-0.5 line-clamp-2">{{ msg.message }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-center text-slate-400 py-8 text-sm">Aucun message non lu</p>
+                {% endif %}
+            </div>
         </div>
 
     </div>
+    {% endif %}
 
 </div>
 {% endblock %}
@@ -219,6 +323,12 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+function changerPeriode(code) {
+    const params = new URLSearchParams(window.location.search);
+    params.set("periode", code);
+    window.location.href = window.location.pathname + "?" + params.toString();
+}
+
 document.addEventListener("DOMContentLoaded", function() {
     var ctx = document.getElementById('ventesChart');
     if (!ctx) return;

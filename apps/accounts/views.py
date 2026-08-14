@@ -58,7 +58,7 @@ def logout_view(request):
 
 
 
-@role_required(["ADMIN"])
+@role_required(["ADMIN", "GERANT"])
 def users_list(request):
 
     users = CustomUser.objects.all()
@@ -100,7 +100,7 @@ def users_list(request):
 
 
 
-@role_required(["ADMIN"])
+@role_required(["ADMIN", "GERANT"], ecriture_autorisee=True)
 def user_create(request):
 
     if request.method == "POST":
@@ -129,7 +129,7 @@ def user_create(request):
 
 
 
-@role_required(["ADMIN"])
+@role_required(["ADMIN", "GERANT"], ecriture_autorisee=True)
 def user_edit(request, id):
 
     user = get_object_or_404(CustomUser, id=id)
@@ -168,7 +168,7 @@ def user_edit(request, id):
 
 
 
-@role_required(["ADMIN"])
+@role_required(["ADMIN", "GERANT"], ecriture_autorisee=True)
 def user_delete(request, id):
 
     user = get_object_or_404(CustomUser, id=id)
@@ -196,7 +196,7 @@ def user_delete(request, id):
 
 
 
-@role_required(["ADMIN"])
+@role_required(["ADMIN", "GERANT"], ecriture_autorisee=True)
 def user_toggle_active(request, id):
 
     user = get_object_or_404(CustomUser, id=id)

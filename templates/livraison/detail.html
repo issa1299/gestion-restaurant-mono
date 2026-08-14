@@ -171,10 +171,45 @@ const livraisonId = {{ livraison.id }};
     const mapInitLat = clientLat || {{ livraison.latitude|stringformat:"f"|default:'12.6392' }};
     const mapInitLng = clientLng || {{ livraison.longitude|stringformat:"f"|default:'-8.0029' }};
     const mapLivraison = L.map('map-livraison').setView([mapInitLat, mapInitLng], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+
+    const coucheCarteLiv = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(mapLivraison);
+    });
+
+    const coucheSatelliteLiv = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        attribution: '&copy; Esri, Maxar, Earthstar Geographics'
+    });
+
+    coucheCarteLiv.addTo(mapLivraison);
+    L.control.layers({
+        'Carte (routes)': coucheCarteLiv,
+        'Satellite': coucheSatelliteLiv
+    }, {}, { position: 'topright' }).addTo(mapLivraison);
+
+    // Bouton plein écran personnalisé
+    L.Control.FullscreenCustom = L.Control.extend({
+        options: { position: 'topright' },
+        onAdd: function (map) {
+            const btn = L.DomUtil.create('button', 'leaflet-bar leaflet-control leaflet-control-custom');
+            btn.innerHTML = '<i class="fas fa-expand"></i>';
+            btn.style.cssText = 'width:30px;height:30px;background:white;border:none;border-radius:4px;cursor:pointer;color:#334155;font-size:13px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 5px rgba(0,0,0,0.4)';
+            btn.title = 'Plein écran';
+            btn.onclick = function (e) { L.DomEvent.stopPropagation(e); L.DomEvent.preventDefault(e); basculerPleinEcran(map); };
+            return btn;
+        }
+    });
+    mapLivraison.addControl(new L.Control.FullscreenCustom());
+
+    function basculerPleinEcran(map) {
+        const conteneur = map.getContainer();
+        if (!document.fullscreenElement) {
+            conteneur.requestFullscreen().catch(() => {});
+        } else {
+            document.exitFullscreen().catch(() => {});
+        }
+    }
 
     // Corrige les cartes blanches (conteneur à taille 0 au chargement)
     setTimeout(() => mapLivraison.invalidateSize(), 300);

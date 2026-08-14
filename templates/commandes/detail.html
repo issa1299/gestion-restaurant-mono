@@ -109,24 +109,40 @@
             </div>
         </div>
 
-        <!-- Actions statut -->
+        <!-- Action statut -->
         {% if request.user|has_role:"SERVEUR,CUISINIER" %}
-        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
-            <h3 class="text-base sm:text-lg font-bold text-slate-900 mb-3 sm:mb-4">Changer le statut</h3>
-            <div class="flex flex-wrap gap-2 sm:gap-3">
-                {% for code, label in commande.STATUTS %}
-                    {% if code != commande.statut %}
-                    <button type="button" onclick="changerStatut('{{ code }}', this)"
-                        class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-semibold text-xs sm:text-sm transition
-                            {% if code == 'EN_ATTENTE' %}bg-orange-600 hover:bg-orange-700 text-white
-                            {% elif code == 'EN_PREPARATION' %}bg-blue-600 hover:bg-blue-700 text-white
-                            {% elif code == 'PRETE' %}bg-green-600 hover:bg-green-700 text-white
-                            {% elif code == 'LIVREE' %}bg-emerald-600 hover:bg-emerald-700 text-white
-                            {% else %}bg-red-600 hover:bg-red-700 text-white{% endif %}">
-                        Passer à {{ label }}
-                    </button>
-                    {% endif %}
-                {% endfor %}
+        <div class="bg-white rounded-xl shadow p-4 sm:p-6">
+            <h3 class="text-base sm:text-lg font-bold text-slate-900 mb-3 sm:mb-4">Suivi de la commande</h3>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                {% if commande.statut == 'EN_ATTENTE' %}
+                <button type="button" onclick="changerStatut('EN_PREPARATION', this)"
+                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 text-sm">
+                    <i class="fas fa-fire"></i> Démarrer la préparation
+                </button>
+                {% elif commande.statut == 'EN_PREPARATION' %}
+                <button type="button" onclick="changerStatut('PRETE', this)"
+                    class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 text-sm">
+                    <i class="fas fa-check-circle"></i> Marquer prête
+                </button>
+                {% elif commande.statut == 'PRETE' %}
+                <button type="button" onclick="changerStatut('LIVREE', this)"
+                    class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 text-sm">
+                    <i class="fas fa-flag-checkered"></i> Marquer livrée
+                </button>
+                {% else %}
+                <p class="flex-1 text-center text-sm font-bold
+                    {% if commande.statut == 'LIVREE' %}text-emerald-600{% else %}text-red-600{% endif %}">
+                    <i class="fas {% if commande.statut == 'LIVREE' %}fa-check-circle{% else %}fa-times-circle{% endif %} mr-2"></i>
+                    {{ commande.get_statut_display }}
+                </p>
+                {% endif %}
+
+                {% if commande.statut != 'LIVREE' and commande.statut != 'ANNULEE' %}
+                <button type="button" onclick="if(confirm('Annuler cette commande ?')){changerStatut('ANNULEE', this)}"
+                    class="px-4 py-2.5 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-50 border border-red-200 transition flex items-center justify-center gap-2">
+                    Annuler
+                </button>
+                {% endif %}
             </div>
         </div>
         {% endif %}

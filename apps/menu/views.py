@@ -18,7 +18,7 @@ def index(request):
     return render(request, "menu/index.html", {"categories": categories})
 
 
-@role_required(["ADMIN", "VENDEUR"])
+@role_required(["ADMIN", "GERANT", "VENDEUR"])
 def gestion(request):
     """Page interne de gestion du menu (staff)"""
     categories = Categorie.objects.prefetch_related("produits").all()
@@ -31,7 +31,7 @@ def gestion(request):
     })
 
 
-@role_required(["ADMIN", "VENDEUR", "CLIENT", "SERVEUR", "CUISINIER", "CAISSIER", "LIVREUR"])
+@role_required(["ADMIN", "GERANT", "VENDEUR", "CLIENT", "SERVEUR", "CUISINIER", "CAISSIER", "LIVREUR"])
 def categorie(request, categorie_id):
     """Affiche les produits d'une catégorie"""
     categorie = get_object_or_404(Categorie, id=categorie_id)

@@ -36,7 +36,8 @@ class TemoignageCRUDTests(TestCase):
         resp = c.get("/temoignages/gestion/")
         self.assertEqual(resp.status_code, 302)
 
-    def test_ajouter_temoignage(self):
+    def test_ajouter_temoignage_interdit_pour_direction_lecture_seule(self):
+        """Admin/Gérant sont en lecture seule : ils ne peuvent pas créer un témoignage."""
         c = Client()
         c.force_login(self.admin)
         resp = c.post("/temoignages/ajouter/", {
@@ -46,9 +47,9 @@ class TemoignageCRUDTests(TestCase):
             "actif": "on",
         })
         self.assertEqual(resp.status_code, 302)
-        self.assertTrue(Temoignage.objects.filter(nom="Moussa", note=4).exists())
+        self.assertFalse(Temoignage.objects.filter(nom="Moussa").exists())
 
-    def test_modifier_temoignage(self):
+    def test_modifier_temoignage_interdit_pour_direction_lecture_seule(self):
         c = Client()
         c.force_login(self.admin)
         resp = c.post("/temoignages/%d/modifier/" % self.temoignage.id, {
@@ -59,24 +60,22 @@ class TemoignageCRUDTests(TestCase):
         })
         self.assertEqual(resp.status_code, 302)
         self.temoignage.refresh_from_db()
-        self.assertEqual(self.temoignage.nom, "Awa D.")
-        self.assertEqual(self.temoignage.note, 3)
-        self.assertFalse(self.temoignage.actif)
+        self.assertEqual(self.temoignage.nom, "Awa")
 
-    def test_supprimer_temoignage(self):
+    def test_supprimer_temoignage_interdit_pour_direction_lecture_seule(self):
         c = Client()
         c.force_login(self.admin)
         resp = c.post("/temoignages/%d/supprimer/" % self.temoignage.id)
         self.assertEqual(resp.status_code, 302)
-        self.assertFalse(Temoignage.objects.filter(id=self.temoignage.id).exists())
+        self.assertTrue(Temoignage.objects.filter(id=self.temoignage.id).exists())
 
-    def test_toggle_actif(self):
+    def test_toggle_actif_interdit_pour_direction_lecture_seule(self):
         c = Client()
         c.force_login(self.admin)
-        resp = c.get("/temoignages/%d/toggle/" % self.temoignage.id)
+        resp = c.post("/temoignages/%d/toggle/" % self.temoignage.id)
         self.assertEqual(resp.status_code, 302)
         self.temoignage.refresh_from_db()
-        self.assertFalse(self.temoignage.actif)
+        self.assertTrue(self.temoignage.actif)
 
     def test_page_publique_cache_inactifs(self):
         Temoignage.objects.create(nom="Caché", note=1, message="x", actif=False)

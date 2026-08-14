@@ -101,6 +101,26 @@ class Commande(models.Model):
         default=EN_ATTENTE
     )
 
+    vente = models.OneToOneField(
+        "ventes.Vente",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="commande",
+        verbose_name="Vente liée"
+    )
+
+    payee = models.BooleanField(
+        default=False,
+        verbose_name="Payée"
+    )
+
+    payee_le = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Payée le"
+    )
+
     token = models.CharField(
         max_length=64,
         unique=True,

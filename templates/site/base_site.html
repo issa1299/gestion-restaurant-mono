@@ -106,7 +106,7 @@
                 </a>
 
                 <nav class="hidden md:flex items-center gap-1">
-                    <a href="{% url 'restaurant:accueil' %}" class="px-4 py-2 rounded-full font-semibold text-sm {% if request.resolver_match.url_name == 'accueil' %}bg-orange-500 text-white{% else %}text-slate-600 hover:bg-orange-50 hover:text-orange-600{% endif %} transition">
+                    <a href="{% url 'restaurant:accueil' %}" class="px-4 py-2 rounded-full font-semibold text-sm {% if request.resolver_match.namespace == 'restaurant' and request.resolver_match.url_name == 'accueil' %}bg-orange-500 text-white{% else %}text-slate-600 hover:bg-orange-50 hover:text-orange-600{% endif %} transition">
                         Accueil
                     </a>
                     <a href="{% url 'menu:accueil' %}" class="px-4 py-2 rounded-full font-semibold text-sm {% if request.resolver_match.namespace == 'menu' %}bg-orange-500 text-white{% else %}text-slate-600 hover:bg-orange-50 hover:text-orange-600{% endif %} transition">

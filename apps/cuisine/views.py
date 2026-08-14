@@ -4,11 +4,12 @@ from apps.commandes.models import Commande
 from apps.accounts.decorators import role_required
 
 
-@role_required(["ADMIN", "CUISINIER"])
+@role_required(["ADMIN", "GERANT", "CUISINIER"])
 def index(request):
     """Vue dédiée au rôle cuisinier : commandes en attente ou en préparation."""
 
     commandes = Commande.objects.filter(
+        payee=False,
         statut__in=[
             Commande.EN_ATTENTE,
             Commande.EN_PREPARATION
@@ -18,7 +19,7 @@ def index(request):
     stats = {
         "en_attente": commandes.filter(statut=Commande.EN_ATTENTE).count(),
         "en_cours": commandes.filter(statut=Commande.EN_PREPARATION).count(),
-        "pretes": Commande.objects.filter(statut=Commande.PRETE).count(),
+        "pretes": Commande.objects.filter(payee=False, statut=Commande.PRETE).count(),
     }
 
     return render(

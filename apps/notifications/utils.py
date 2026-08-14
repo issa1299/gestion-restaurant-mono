@@ -3,6 +3,7 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
 from apps.clients.models import Client
+from apps.commandes.models import Commande
 
 
 def envoyer_notification_broadcast(groupe, evenement, data):
@@ -72,6 +73,11 @@ def notifier_nouvelle_commande(commande):
     envoyer_notification_broadcast('commandes', 'nouvelle_commande', data)
     envoyer_notification_broadcast('dashboard', 'nouvelle_commande', data)
     envoyer_notification_broadcast('cuisine', 'nouvelle_commande', data)
+    if commande.type == Commande.LIVRAISON:
+        data['type'] = 'LIVRAISON'
+        data['adresse'] = commande.adresse_livraison
+        data['telephone'] = commande.telephone_livraison
+        envoyer_notification_broadcast('livraison', 'nouvelle_commande', data)
 
 
 def notifier_changement_statut_commande(commande_id, ancien_statut, nouveau_statut):

@@ -1,8 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import JsonResponse, Http404
+from django.utils import timezone
 from apps.accounts.decorators import role_required
 from apps.notifications.utils import envoyer_notification_broadcast
+from apps.parametres.models import ParametreRestaurant
+from .email_utils import envoyer_reponse_message, envoyer_confirmation_reservation
 from .models import Reservation, ContactMessage, PhotoGalerie, Temoignage
 
 
@@ -117,7 +120,7 @@ def reserver(request):
     return render(request, "site/reserver.html")
 
 
-@role_required(["ADMIN", "SERVEUR", "CAISSIER"])
+@role_required(["ADMIN", "GERANT", "SERVEUR", "CAISSIER"], ecriture_autorisee=True)
 def changer_statut_reservation(request, pk):
     """Confirmer ou annuler une réservation depuis le dashboard"""
     reservation = get_object_or_404(Reservation, pk=pk)
@@ -139,6 +142,11 @@ def changer_statut_reservation(request, pk):
             "nom": reservation.nom,
             "statut": libelles.get(statut),
         })
+        ok, erreur = envoyer_confirmation_reservation(reservation)
+        if ok:
+            messages.success(request, f"Email de confirmation envoyé à {reservation.nom}.")
+        elif erreur:
+            messages.warning(request, f"Email non envoyé : {erreur}")
     else:
         messages.error(request, "Statut invalide.")
 
@@ -147,7 +155,7 @@ def changer_statut_reservation(request, pk):
     return redirect("dashboard:index")
 
 
-@role_required(["ADMIN", "SERVEUR", "CAISSIER"])
+@role_required(["ADMIN", "GERANT", "SERVEUR", "CAISSIER"])
 def marquer_message_lu(request, pk):
     """Marquer un message de contact comme lu (ou non lu)"""
     message = get_object_or_404(ContactMessage, pk=pk)
@@ -163,7 +171,32 @@ def marquer_message_lu(request, pk):
     return redirect("dashboard:index")
 
 
-@role_required(["ADMIN", "SERVEUR", "CAISSIER"])
+@role_required(["ADMIN", "GERANT", "SERVEUR", "CAISSIER"], ecriture_autorisee=True)
+def repondre_message(request, pk):
+    """Répondre par email à un message de contact"""
+    message_contact = get_object_or_404(ContactMessage, pk=pk)
+    reponse = request.POST.get("reponse", "").strip()
+    if not reponse:
+        messages.error(request, "La réponse ne peut pas être vide.")
+        return redirect("restaurant:messages")
+
+    ok, erreur = envoyer_reponse_message(message_contact, reponse)
+    message_contact.reponse = reponse
+    message_contact.lu = True
+    message_contact.save()
+    if ok:
+        message_contact.repondu_le = timezone.now()
+        message_contact.save()
+        messages.success(request, f"Réponse envoyée à {message_contact.nom}.")
+    else:
+        messages.error(request, f"Échec de l'envoi : {erreur}. La réponse est enregistrée en brouillon.")
+
+    if request.POST.get("source") == "messages":
+        return redirect("restaurant:messages")
+    return redirect("dashboard:index")
+
+
+@role_required(["ADMIN", "GERANT", "SERVEUR", "CAISSIER"])
 def liste_reservations(request):
     """Historique complet des réservations avec filtre par statut"""
     statut = request.GET.get("statut", "")
@@ -178,7 +211,7 @@ def liste_reservations(request):
     })
 
 
-@role_required(["ADMIN", "SERVEUR", "CAISSIER"])
+@role_required(["ADMIN", "GERANT", "SERVEUR", "CAISSIER"])
 def liste_messages(request):
     """Liste des messages de contact avec filtre lu / non lu"""
     filtre = request.GET.get("filtre", "")
@@ -194,7 +227,7 @@ def liste_messages(request):
     })
 
 
-@role_required(["ADMIN"])
+@role_required(["ADMIN", "GERANT"])
 def galerie_gestion(request):
     """Gestion interne des photos de la galerie"""
     if request.method == "POST":
@@ -218,9 +251,11 @@ def galerie_gestion(request):
     })
 
 
-@role_required(["ADMIN"])
+@role_required(["ADMIN", "GERANT"])
 def galerie_supprimer(request, pk):
     """Supprimer une photo de la galerie"""
+    if request.method != "POST":
+        return redirect("restaurant:galerie_gestion")
     photo = get_object_or_404(PhotoGalerie, pk=pk)
     titre = photo.titre or f"Photo {photo.id}"
     photo.delete()
@@ -228,7 +263,7 @@ def galerie_supprimer(request, pk):
     return redirect("restaurant:galerie_gestion")
 
 
-@role_required(["ADMIN"])
+@role_required(["ADMIN", "GERANT"])
 def temoignages_gestion(request):
     """Liste et gestion des témoignages (admin)"""
     temoignages_list = Temoignage.objects.all()
@@ -244,7 +279,7 @@ def temoignages_gestion(request):
     })
 
 
-@role_required(["ADMIN"])
+@role_required(["ADMIN", "GERANT"])
 def temoignage_ajouter(request):
     """Créer un témoignage"""
     if request.method == "POST":
@@ -276,7 +311,7 @@ def temoignage_ajouter(request):
     return render(request, "restaurant/temoignage_form.html", {"edition": False})
 
 
-@role_required(["ADMIN"])
+@role_required(["ADMIN", "GERANT"])
 def temoignage_modifier(request, pk):
     """Modifier un témoignage"""
     temoignage = get_object_or_404(Temoignage, pk=pk)
@@ -313,7 +348,7 @@ def temoignage_modifier(request, pk):
     })
 
 
-@role_required(["ADMIN"])
+@role_required(["ADMIN", "GERANT"])
 def temoignage_supprimer(request, pk):
     """Supprimer un témoignage"""
     temoignage = get_object_or_404(Temoignage, pk=pk)
@@ -329,9 +364,11 @@ def temoignage_supprimer(request, pk):
     })
 
 
-@role_required(["ADMIN"])
+@role_required(["ADMIN", "GERANT"])
 def temoignage_toggle(request, pk):
     """Activer / désactiver un témoignage"""
+    if request.method != "POST":
+        return redirect("restaurant:temoignages_gestion")
     temoignage = get_object_or_404(Temoignage, pk=pk)
     temoignage.actif = not temoignage.actif
     temoignage.save()

@@ -134,6 +134,7 @@
     Ticket : <b>N° {{ vente.id }}</b><br>
     Date : {{ vente.created_at|date:"d/m/Y H:i" }}<br>
     Caissier : {{ vente.caissier.username|default:"—" }}<br>
+    {% if vente.table %}<span style="background:#fee2e2;color:#b91c1c;font-weight:700;padding:1px 6px;border-radius:4px;">Table {{ vente.table.numero }}</span><br>{% endif %}
     Paiement : <b>{{ vente.get_mode_paiement_display }}</b>
 </div>
 
@@ -164,6 +165,11 @@
     <span class="label">Total</span>
     <span>{{ vente.total }} {{ parametre.devise|default:"FCFA" }}</span>
 </div>
+{% if vente.remise_pourcent %}
+<div class="meta" style="justify-content:space-between;">
+    <span>Remise {{ vente.remise_pourcent }}%</span>
+</div>
+{% endif %}
 
 <div class="meta">
     <span>Articles: {{ vente.details.count }}</span>

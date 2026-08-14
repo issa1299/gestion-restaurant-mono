@@ -12,6 +12,9 @@ class ParametreRestaurant(models.Model):
     
     message_ticket = models.TextField(blank=True, default="Merci de votre visite et à bientôt !")
 
+    # Impression automatique silencieuse du ticket (PC caisse)
+    impression_silencieuse = models.BooleanField(default=False)
+
     # Horaires d'ouverture (deux services : midi et soir)
     jours_ouverture = models.CharField(
         max_length=50, blank=True, default="Lundi au Dimanche"

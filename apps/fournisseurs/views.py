@@ -9,7 +9,7 @@ from apps.stock.models import Stock, MouvementStock
 from .models import Fournisseur, Approvisionnement
 
 
-@role_required(["ADMIN", "VENDEUR"])
+@role_required(["ADMIN", "GERANT", "VENDEUR"])
 def liste_fournisseurs(request):
     q = request.GET.get("q", "").strip()
     fournisseurs = Fournisseur.objects.all()
@@ -32,7 +32,7 @@ def liste_fournisseurs(request):
     })
 
 
-@role_required(["ADMIN", "VENDEUR"])
+@role_required(["ADMIN", "GERANT", "VENDEUR"])
 def detail_fournisseur(request, pk):
     fournisseur = get_object_or_404(Fournisseur, pk=pk)
     approvisionnements = fournisseur.approvisionnements.select_related("produit", "utilisateur")
@@ -184,7 +184,7 @@ def ajouter_approvisionnement(request):
     })
 
 
-@role_required(["ADMIN", "VENDEUR"])
+@role_required(["ADMIN", "GERANT", "VENDEUR"])
 def liste_approvisionnements(request):
     q = request.GET.get("q", "").strip()
     approvisionnements = Approvisionnement.objects.select_related(

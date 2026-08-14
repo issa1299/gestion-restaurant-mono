@@ -41,7 +41,7 @@
                         <th class="p-3 sm:p-4">Message</th>
                         <th class="p-3 sm:p-4 hidden md:table-cell">Date</th>
                         <th class="p-3 sm:p-4 text-center">Statut</th>
-                        <th class="p-3 sm:p-4 text-center">Action</th>
+                        <th class="p-3 sm:p-4 text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -56,25 +56,46 @@
                         <td class="p-3 sm:p-4 text-gray-600 text-xs max-w-xs">{{ msg.message }}</td>
                         <td class="p-3 sm:p-4 text-gray-500 text-xs hidden md:table-cell">{{ msg.created_at|date:"d/m/Y H:i" }}</td>
                         <td class="p-3 sm:p-4 text-center">
-                            {% if msg.lu %}
-                                <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">Lu</span>
-                            {% else %}
-                                <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">Non lu</span>
-                            {% endif %}
+                            <div class="flex flex-col items-center gap-1">
+                                {% if msg.lu %}
+                                    <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">Lu</span>
+                                {% else %}
+                                    <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">Non lu</span>
+                                {% endif %}
+                                {% if msg.reponse %}
+                                    <span class="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-semibold">Répondu</span>
+                                {% endif %}
+                            </div>
                         </td>
-                        <td class="p-3 sm:p-4 text-center">
-                            <form method="post" action="{% url 'restaurant:marquer_message_lu' msg.id %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="lu" value="{% if msg.lu %}0{% else %}1{% endif %}">
-                                <input type="hidden" name="source" value="messages">
-                                <button type="submit"
-                                        class="inline-flex items-center gap-1 {% if msg.lu %}bg-slate-100 text-slate-600 hover:bg-blue-100 hover:text-blue-700{% else %}bg-blue-100 text-blue-700 hover:bg-blue-200{% endif %} px-3 py-1.5 rounded-lg text-xs font-semibold transition">
-                                    <i class="fas {% if msg.lu %}fa-undo{% else %}fa-check{% endif %}"></i>
-                                    {% if msg.lu %}Non lu{% else %}Lu{% endif %}
+                        <td class="p-3 sm:p-4 text-center whitespace-nowrap">
+                            <div class="flex items-center justify-center gap-1">
+                                <form method="post" action="{% url 'restaurant:marquer_message_lu' msg.id %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="lu" value="{% if msg.lu %}0{% else %}1{% endif %}">
+                                    <input type="hidden" name="source" value="messages">
+                                    <button type="submit"
+                                            class="inline-flex items-center gap-1 {% if msg.lu %}bg-slate-100 text-slate-600 hover:bg-blue-100 hover:text-blue-700{% else %}bg-blue-100 text-blue-700 hover:bg-blue-200{% endif %} px-3 py-1.5 rounded-lg text-xs font-semibold transition">
+                                        <i class="fas {% if msg.lu %}fa-undo{% else %}fa-check{% endif %}"></i>
+                                        {% if msg.lu %}Non lu{% else %}Lu{% endif %}
+                                    </button>
+                                </form>
+                                <button type="button" class="js-repondre-btn bg-orange-500 text-white hover:bg-orange-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition"
+                                        data-nom="{{ msg.nom }}" data-email="{{ msg.email }}"
+                                        data-sujet="{{ msg.sujet|default:'Votre message' }}" data-id="{{ msg.id }}"
+                                        data-url="{% url 'restaurant:repondre_message' msg.id %}">
+                                    <i class="fas fa-reply mr-1"></i>Répondre
                                 </button>
-                            </form>
+                            </div>
                         </td>
                     </tr>
+                    {% if msg.reponse %}
+                    <tr class="border-b border-slate-100 bg-orange-50/50">
+                        <td colspan="6" class="p-3 sm:p-4">
+                            <p class="text-xs font-semibold text-orange-700 mb-1"><i class="fas fa-reply mr-1"></i>Votre réponse du {{ msg.repondu_le|date:"d/m/Y à H:i" }}</p>
+                            <p class="text-sm text-slate-700">{{ msg.reponse }}</p>
+                        </td>
+                    </tr>
+                    {% endif %}
                     {% empty %}
                     <tr>
                         <td colspan="6" class="p-8 text-center text-gray-500">
@@ -89,4 +110,63 @@
     </div>
 
 </div>
+
+<!-- Modal Répondre -->
+<div id="repondre-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/50">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+        <div class="bg-orange-500 px-5 py-4 flex justify-between items-center">
+            <h3 class="text-white font-bold"><i class="fas fa-reply mr-2"></i>Répondre au message</h3>
+            <button type="button" class="js-repondre-close text-white/80 hover:text-white text-xl">&times;</button>
+        </div>
+        <form method="post" action="" id="repondre-form" class="p-5 space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="source" value="messages">
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-1">Destinataire</label>
+                <p id="repondre-destinataire" class="text-sm text-gray-500 bg-slate-50 rounded-lg px-3 py-2"></p>
+            </div>
+            <div>
+                <label for="reponse" class="block text-sm font-semibold text-slate-700 mb-1">Votre réponse</label>
+                <textarea name="reponse" id="reponse" rows="5" required
+                          class="w-full rounded-xl border-2 border-gray-200 p-3 focus:border-orange-500 focus:outline-none" placeholder="Écrivez votre réponse ici..."></textarea>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button type="button" class="js-repondre-close px-4 py-2 rounded-xl bg-slate-100 text-slate-600 font-semibold text-sm hover:bg-slate-200">Annuler</button>
+                <button type="submit" class="px-4 py-2 rounded-xl bg-orange-500 text-white font-semibold text-sm hover:bg-orange-600">
+                    <i class="fas fa-paper-plane mr-1"></i>Envoyer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var modal = document.getElementById('repondre-modal');
+        var form = document.getElementById('repondre-form');
+        var dest = document.getElementById('repondre-destinataire');
+
+        document.querySelectorAll('.js-repondre-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                dest.textContent = btn.dataset.nom + ' <' + btn.dataset.email + '> — ' + btn.dataset.sujet;
+                form.action = btn.dataset.url;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                document.getElementById('reponse').value = '';
+                document.getElementById('reponse').focus();
+            });
+        });
+
+        function closeModal() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+        document.querySelectorAll('.js-repondre-close').forEach(function (el) {
+            el.addEventListener('click', closeModal);
+        });
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) closeModal();
+        });
+    });
+</script>
 {% endblock %}

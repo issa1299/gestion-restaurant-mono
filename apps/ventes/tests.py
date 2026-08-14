@@ -11,7 +11,7 @@ User = get_user_model()
 
 
 class VenteAccessTests(TestCase):
-    """La caisse (POS) et l'historique sont réservés à ADMIN et CAISSIER."""
+    """La caisse (POS) est accessible à ADMIN, GÉRANT et CAISSIER ; l'historique à ADMIN et CAISSIER."""
 
     def setUp(self):
         self.caissier = User.objects.create_user(
@@ -32,10 +32,10 @@ class VenteAccessTests(TestCase):
         c.force_login(self.caissier)
         self.assertEqual(c.get("/ventes/").status_code, 200)
 
-    def test_pos_interdit_admin(self):
+    def test_pos_accessible_admin(self):
         c = Client()
         c.force_login(self.admin)
-        self.assertEqual(c.get("/ventes/").status_code, 302)
+        self.assertEqual(c.get("/ventes/").status_code, 200)
 
     def test_pos_interdit_serveur_et_client(self):
         for user in (self.serveur, self.client_role):
@@ -106,6 +106,28 @@ class EnregistrerVenteTests(TestCase):
                 produit=self.produit, type_mouvement="SORTIE", quantite=2,
             ).exists()
         )
+
+    def test_vente_avec_remise_et_table(self):
+        from apps.tables.models import Table
+        table = Table.objects.create(numero="5", capacite=4, disponible=True)
+        c = Client()
+        c.force_login(self.caissier)
+        data = json.dumps({
+            "panier": [{"id": self.produit.id, "qte": 2}],  # 2 x 500 = 1000
+            "mode_paiement": "ESPECES",
+            "table_id": table.id,
+            "remise": 10,
+        })
+        resp = c.post(
+            "/ventes/enregistrer/", data=data, content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, 200)
+        body = json.loads(resp.content)
+        vente = Vente.objects.get(id=body["vente_id"])
+        self.assertEqual(vente.total, 900)
+        self.assertEqual(vente.remise_pourcent, 10)
+        self.assertEqual(vente.table, table)
+        self.assertEqual(vente.remise_montant, 100)
 
     def test_vente_stock_insuffisant_refusee(self):
         resp = self._post_vente(

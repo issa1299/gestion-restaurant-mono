@@ -24,7 +24,7 @@
     <nav class="flex-1 overflow-y-auto mt-6 pb-4">
 
         <!-- Section : Navigation -->
-        {% if request.user|has_role:"ADMIN,SERVEUR,CUISINIER,CAISSIER" %}
+        {% if request.user|has_role:"ADMIN,GERANT,SERVEUR,CUISINIER,CAISSIER" %}
             <p class="sidebar-section-title px-6 mb-3 text-xs uppercase tracking-wider text-gray-400 font-semibold">
                 Navigation
             </p>
@@ -53,7 +53,7 @@
         {% endif %}
 
         <!-- Section : Commandes -->
-        {% if request.user|has_role:"ADMIN,SERVEUR,CUISINIER" %}
+        {% if request.user|has_role:"ADMIN,GERANT,SERVEUR,CUISINIER" %}
             <p class="sidebar-section-title px-6 mt-8 mb-3 text-xs uppercase tracking-wider text-gray-400 font-semibold">
                 Commandes
             </p>
@@ -65,7 +65,7 @@
                         <span class="sidebar-label">Commandes</span>
                     </a>
                 </li>
-                {% if request.user|has_role:"ADMIN,CUISINIER" %}
+                {% if request.user|has_role:"ADMIN,GERANT,CUISINIER" %}
                 <li>
                     <a href="{% url 'cuisine:liste' %}" title="Cuisine"
                        class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.namespace == 'cuisine' %}bg-orange-500 text-white shadow-sm{% else %}hover:bg-gray-100 hover:text-slate-900{% endif %}">
@@ -78,7 +78,7 @@
         {% endif %}
 
         <!-- Section : Ventes -->
-        {% if request.user|has_role:"ADMIN,CAISSIER" %}
+        {% if request.user|has_role:"ADMIN,GERANT,CAISSIER" %}
             <p class="sidebar-section-title px-6 mt-8 mb-3 text-xs uppercase tracking-wider text-gray-400 font-semibold">
                 Ventes
             </p>
@@ -103,12 +103,12 @@
         {% endif %}
 
         <!-- Section : Restaurant -->
-        {% if request.user|has_role:"ADMIN,VENDEUR,SERVEUR,CAISSIER" %}
+        {% if request.user|has_role:"ADMIN,GERANT,VENDEUR,SERVEUR,CAISSIER" %}
             <p class="sidebar-section-title px-6 mt-8 mb-3 text-xs uppercase tracking-wider text-gray-400 font-semibold">
                 Restaurant
             </p>
             <ul class="space-y-2 px-3">
-                {% if request.user|has_role:"ADMIN,VENDEUR" %}
+                {% if request.user|has_role:"ADMIN,GERANT,VENDEUR" %}
                 <li>
                     <a href="{% url 'menu:gestion' %}" title="Gestion du menu"
                        class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.namespace == 'menu' %}bg-orange-500 text-white shadow-sm{% else %}hover:bg-gray-100 hover:text-slate-900{% endif %}">
@@ -117,7 +117,7 @@
                     </a>
                 </li>
                 {% endif %}
-                {% if request.user|has_role:"ADMIN,SERVEUR" %}
+                {% if request.user|has_role:"ADMIN,GERANT,SERVEUR" %}
                 <li>
                     <a href="{% url 'tables:liste' %}" title="Tables"
                        class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.namespace == 'tables' %}bg-orange-500 text-white shadow-sm{% else %}hover:bg-gray-100 hover:text-slate-900{% endif %}">
@@ -126,7 +126,7 @@
                     </a>
                 </li>
                 {% endif %}
-                {% if request.user|has_role:"ADMIN,SERVEUR,CAISSIER" %}
+                {% if request.user|has_role:"ADMIN,GERANT,SERVEUR,CAISSIER" %}
                 <li>
                     <a href="{% url 'restaurant:reservations' %}" title="Réservations"
                        class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.url_name == 'reservations' %}bg-orange-500 text-white shadow-sm{% else %}hover:bg-gray-100 hover:text-slate-900{% endif %}">
@@ -142,7 +142,7 @@
                     </a>
                 </li>
                 {% endif %}
-                {% if request.user.role == "ADMIN" or request.user.is_superuser %}
+                {% if request.user.role == "ADMIN" or request.user.role == "GERANT" or request.user.is_superuser %}
                 <li>
                     <a href="{% url 'restaurant:galerie_gestion' %}" title="Galerie"
                        class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.url_name == 'galerie_gestion' %}bg-orange-500 text-white shadow-sm{% else %}hover:bg-gray-100 hover:text-slate-900{% endif %}">
@@ -162,12 +162,12 @@
         {% endif %}
 
         <!-- Section : Stock & Livraison -->
-        {% if request.user|has_role:"ADMIN,VENDEUR,LIVREUR" %}
+        {% if request.user|has_role:"ADMIN,GERANT,VENDEUR,LIVREUR" %}
             <p class="sidebar-section-title px-6 mt-8 mb-3 text-xs uppercase tracking-wider text-gray-400 font-semibold">
                 Stock &amp; Livraison
             </p>
             <ul class="space-y-2 px-3">
-                {% if request.user|has_role:"ADMIN,VENDEUR" %}
+                {% if request.user|has_role:"ADMIN,GERANT,VENDEUR" %}
                 <li>
                     <a href="{% url 'stock:liste' %}" title="Stock"
                        class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.namespace == 'stock' %}bg-orange-500 text-white shadow-sm{% else %}hover:bg-gray-100 hover:text-slate-900{% endif %}">
@@ -183,7 +183,7 @@
                     </a>
                 </li>
                 {% endif %}
-                {% if request.user|has_role:"ADMIN,LIVREUR" %}
+                {% if request.user|has_role:"ADMIN,GERANT,LIVREUR" %}
                 <li>
                     <a href="{% url 'livraison:liste' %}" title="Livraison"
                        class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.namespace == 'livraison' %}bg-orange-500 text-white shadow-sm{% else %}hover:bg-gray-100 hover:text-slate-900{% endif %}">
@@ -196,12 +196,12 @@
         {% endif %}
 
         <!-- Section : Administration -->
-        {% if request.user|has_role:"ADMIN,CAISSIER" %}
+        {% if request.user|has_role:"ADMIN,GERANT,CAISSIER" %}
             <p class="sidebar-section-title px-6 mt-8 mb-3 text-xs uppercase tracking-wider text-gray-400 font-semibold">
                 Administration
             </p>
             <ul class="space-y-2 px-3">
-                {% if request.user|has_role:"ADMIN,CAISSIER" %}
+                {% if request.user|has_role:"ADMIN,GERANT,CAISSIER" %}
                 <li>
                     <a href="{% url 'clients:list' %}" title="Clients"
                        class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.namespace == 'clients' %}bg-orange-500 text-white shadow-sm{% else %}hover:bg-gray-100 hover:text-slate-900{% endif %}">
@@ -210,7 +210,7 @@
                     </a>
                 </li>
                 {% endif %}
-                {% if request.user.role == "ADMIN" or request.user.is_superuser %}
+                {% if request.user.role == "ADMIN" or request.user.role == "GERANT" or request.user.is_superuser %}
                 <li>
                     <a href="{% url 'rapports:index' %}" title="Rapports"
                        class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.namespace == 'rapports' %}bg-orange-500 text-white shadow-sm{% else %}hover:bg-gray-100 hover:text-slate-900{% endif %}">

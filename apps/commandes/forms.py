@@ -4,6 +4,10 @@ from apps.commandes.models import Commande, LigneCommande
 from apps.menu.models import Produit
 
 class CommandeForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['type'].initial = Commande.A_EMPORTER
+
     class Meta:
         model = Commande
         fields = ['type', 'client', 'table', 'serveur', 'adresse_livraison', 'telephone_livraison']

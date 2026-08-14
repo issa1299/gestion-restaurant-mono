@@ -13,7 +13,7 @@ from apps.accounts.decorators import role_required
 from apps.notifications.utils import envoyer_notification_broadcast
 
 
-@role_required(["ADMIN", "LIVREUR"])
+@role_required(["ADMIN", "GERANT", "LIVREUR"])
 def index(request):
     """Liste des livraisons."""
     livraisons = Livraison.objects.select_related(
@@ -22,9 +22,10 @@ def index(request):
         "commande__lignes__produit"
     ).all()
 
-    # Commandes prêtes sans livraison encore créée
+    # Commandes prêtes sans livraison encore créée — uniquement les commandes Livraison
     commandes_pretes = Commande.objects.filter(
-        statut=Commande.PRETE
+        statut=Commande.PRETE,
+        type=Commande.LIVRAISON
     ).exclude(
         livraisons__statut__in=[
             Livraison.EN_ATTENTE,
@@ -147,7 +148,7 @@ def suivi_commande(request, commande_id, token):
     })
 
 
-@role_required(["ADMIN", "LIVREUR"])
+@role_required(["ADMIN", "GERANT", "LIVREUR"])
 def detail(request, pk):
     """Détail complet d'une livraison."""
     livraison = get_object_or_404(

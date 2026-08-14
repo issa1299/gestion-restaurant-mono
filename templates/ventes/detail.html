@@ -64,8 +64,21 @@
                 </span>
             </div>
             <div>
+                <p class="text-gray-500 text-xs uppercase tracking-wider font-semibold mb-1">Table</p>
+                {% if vente.table %}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                        <i class="fas fa-chair"></i> Table {{ vente.table.numero }}
+                    </span>
+                {% else %}
+                    <p class="font-semibold text-slate-800 text-sm">—</p>
+                {% endif %}
+            </div>
+            <div>
                 <p class="text-gray-500 text-xs uppercase tracking-wider font-semibold mb-1">Total</p>
                 <p class="font-bold text-green-600 text-xl">{{ vente.total|floatformat:0 }} FCFA</p>
+                {% if vente.remise_pourcent %}
+                <p class="text-xs text-orange-600 font-semibold mt-0.5">Remise {{ vente.remise_pourcent }}%</p>
+                {% endif %}
             </div>
         </div>
 
@@ -112,6 +125,12 @@
                         <td colspan="3" class="p-3 sm:p-4 text-right font-bold text-gray-700">Total</td>
                         <td class="p-3 sm:p-4 text-right font-bold text-green-600">{{ vente.total|floatformat:0 }} FCFA</td>
                     </tr>
+                    {% if vente.remise_pourcent %}
+                    <tr class="bg-orange-50">
+                        <td colspan="3" class="p-3 sm:p-4 text-right font-semibold text-orange-700">Remise {{ vente.remise_pourcent }}%</td>
+                        <td class="p-3 sm:p-4 text-right font-semibold text-orange-600">-{{ vente.remise_montant|floatformat:0 }} FCFA</td>
+                    </tr>
+                    {% endif %}
                 </tfoot>
             </table>
         </div>

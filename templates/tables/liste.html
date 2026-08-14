@@ -12,12 +12,18 @@
             </h1>
             <p class="text-gray-500 text-sm mt-0.5">{{ total }} table{{ total|pluralize }}</p>
         </div>
-        {% if request.user.role == "SERVEUR" %}
-        <a href="{% url 'tables:creer' %}"
-           class="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl font-semibold text-sm transition shadow-md w-full sm:w-auto justify-center">
-            <i class="fas fa-plus"></i> Ajouter une table
-        </a>
-        {% endif %}
+        <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <a href="{% url 'tables:qr_codes' %}"
+               class="flex items-center justify-center gap-2 bg-teal-500 hover:bg-teal-600 text-white px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl font-semibold text-sm transition shadow-md">
+                <i class="fas fa-qrcode"></i> Voir les QR codes
+            </a>
+            {% if request.user.role == "SERVEUR" %}
+            <a href="{% url 'tables:creer' %}"
+               class="flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl font-semibold text-sm transition shadow-md">
+                <i class="fas fa-plus"></i> Ajouter une table
+            </a>
+            {% endif %}
+        </div>
     </div>
 
     <!-- Stats -->
@@ -57,9 +63,7 @@
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-5">
 
         {% for table in tables %}
-        <div class="bg-white rounded-xl sm:rounded-2xl shadow-md overflow-hidden border-2
-                    {% if table.disponible %}border-green-400{% else %}border-red-400{% endif %}
-                    transition hover:shadow-lg">
+        <div class="bg-white rounded-xl sm:rounded-2xl shadow-md overflow-hidden border border-slate-100 transition hover:shadow-lg">
 
             <!-- Indicateur couleur -->
             <div class="{% if table.disponible %}bg-green-400{% else %}bg-red-400{% endif %} h-1.5 sm:h-2"></div>
