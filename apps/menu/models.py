@@ -1,6 +1,13 @@
 from django.db import models
 
 
+class ProduitQuerySet(models.QuerySet):
+    def disponibles(self):
+        """Produits visibles au menu / POS : marqués disponibles ET avec stock > 0.
+        Un produit sans ligne de stock suivi reste visible."""
+        return self.filter(disponible=True).exclude(stock__quantite=0)
+
+
 class Categorie(models.Model):
     nom = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
@@ -41,6 +48,8 @@ class Produit(models.Model):
     disponible = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    objects = ProduitQuerySet.as_manager()
 
     class Meta:
         ordering = ["nom"]

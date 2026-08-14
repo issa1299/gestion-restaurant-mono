@@ -57,7 +57,7 @@ def index(request):
 def ajouter(request):
     """Ajouter une nouvelle commande"""
     from apps.menu.models import Categorie
-    produits = Produit.objects.filter(disponible=True).select_related('categorie', 'stock')
+    produits = Produit.objects.disponibles().select_related('categorie', 'stock')
     categories = Categorie.objects.all()
 
     if request.method == "POST":
@@ -104,7 +104,7 @@ def detail(request, pk):
 def modifier(request, pk):
     """Modifier une commande"""
     commande = get_object_or_404(Commande, pk=pk)
-    produits = Produit.objects.filter(disponible=True)
+    produits = Produit.objects.disponibles()
 
     if request.method == "POST":
         form = CommandeForm(request.POST, instance=commande)
@@ -169,7 +169,7 @@ def changer_statut(request, pk):
 
 def client_commander(request):
     """Page de commande pour les clients avec panier interactif (publique)"""
-    produits = Produit.objects.filter(disponible=True)
+    produits = Produit.objects.disponibles()
     from apps.menu.models import Categorie
     from apps.parametres.models import ParametreRestaurant
     categories = Categorie.objects.filter(produits__isnull=False).distinct()
@@ -264,7 +264,7 @@ def client_passer_commande(request):
         )
 
     ids_produits = [int(item.get("id")) for item in panier]
-    produits = {p.id: p for p in Produit.objects.filter(id__in=ids_produits, disponible=True)}
+    produits = {p.id: p for p in Produit.objects.disponibles().filter(id__in=ids_produits)}
 
     if len(produits) != len(ids_produits):
         return JsonResponse({"success": False, "message": "Certains produits ne sont plus disponibles."}, status=400)

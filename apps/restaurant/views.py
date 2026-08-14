@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import JsonResponse, Http404
 from django.utils import timezone
+from django.db.models import Prefetch
 from apps.accounts.decorators import role_required
 from apps.notifications.utils import envoyer_notification_broadcast
 from apps.parametres.models import ParametreRestaurant
@@ -384,7 +385,7 @@ def commander_en_ligne(request):
     import json
 
     categories = Categorie.objects.prefetch_related(
-        "produits"
+        Prefetch("produits", queryset=Produit.objects.disponibles())
     ).filter(produits__disponible=True).distinct()
 
     if request.method == "POST":
@@ -422,7 +423,9 @@ def commander_en_ligne(request):
         # Ajouter les lignes
         for item in produits_data:
             try:
-                produit = Produit.objects.get(pk=item["id"], disponible=True)
+                produit = Produit.objects.disponibles().filter(pk=item["id"]).first()
+                if produit is None:
+                    continue
                 quantite = max(1, int(item.get("quantite", 1)))
                 LigneCommande.objects.create(
                     commande=commande,

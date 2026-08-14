@@ -13,7 +13,7 @@ from django.conf import settings
 def index(request):
     """Affiche le menu complet avec toutes les catégories (public)"""
     categories = Categorie.objects.prefetch_related(
-        Prefetch("produits", queryset=Produit.objects.filter(disponible=True))
+        Prefetch("produits", queryset=Produit.objects.disponibles())
     ).all()
     return render(request, "menu/index.html", {"categories": categories})
 
@@ -35,7 +35,7 @@ def gestion(request):
 def categorie(request, categorie_id):
     """Affiche les produits d'une catégorie"""
     categorie = get_object_or_404(Categorie, id=categorie_id)
-    produits = categorie.produits.filter(disponible=True)
+    produits = categorie.produits.disponibles()
     categories = Categorie.objects.all()
     return render(request, "menu/categorie.html", {
         "categorie": categorie,

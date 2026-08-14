@@ -72,7 +72,7 @@ def _charger_panier(panier, produits_ok=None):
 def pos(request):
     from apps.menu.models import Categorie
     from apps.tables.models import Table
-    produits = Produit.objects.filter(disponible=True).select_related('categorie', 'stock')
+    produits = Produit.objects.disponibles().select_related('categorie', 'stock')
     categories = Categorie.objects.all()
     parametre = ParametreRestaurant.load()
     tables = Table.objects.all()
@@ -351,7 +351,7 @@ def enregistrer_vente(request):
     ids_produits = [int(item.get("id")) for item in panier]
     produits = {
         produit.id: produit
-        for produit in Produit.objects.filter(id__in=ids_produits)
+        for produit in Produit.objects.disponibles().filter(id__in=ids_produits)
     }
 
     for item in panier:
