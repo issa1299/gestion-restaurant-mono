@@ -102,7 +102,7 @@ def pos(request):
                     "nom": ligne.produit.nom,
                     "prix": float(ligne.prix),
                     "qte": ligne.quantite,
-                    "stock": ligne.produit.stock.quantite if ligne.produit.stock else 9999,
+                    "stock": getattr(getattr(ligne.produit, "stock", None), "quantite", None) or 9999,
                 }
                 for ligne in commande.lignes.all()
             ],
