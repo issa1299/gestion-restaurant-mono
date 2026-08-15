@@ -1,4 +1,4 @@
-{% extends "base/base.html" %}
+﻿{% extends "base/base.html" %}
 
 {% block title %}Caisse - {{ parametre.nom|default:"RestaurantPro" }}{% endblock %}
 
@@ -50,7 +50,7 @@
     <!-- ===================== CATALOGUE ===================== -->
     <section class="flex-1 min-w-0 bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col overflow-hidden">
 
-        <!-- En-tête -->
+        <!-- En-tÃªte -->
         <div class="px-4 sm:px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
                 <h1 class="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -59,7 +59,7 @@
                     </span>
                     Nouvelle vente
                 </h1>
-                <p class="text-xs sm:text-sm text-slate-400 mt-0.5">{{ parametre.nom|default:"RestaurantPro" }} — {{ request.user.get_role_display|lower }}</p>
+                <p class="text-xs sm:text-sm text-slate-400 mt-0.5">{{ parametre.nom|default:"RestaurantPro" }} â€” {{ request.user.get_role_display|lower }}</p>
             </div>
 
             <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
@@ -89,7 +89,7 @@
             
         </div>
 
-        <!-- Catégories -->
+        <!-- CatÃ©gories -->
         <div class="px-4 sm:px-6 py-3 flex gap-2 overflow-x-auto border-b border-slate-50" id="categories-filter">
             <button onclick="filtrerCategorie('all', this)"
                     class="cat-chip active px-3.5 py-1.5 rounded-full text-xs font-semibold border-2 border-slate-900 bg-slate-900 text-white shrink-0">
@@ -155,7 +155,7 @@
     <!-- ===================== COMMANDE EN COURS ===================== -->
     <aside class="w-full lg:w-[390px] xl:w-[430px] shrink-0 bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col overflow-y-auto overflow-x-hidden">
 
-        <!-- En-tête -->
+        <!-- En-tÃªte -->
         <div class="px-4 sm:px-5 py-3 border-b border-slate-100 flex items-center justify-between">
             <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <i class="fas fa-shopping-bag text-orange-500"></i>
@@ -176,7 +176,7 @@
         <!-- Total + Encaisser -->
         <div class="border-t border-slate-100 px-4 sm:px-5 py-3 bg-slate-50/50">
             <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-semibold text-slate-500">Total à payer</span>
+                <span class="text-sm font-semibold text-slate-500">Total Ã  payer</span>
                 <span id="total" class="text-2xl sm:text-3xl font-bold text-slate-900">0 <span class="text-sm">{{ parametre.devise|default:"FCFA" }}</span></span>
             </div>
             <button onclick="ouvrirPaiement()" id="btn-encaisser"
@@ -197,7 +197,7 @@
                 <i class="fas fa-trash-alt text-red-500 text-2xl"></i>
             </div>
             <h2 class="text-xl font-bold mt-4 text-slate-800">Vider la commande ?</h2>
-            <p class="text-slate-500 text-sm mt-1">Tous les articles seront supprimés.</p>
+            <p class="text-slate-500 text-sm mt-1">Tous les articles seront supprimÃ©s.</p>
         </div>
         <div class="flex gap-3 mt-6">
             <button onclick="fermerModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-2.5 rounded-xl font-semibold text-sm transition">Annuler</button>
@@ -226,14 +226,14 @@
     </div>
 </div>
 
-<!-- ===================== MODAL SUCCÈS ===================== -->
+<!-- ===================== MODAL SUCCÃˆS ===================== -->
 <div id="modalSucces" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
         <div class="w-16 h-16 mx-auto rounded-full bg-emerald-50 flex items-center justify-center border-2 border-emerald-100">
             <i class="fas fa-check text-emerald-500 text-2xl"></i>
         </div>
-        <h2 class="text-xl font-bold mt-4 text-slate-800">Vente encaissée !</h2>
-        <p class="text-slate-500 text-sm mt-1">Ticket <b>N° <span id="succes-vente-id">-</span></b> généré.<br>Le ticket s'ouvre automatiquement pour impression.</p>
+        <h2 class="text-xl font-bold mt-4 text-slate-800">Vente encaissÃ©e !</h2>
+        <p class="text-slate-500 text-sm mt-1">Ticket <b>NÂ° <span id="succes-vente-id">-</span></b> gÃ©nÃ©rÃ©.<br>Le ticket s'ouvre automatiquement pour impression.</p>
         <div class="flex gap-3 mt-6">
             <button onclick="fermerSucces()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-2.5 rounded-xl font-semibold text-sm transition">Continuer</button>
             <button onclick="imprimerDernierTicket()" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2.5 rounded-xl font-bold text-sm transition shadow-lg shadow-orange-200">
@@ -254,7 +254,7 @@
                 </div>
                 <div>
                     <h2 class="text-xl font-bold text-slate-900">Paiement</h2>
-                    <p class="text-sm text-slate-400">Réglez la commande en quelques clics</p>
+                    <p class="text-sm text-slate-400">RÃ©glez la commande en quelques clics</p>
                 </div>
             </div>
             <button onclick="fermerPaiement()" class="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition">
@@ -304,7 +304,7 @@
                     {% for table_id, commande in commande_par_table.items %}
                     <div class="mt-2 hidden" data-commande-table="{{ table_id }}">
                         <span class="inline-flex items-center gap-1.5 text-xs font-semibold bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full">
-                            <i class="fas fa-fire"></i> Commande N° {{ commande.id }} ouverte sur cette table
+                            <i class="fas fa-fire"></i> Commande NÂ° {{ commande.id }} ouverte sur cette table
                         </span>
                     </div>
                     {% endfor %}
@@ -318,7 +318,7 @@
                     <div class="space-y-2.5">
                         <input id="nomClientLivraison" type="text" placeholder="Nom du client"
                                class="w-full px-3 py-2.5 border-2 border-slate-200 rounded-xl focus:border-orange-400 focus:outline-none text-sm bg-white font-semibold">
-                        <input id="telephoneLivraison" type="tel" placeholder="Téléphone du client"
+                        <input id="telephoneLivraison" type="tel" placeholder="TÃ©lÃ©phone du client"
                                class="w-full px-3 py-2.5 border-2 border-slate-200 rounded-xl focus:border-orange-400 focus:outline-none text-sm bg-white font-semibold">
                         <textarea id="adresseLivraison" rows="2" placeholder="Adresse de livraison"
                                   class="w-full px-3 py-2.5 border-2 border-slate-200 rounded-xl focus:border-orange-400 focus:outline-none text-sm bg-white font-semibold resize-none"></textarea>
@@ -332,7 +332,7 @@
                         <button type="button" onclick="choisirMode('ESPECES', this)"
                                 class="mode-btn active flex items-center gap-2 px-3 py-3 rounded-xl text-sm font-semibold text-slate-700">
                             <span class="w-9 h-9 rounded-lg bg-green-100 text-green-600 flex items-center justify-center"><i class="fas fa-money-bill-wave"></i></span>
-                            Espèces
+                            EspÃ¨ces
                         </button>
                         <button type="button" onclick="choisirMode('ORANGE', this)"
                                 class="mode-btn flex items-center gap-2 px-3 py-3 rounded-xl text-sm font-semibold text-slate-700">
@@ -351,7 +351,7 @@
                         </button>
                     </div>
                     <select id="modePaiement" class="hidden">
-                        <option value="ESPECES">Espèces</option>
+                        <option value="ESPECES">EspÃ¨ces</option>
                         <option value="ORANGE">Orange Money</option>
                         <option value="WAVE">Wave</option>
                         <option value="CARTE">Carte bancaire</option>
@@ -359,7 +359,7 @@
                 </div>
 
                 <div>
-                    <label class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Montant reçu</label>
+                    <label class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Montant reÃ§u</label>
                     <div class="relative">
                         <i class="fas fa-money-bill absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
                         <input id="montantRecu" type="number" min="0" oninput="calculerMonnaie()" placeholder="Ex: 10000"
@@ -369,7 +369,7 @@
                 </div>
             </div>
 
-            <!-- Colonne droite : remise + récapitulatif -->
+            <!-- Colonne droite : remise + rÃ©capitulatif -->
             <div class="space-y-5">
                 <div>
                     <p class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">Remise (%)</p>
@@ -399,7 +399,7 @@
                         <b id="totalPaiement" class="text-slate-900 text-2xl">0 FCFA</b>
                     </div>
                     <div class="flex justify-between text-sm">
-                        <span class="text-slate-500">Monnaie à rendre</span>
+                        <span class="text-slate-500">Monnaie Ã  rendre</span>
                         <b id="monnaie" class="text-green-600">0 FCFA</b>
                     </div>
                 </div>
@@ -421,7 +421,7 @@
 
 {% block extra_js %}
 <script>
-let panier = JSON.parse(localStorage.getItem("panier")) || [];
+let panier = JSON.parse(localStorage.getItem("panier_pos")) || [];
 let derniereVente = null;
 let typeCommande = "SUR_PLACE";
 let modePaiement = "ESPECES";
@@ -456,7 +456,7 @@ document.querySelectorAll(".produit-btn").forEach(btn => {
 function afficherPanier() {
     let total = 0, nb = 0;
     panier.forEach(p => { total += p.prix * p.qte; nb += p.qte; });
-    localStorage.setItem("panier", JSON.stringify(panier));
+    localStorage.setItem("panier_pos", JSON.stringify(panier));
 
     document.querySelectorAll(".produit-btn").forEach(btn => {
         const qte = panier.reduce((s, p) => s + (p.id == btn.dataset.id ? p.qte : 0), 0);
@@ -535,7 +535,7 @@ function afficherPanier() {
     calculerTotalAvecRemise();
 }
 
-/* Délégation d'événements sur les actions du panier */
+/* DÃ©lÃ©gation d'Ã©vÃ©nements sur les actions du panier */
 panierDiv.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-action]");
     if (!btn) return;
@@ -742,7 +742,7 @@ async function validerVente() {
     const montantRecu = Number(document.getElementById("montantRecu").value);
     const total = totalAvecRemise();
     if (modePaiement === "ESPECES" && montantRecu < total) {
-        ouvrirModal("Le montant reçu est insuffisant.<br>Veuillez saisir un montant supérieur ou égal au total.");
+        ouvrirModal("Le montant reÃ§u est insuffisant.<br>Veuillez saisir un montant supÃ©rieur ou Ã©gal au total.");
         return;
     }
     if (typeCommande === "LIVRAISON") {
@@ -753,7 +753,7 @@ async function validerVente() {
             return;
         }
         if (!telephone) {
-            ouvrirModal("Le téléphone du client est requis.");
+            ouvrirModal("Le tÃ©lÃ©phone du client est requis.");
             return;
         }
     }
@@ -802,7 +802,7 @@ async function validerVente() {
                 commandesOuvertes = commandesOuvertes.filter(c => c.id !== commande.id);
             }
             panier = [];
-            localStorage.removeItem("panier");
+            localStorage.removeItem("panier_pos");
             const ri = document.getElementById("remiseInput");
             if (ri) ri.value = 0;
             document.getElementById("tableSelect").value = "";
@@ -823,7 +823,7 @@ async function validerVente() {
             ouvrirModal(data.message);
         }
     } catch (e) {
-        ouvrirModal("Une erreur est survenue. Veuillez réessayer.");
+        ouvrirModal("Une erreur est survenue. Veuillez rÃ©essayer.");
     }
     btn.disabled = false;
     btn.innerHTML = '<i class="fas fa-check-circle"></i> Valider la vente';
@@ -834,7 +834,7 @@ function commandeOuvertePourTable(tableId) {
     return commandesOuvertes.find(c => String(c.table_id) === String(tableId)) || null;
 }
 
-/* Impression silencieuse du ticket via un iframe caché (sans ouvrir d'onglet) */
+/* Impression silencieuse du ticket via un iframe cachÃ© (sans ouvrir d'onglet) */
 function imprimerTicket(venteId) {
     const old = document.getElementById("iframe-ticket-impression");
     if (old) old.remove();
@@ -874,7 +874,7 @@ function fermerModal() {
 
 function ouvrirModalVider() {
     if (panier.length === 0) {
-        ouvrirModal("La commande est déjà vide.");
+        ouvrirModal("La commande est dÃ©jÃ  vide.");
         return;
     }
     const modal = document.getElementById("modalVider");
@@ -884,7 +884,7 @@ function ouvrirModalVider() {
 
 function confirmerSuppression() {
     panier = [];
-    localStorage.removeItem("panier");
+    localStorage.removeItem("panier_pos");
     const ri = document.getElementById("remiseInput");
     if (ri) ri.value = 0;
     const nomL = document.getElementById("nomClientLivraison");

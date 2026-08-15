@@ -298,7 +298,7 @@
 
 {% block extra_js %}
 <script>
-let panier = JSON.parse(localStorage.getItem("panier_client")) || [];
+let panier = JSON.parse(localStorage.getItem("panier")) || [];
 let mode = "SUR_PLACE";
 let mpId = null, mpQte = 1;
 
@@ -405,7 +405,7 @@ function viderPanier() {
 }
 
 function sauvegarder() {
-    localStorage.setItem("panier_client", JSON.stringify(panier));
+    localStorage.setItem("panier", JSON.stringify(panier));
 }
 
 function afficherPanier() {
