@@ -25,7 +25,7 @@
             <div class="p-5 text-center">
                 <p class="font-bold text-slate-800 text-lg">Table {{ table.numero }}</p>
                 <p class="text-xs text-gray-500 mb-3">{{ table.capacite }} places</p>
-                <img src="{% url 'tables:telecharger_qr' table.id %}" alt="QR Table {{ table.numero }}"
+                <img src="{% url 'tables:qr_image' table.id %}" alt="QR Table {{ table.numero }}"
                      class="mx-auto w-40 h-40 sm:w-48 sm:h-48 object-contain rounded-xl border border-gray-200 bg-white">
                 <p class="text-[10px] text-gray-400 mt-3 break-all">{{ lien }}</p>
             </div>

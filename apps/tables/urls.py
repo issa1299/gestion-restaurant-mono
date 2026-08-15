@@ -10,5 +10,6 @@ urlpatterns = [
     path("<int:id>/supprimer/", views.supprimer_table, name="supprimer"),
     path("<int:id>/toggle/", views.toggle_table, name="toggle"),
     path("qr-codes/", views.qr_codes, name="qr_codes"),
+    path("<int:id>/qr/image/", views.qr_image, name="qr_image"),
     path("<int:id>/qr/telecharger/", views.telecharger_qr, name="telecharger_qr"),
 ]

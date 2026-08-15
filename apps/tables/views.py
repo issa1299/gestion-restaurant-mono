@@ -114,14 +114,25 @@ def qr_codes(request):
     })
 
 
-@role_required(["ADMIN", "GERANT", "SERVEUR"])
-def telecharger_qr(request, id):
-    table = get_object_or_404(Table, id=id)
+def _qr_png_response(table, request, attachment):
     lien = _lien_qr_table(table, request)
     img = _generer_qr_png(lien)
     import io
     buffer = io.BytesIO()
     img.save(buffer, format="PNG")
     response = HttpResponse(buffer.getvalue(), content_type="image/png")
-    response["Content-Disposition"] = f'attachment; filename="table-{table.numero}-qr.png"'
+    if attachment:
+        response["Content-Disposition"] = f'attachment; filename="table-{table.numero}-qr.png"'
     return response
+
+
+@role_required(["ADMIN", "GERANT", "SERVEUR"])
+def qr_image(request, id):
+    table = get_object_or_404(Table, id=id)
+    return _qr_png_response(table, request, attachment=False)
+
+
+@role_required(["ADMIN", "GERANT", "SERVEUR"])
+def telecharger_qr(request, id):
+    table = get_object_or_404(Table, id=id)
+    return _qr_png_response(table, request, attachment=True)
