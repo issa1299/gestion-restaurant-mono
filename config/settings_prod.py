@@ -8,10 +8,18 @@ from .settings import *  # noqa: F401,F403
 
 DEBUG = False
 
-SECRET_KEY = os.environ.get("SECRET_KEY", SECRET_KEY)
+# SECRET_KEY doit être fourni par l'environnement en production.
+# Sur PythonAnywhere, ajoutez-le dans l'onglet "Web" > "Environment variables"
+# (ou définissez-le en tête du WSGI). Ne JAMAIS le laisser en dur ici.
+SECRET_KEY = os.environ.get("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY manquant : définissez la variable d'environnement SECRET_KEY.")
 
 # Domaine pythonanywhere : <utilisateur>.pythonanywhere.com
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = os.environ.get(
+    "DJANGO_ALLOWED_HOSTS",
+    "issa72.pythonanywhere.com,www.issa72.pythonanywhere.com",
+).split(",")
 
 CSRF_TRUSTED_ORIGINS = ["https://*.pythonanywhere.com"]
 
@@ -26,3 +34,11 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+# Sécurité HTTP (PythonAnywhere termine le TLS à son niveau de proxy)
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "same-origin"
+X_FRAME_OPTIONS = "DENY"

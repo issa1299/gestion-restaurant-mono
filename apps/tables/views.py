@@ -69,6 +69,8 @@ def supprimer_table(request, id):
 
 @role_required(["SERVEUR"])
 def toggle_table(request, id):
+    if request.method != "POST":
+        return redirect("tables:liste")
     table = get_object_or_404(Table, id=id)
     table.disponible = not table.disponible
     table.save()

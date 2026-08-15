@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.http import JsonResponse, Http404
 from django.utils import timezone
 from django.db.models import Prefetch
+from django.views.decorators.csrf import ensure_csrf_cookie
 from apps.accounts.decorators import role_required
 from apps.notifications.utils import envoyer_notification_broadcast
 from apps.parametres.models import ParametreRestaurant
@@ -378,6 +379,7 @@ def temoignage_toggle(request, pk):
     return redirect("restaurant:temoignages_gestion")
 
 
+@ensure_csrf_cookie
 def commander_en_ligne(request):
     """Page publique de commande en ligne avec géolocalisation du client."""
     from apps.menu.models import Categorie, Produit
@@ -409,6 +411,16 @@ def commander_en_ligne(request):
             messages.error(request, "Veuillez sélectionner au moins un article.")
             return redirect("restaurant:commander")
 
+        # Coordonnées GPS : ignorées si invalides
+        try:
+            latitude_client = float(latitude) if latitude else None
+        except (ValueError, TypeError):
+            latitude_client = None
+        try:
+            longitude_client = float(longitude) if longitude else None
+        except (ValueError, TypeError):
+            longitude_client = None
+
         # Créer la commande
         commande = Commande.objects.create(
             type=Commande.LIVRAISON,
@@ -416,8 +428,8 @@ def commander_en_ligne(request):
             adresse_livraison=adresse,
             telephone_livraison=telephone,
             nom_client_livraison=nom,
-            latitude_client=float(latitude) if latitude else None,
-            longitude_client=float(longitude) if longitude else None,
+            latitude_client=latitude_client,
+            longitude_client=longitude_client,
         )
 
         # Ajouter les lignes

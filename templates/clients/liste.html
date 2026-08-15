@@ -208,7 +208,7 @@
 <script>
 function openDeleteModal(name,url){
   document.getElementById("deleteItemName").innerHTML=name;
-  document.getElementById("deleteUrl").href=url;
+  document.getElementById("deleteForm").action=url;
   document.getElementById("deleteModal").style.display="flex";
 }
 function closeDeleteModal(){

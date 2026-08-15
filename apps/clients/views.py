@@ -97,6 +97,9 @@ def supprimer_client(request, pk):
 
     client = get_object_or_404(Client, pk=pk)
 
+    if request.method != "POST":
+        return redirect("clients:list")
+
     client.delete()
 
     messages.success(

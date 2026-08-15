@@ -199,6 +199,9 @@ def user_delete(request, id):
 @role_required(["ADMIN", "GERANT"], ecriture_autorisee=True)
 def user_toggle_active(request, id):
 
+    if request.method != "POST":
+        return redirect("accounts:users_list")
+
     user = get_object_or_404(CustomUser, id=id)
 
     if user == request.user:

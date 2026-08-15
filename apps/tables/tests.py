@@ -63,7 +63,7 @@ class TableToggleTests(TestCase):
     def test_toggle_par_serveur(self):
         c = Client()
         c.force_login(self.serveur)
-        resp = c.get("/tables/%d/toggle/" % self.table.id)
+        resp = c.post("/tables/%d/toggle/" % self.table.id)
         self.assertEqual(resp.status_code, 302)
         self.table.refresh_from_db()
         self.assertFalse(self.table.disponible)
@@ -71,6 +71,14 @@ class TableToggleTests(TestCase):
     def test_toggle_interdit_client(self):
         c = Client()
         c.force_login(self.client_role)
+        resp = c.get("/tables/%d/toggle/" % self.table.id)
+        self.assertEqual(resp.status_code, 302)
+        self.table.refresh_from_db()
+        self.assertTrue(self.table.disponible)
+
+    def test_toggle_refuse_en_get(self):
+        c = Client()
+        c.force_login(self.serveur)
         resp = c.get("/tables/%d/toggle/" % self.table.id)
         self.assertEqual(resp.status_code, 302)
         self.table.refresh_from_db()

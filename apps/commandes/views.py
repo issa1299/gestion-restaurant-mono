@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib import messages
 from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 from apps.commandes.models import Commande, LigneCommande
 from apps.commandes.forms import CommandeForm, LigneCommandeFormSet
@@ -167,6 +167,7 @@ def changer_statut(request, pk):
     })
 
 
+@ensure_csrf_cookie
 def client_commander(request):
     """Page de commande pour les clients avec panier interactif (publique)"""
     produits = Produit.objects.disponibles()
@@ -191,7 +192,6 @@ def client_commander(request):
 
 
 @require_POST
-@csrf_exempt
 def client_passer_commande(request):
     """API: Le client valide son panier et crée une commande (support guest)"""
     import json
@@ -221,8 +221,11 @@ def client_passer_commande(request):
     except (ValueError, TypeError):
         longitude_client = None
 
-    if not panier:
+    if not isinstance(panier, list) or not panier:
         return JsonResponse({"success": False, "message": "Panier vide."}, status=400)
+
+    if len(panier) > 50:
+        return JsonResponse({"success": False, "message": "Panier trop volumineux."}, status=400)
 
     if mode == "LIVRAISON" and not adresse:
         return JsonResponse({"success": False, "message": "Adresse de livraison requise."}, status=400)
@@ -263,7 +266,10 @@ def client_passer_commande(request):
             }
         )
 
-    ids_produits = [int(item.get("id")) for item in panier]
+    try:
+        ids_produits = [int(item.get("id")) for item in panier]
+    except (ValueError, TypeError, AttributeError):
+        return JsonResponse({"success": False, "message": "Panier invalide."}, status=400)
     produits = {p.id: p for p in Produit.objects.disponibles().filter(id__in=ids_produits)}
 
     if len(produits) != len(ids_produits):
@@ -287,8 +293,16 @@ def client_passer_commande(request):
     )
 
     for item in panier:
-        produit = produits[int(item["id"])]
-        quantite = int(item.get("qte", 1))
+        try:
+            produit = produits[int(item["id"])]
+        except (ValueError, TypeError, KeyError):
+            continue
+        try:
+            quantite = int(item.get("qte", 1))
+        except (ValueError, TypeError):
+            continue
+        if quantite < 1 or quantite > 100:
+            continue
         prix = produit.prix
         LigneCommande.objects.create(
             commande=commande,
@@ -296,6 +310,10 @@ def client_passer_commande(request):
             quantite=quantite,
             prix=prix,
         )
+
+    if not commande.lignes.exists():
+        commande.delete()
+        return JsonResponse({"success": False, "message": "Panier invalide."}, status=400)
 
     notifier_nouvelle_commande(commande)
 
