@@ -29,6 +29,10 @@ def login_view(request):
 
             login(request, user)
 
+            # "Se souvenir de moi" : prolonge la session 30 jours
+            if not request.POST.get("remember"):
+                request.session.set_expiry(0)
+
             # Les superusers vont au dashboard (même si rôle par défaut CLIENT)
             if user.is_superuser:
                 return redirect("dashboard:index")
