@@ -145,13 +145,13 @@ class StockDetailModifSupprTests(TestCase):
         self.stock.refresh_from_db()
         self.assertEqual(self.stock.seuil_alerte, 8)
 
-    def test_modifier_interdit_admin(self):
+    def test_modifier_admin_autorise(self):
         c = Client()
         c.force_login(self.admin)
         resp = c.post("/stock/%d/modifier/" % self.stock.id, {"seuil_alerte": 8})
         self.assertEqual(resp.status_code, 302)
         self.stock.refresh_from_db()
-        self.assertEqual(self.stock.seuil_alerte, 3)
+        self.assertEqual(self.stock.seuil_alerte, 8)
 
     def test_supprimer_ligne_stock(self):
         c = Client()

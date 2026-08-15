@@ -46,7 +46,7 @@ def detail_stock(request, stock_id):
     })
 
 
-@role_required(["VENDEUR"])
+@role_required(["ADMIN", "GERANT", "VENDEUR"], ecriture_autorisee=True)
 def modifier_stock(request, stock_id):
     stock = get_object_or_404(Stock, id=stock_id)
 
@@ -68,7 +68,7 @@ def modifier_stock(request, stock_id):
     return render(request, "stock/form.html", {"stock": stock})
 
 
-@role_required(["VENDEUR"])
+@role_required(["ADMIN", "GERANT", "VENDEUR"], ecriture_autorisee=True)
 def supprimer_stock(request, stock_id):
     stock = get_object_or_404(Stock, id=stock_id)
 
@@ -81,7 +81,7 @@ def supprimer_stock(request, stock_id):
     return render(request, "stock/supprimer.html", {"stock": stock})
 
 
-@role_required(["VENDEUR"])
+@role_required(["ADMIN", "GERANT", "VENDEUR"], ecriture_autorisee=True)
 def ajouter_mouvement(request, stock_id):
     stock = get_object_or_404(Stock, id=stock_id)
 
