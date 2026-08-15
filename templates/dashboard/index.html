@@ -1,4 +1,4 @@
-﻿{% extends "base/base.html" %}
+{% extends "base/base.html" %}
 {% block title %}Dashboard - RestaurantPro{% endblock %}
 
 {% block content %}
@@ -10,10 +10,10 @@
     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
         <div>
             <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">Tableau de bord</h1>
-            <p class="text-slate-500 text-sm mt-0.5">Vue gestionnaire Â· {{ label_periode }}</p>
+            <p class="text-slate-500 text-sm mt-0.5">Vue gestionnaire · {{ label_periode }}</p>
         </div>
 
-        <!-- SÃ©lecteur de pÃ©riode -->
+        <!-- Sélecteur de période -->
         <div class="flex flex-wrap gap-1.5 bg-white rounded-xl p-1.5 border border-slate-200 shadow-sm" id="periode-selector">
             {% for code, lbl in periodes %}
             <button onclick="changerPeriode('{{ code }}')" data-periode="{{ code }}"
@@ -26,7 +26,7 @@
     </div>
 
     {% if est_gerant %}
-    <!-- Cartes statistiques gÃ©rant -->
+    <!-- Cartes statistiques gérant -->
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-5">
 
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
@@ -47,7 +47,7 @@
                     <span class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center"><i class="fas fa-clipboard-list"></i></span>
                 </div>
                 <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">{{ nb_commandes }}</h2>
-                <p class="text-xs text-slate-400 mt-1">sur la pÃ©riode</p>
+                <p class="text-xs text-slate-400 mt-1">sur la période</p>
             </div>
         </div>
 
@@ -65,17 +65,17 @@
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
             <div class="p-4 sm:p-5">
                 <div class="flex items-center justify-between">
-                    <p class="text-slate-500 text-xs sm:text-sm">Tables occupÃ©es</p>
+                    <p class="text-slate-500 text-xs sm:text-sm">Tables occupées</p>
                     <span class="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center"><i class="fas fa-chair"></i></span>
                 </div>
                 <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">{{ tables_occupees }}</h2>
-                <p class="text-xs text-slate-400 mt-1">{{ total_clients }} clients enregistrÃ©s</p>
+                <p class="text-xs text-slate-400 mt-1">{{ total_clients }} clients enregistrés</p>
             </div>
         </div>
 
     </div>
 
-    <!-- RÃ©partition : graphique + CA par type + top produits -->
+    <!-- Répartition : graphique + CA par type + top produits -->
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-5">
 
         <!-- Graphique Ventes -->
@@ -109,7 +109,7 @@
                     <div class="flex items-center gap-3">
                         <span class="w-9 h-9 rounded-lg bg-red-50 text-red-500 flex items-center justify-center shrink-0"><i class="fas fa-bag-shopping text-sm"></i></span>
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold text-slate-700">Ã€ emporter</p>
+                            <p class="text-sm font-semibold text-slate-700">À emporter</p>
                             <div class="flex items-center gap-2">
                                 <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
                                     <div class="h-full bg-red-500 rounded-full" style="width: {% widthratio ca_par_type.A_EMPORTER ca_types_total 100 %}%"></div>
@@ -132,14 +132,14 @@
                     </div>
                 </div>
                 {% else %}
-                <p class="text-center text-slate-400 py-8 text-sm">Aucun chiffre sur cette pÃ©riode</p>
+                <p class="text-center text-slate-400 py-8 text-sm">Aucun chiffre sur cette période</p>
                 {% endif %}
             </div>
         </div>
 
     </div>
 
-    <!-- Top produits + derniÃ¨res commandes -->
+    <!-- Top produits + dernières commandes -->
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-5">
 
         <!-- Top produits -->
@@ -160,24 +160,24 @@
                     {% endfor %}
                 </div>
                 {% else %}
-                <p class="text-center text-slate-400 py-8 text-sm">Aucun produit vendu sur cette pÃ©riode</p>
+                <p class="text-center text-slate-400 py-8 text-sm">Aucun produit vendu sur cette période</p>
                 {% endif %}
             </div>
         </div>
 
-        <!-- Commandes rÃ©centes -->
+        <!-- Commandes récentes -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
             <div class="p-4 sm:p-5">
-                <h2 class="text-base sm:text-lg font-bold text-slate-800 mb-4">DerniÃ¨res commandes</h2>
+                <h2 class="text-base sm:text-lg font-bold text-slate-800 mb-4">Dernières commandes</h2>
                 {% if dernieres_commandes %}
                 <div class="space-y-3">
                     {% for cmd in dernieres_commandes %}
                     <div class="flex justify-between items-center p-2 sm:p-3 bg-slate-50 rounded-xl">
                         <div class="min-w-0">
-                            <p class="font-semibold text-slate-800 text-sm">NÂ° {{ cmd.id }}
+                            <p class="font-semibold text-slate-800 text-sm">N° {{ cmd.id }}
                                 <span class="text-[10px] uppercase tracking-wide text-slate-400 ml-1">{{ cmd.get_type_display }}</span>
                             </p>
-                            <p class="text-xs text-slate-500">{{ cmd.created_at|date:"H:i d/m" }} Â· {{ cmd.total|floatformat:0 }} F</p>
+                            <p class="text-xs text-slate-500">{{ cmd.created_at|date:"H:i d/m" }} · {{ cmd.total|floatformat:0 }} F</p>
                         </div>
                         <span class="text-xs px-2 py-1 rounded-full font-semibold shrink-0
                             {% if cmd.statut == 'EN_ATTENTE' %}bg-orange-100 text-orange-700
@@ -201,18 +201,18 @@
     <!-- Alertes -->
     <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <div class="p-4 sm:p-5">
-            <h2 class="text-base sm:text-lg font-bold text-slate-800 mb-4">Alertes systÃ¨me</h2>
+            <h2 class="text-base sm:text-lg font-bold text-slate-800 mb-4">Alertes système</h2>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div class="bg-blue-50 border border-slate-100 p-3 sm:p-4 rounded-xl">
                     <i class="fas fa-bell text-blue-500 mr-2"></i>
-                    <span class="text-sm text-slate-700">RÃ©servations : <b>{{ reservations_count }}</b> Â· Messages : <b>{{ messages_non_lus_count }}</b></span>
+                    <span class="text-sm text-slate-700">Réservations : <b>{{ reservations_count }}</b> · Messages : <b>{{ messages_non_lus_count }}</b></span>
                 </div>
             </div>
         </div>
     </div>
 
     {% else %}
-    <!-- Vue simple pour les autres rÃ´les -->
+    <!-- Vue simple pour les autres rôles -->
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-5">
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
             <div class="p-4 sm:p-5">
@@ -234,22 +234,22 @@
         </div>
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
             <div class="p-4 sm:p-5">
-                <p class="text-slate-500 text-xs sm:text-sm">Tables occupÃ©es</p>
+                <p class="text-slate-500 text-xs sm:text-sm">Tables occupées</p>
                 <h2 class="text-2xl font-bold text-slate-900 mt-1">{{ tables_occupees }}</h2>
             </div>
         </div>
     </div>
     {% endif %}
 
-    <!-- RÃ©servations & Messages (gÃ©rables par le gÃ©rant) -->
+    <!-- Réservations & Messages (gérables par le gérant) -->
     {% if est_gerant %}
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-5">
 
-        <!-- RÃ©servations Ã  confirmer -->
+        <!-- Réservations à confirmer -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
             <div class="p-4 sm:p-5">
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-base sm:text-lg font-bold text-slate-800">RÃ©servations Ã  confirmer</h2>
+                    <h2 class="text-base sm:text-lg font-bold text-slate-800">Réservations à confirmer</h2>
                     <span class="text-xs px-2.5 py-1 rounded-full font-semibold bg-purple-100 text-purple-700">{{ reservations_count }}</span>
                 </div>
                 {% if reservations_recentes %}
@@ -260,8 +260,8 @@
                                 <div class="min-w-0">
                                     <p class="font-semibold text-slate-800 text-sm"><i class="fas fa-user text-purple-500 mr-1"></i>{{ res.nom }}</p>
                                     <p class="text-xs text-slate-500 mt-0.5">
-                                        <i class="fas fa-calendar-day mr-1"></i>{{ res.date|date:"d/m/Y" }} Ã  {{ res.heure|time:"H:i" }}
-                                        Â· <i class="fas fa-users mr-1"></i>{{ res.nombre_personnes }} pers.
+                                        <i class="fas fa-calendar-day mr-1"></i>{{ res.date|date:"d/m/Y" }} à {{ res.heure|time:"H:i" }}
+                                        · <i class="fas fa-users mr-1"></i>{{ res.nombre_personnes }} pers.
                                     </p>
                                     {% if res.telephone %}<p class="text-xs text-slate-500 mt-0.5"><i class="fas fa-phone mr-1"></i>{{ res.telephone }}</p>{% endif %}
                                 </div>
@@ -273,7 +273,7 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    <p class="text-center text-slate-400 py-8 text-sm">Aucune rÃ©servation en attente</p>
+                    <p class="text-center text-slate-400 py-8 text-sm">Aucune réservation en attente</p>
                 {% endif %}
             </div>
         </div>
