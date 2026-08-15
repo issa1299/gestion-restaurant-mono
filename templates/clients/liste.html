@@ -185,7 +185,7 @@
               </a>
               <!-- Supprimer -->
               <button type="button"
-                 onclick="openDeleteModal('{{ client.nom }}','{% url 'clients:delete' client.id %}')"
+                 onclick="supprimerClient('{{ client.nom|escapejs }}','{% url 'clients:delete' client.id %}')"
                  class="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center hover:bg-red-600 hover:text-white transition"
                  title="Supprimer le client">
                 <i class="fas fa-trash"></i>
@@ -207,21 +207,19 @@
   </div>
 </div>
 
-{% include "components/modal_delete.html" %}
-
 <!-- Script DataTables + Modale -->
 <script>
-function openDeleteModal(name,url){
-  document.getElementById("deleteItemName").innerHTML=name;
-  document.getElementById("deleteForm").action=url;
-  document.getElementById("deleteModal").style.display="flex";
-}
-function closeDeleteModal(){
-  document.getElementById("deleteModal").style.display="none";
-}
-window.onclick=function(e){
-  const modal=document.getElementById("deleteModal");
-  if(e.target===modal){ closeDeleteModal(); }
+function supprimerClient(nom, url) {
+  confirmerAction("Supprimer le client \u00ab " + nom + " \u00bb ?", { okText: "Supprimer" }).then(ok => {
+    if (ok) {
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = url;
+      form.innerHTML = '{% csrf_token %}';
+      document.body.appendChild(form);
+      form.submit();
+    }
+  });
 }
 document.addEventListener("DOMContentLoaded", function () {
   new DataTable("#tableClients", {
@@ -237,6 +235,8 @@ document.addEventListener("DOMContentLoaded", function () {
 {% endblock %}
 
 {% block extra_js %}
+{% load static %}
+<script src="{% static 'js/toast.js' %}"></script>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.datatables.net/2.3.2/js/dataTables.js"></script>
 <script src="https://cdn.datatables.net/buttons/3.2.3/js/dataTables.buttons.js"></script>

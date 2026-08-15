@@ -80,3 +80,18 @@
     </div>
 
 </div>
+
+<script>
+function openDeleteModal(name, url) {
+  document.getElementById("deleteItemName").innerHTML = name;
+  document.getElementById("deleteForm").action = url;
+  document.getElementById("deleteModal").style.display = "flex";
+}
+function closeDeleteModal() {
+  document.getElementById("deleteModal").style.display = "none";
+}
+window.onclick = function (e) {
+  const modal = document.getElementById("deleteModal");
+  if (e.target === modal) { closeDeleteModal(); }
+};
+</script>
