@@ -253,32 +253,16 @@
 {% endblock %}
 
 {% block extra_js %}
+{% load static %}
+<script src="{% static 'js/statut.js' %}"></script>
 <script>
 function changerStatut(id, nouveauStatut, btn) {
     const texteOriginal = btn ? btn.innerHTML : '';
-    if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> En cours...';
-    }
-    const formData = new FormData();
-    formData.append('statut', nouveauStatut);
-    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-    fetch("/commandes/" + id + "/statut/", {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            window.location.reload();
-        } else {
-            alert(data.error || 'Erreur lors du changement de statut');
-            if (btn) { btn.disabled = false; btn.innerHTML = texteOriginal; }
-        }
-    })
-    .catch(error => {
-        console.error('Erreur:', error);
-        alert('Erreur de connexion. Veuillez réessayer.');
+    changerStatutAction("/commandes/" + id + "/statut/", nouveauStatut, {
+        btn: btn,
+        csrf: '{{ csrf_token }}',
+        reload: true,
+    }).catch(() => {
         if (btn) { btn.disabled = false; btn.innerHTML = texteOriginal; }
     });
 }

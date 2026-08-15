@@ -278,6 +278,8 @@
 {% endblock %}
 
 {% block extra_js %}
+{% load static %}
+<script src="{% static 'js/statut.js' %}"></script>
 <script>
 function getCookie(name) {
     const value = `; ${document.cookie}`;
@@ -310,34 +312,12 @@ async function prendreEnCharge(btn) {
     }
 }
 
-async function changerStatutLivraison(id, statut) {
-    try {
-        const formData = new FormData();
-        formData.append("statut", statut);
-        const response = await fetch(`/livraisons/${id}/statut/`, {
-            method: "POST",
-            headers: { "X-CSRFToken": getCookie("csrftoken") },
-            body: formData,
-        });
-        const data = await response.json();
-        if (data.success) {
-            const card = document.getElementById(`livraison-${id}`);
-            if (card) {
-                card.style.transition = "0.3s";
-                card.style.transform = "scale(1.02)";
-                setTimeout(() => {
-                    window.location.reload();
-                }, 300);
-            } else {
-                window.location.reload();
-            }
-        } else {
-            alert(data.error || "Erreur lors du changement de statut.");
-        }
-    } catch (error) {
-        console.error("Erreur:", error);
+function changerStatutLivraison(id, statut) {
+    changerStatutAction(`/livraisons/${id}/statut/`, statut, {
+        reload: true,
+    }).catch(() => {
         alert("Erreur rÃ©seau.");
-    }
+    });
 }
 
 // === Filtres par statut ===

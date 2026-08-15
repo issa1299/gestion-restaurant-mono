@@ -136,18 +136,14 @@
 {% endblock %}
 
 {% block extra_js %}
+{% load static %}
+<script src="{% static 'js/statut.js' %}"></script>
 <script>
 function changerStatut(commandeId, nouveauStatut) {
-    const formData = new FormData();
-    formData.append('statut', nouveauStatut);
-    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-    fetch("{% url 'commandes:changer_statut' 0 %}".replace('/0/', '/' + commandeId + '/'), {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
+    changerStatutAction("{% url 'commandes:changer_statut' 0 %}".replace('/0/', '/' + commandeId + '/'), nouveauStatut, {
+        csrf: '{{ csrf_token }}',
+        reload: false,
+        onSuccess: function (data) {
             const card = document.querySelector(`.commande-card[data-commande-id="${commandeId}"]`);
             if (card) {
                 card.style.transition = '0.3s';
@@ -157,9 +153,7 @@ function changerStatut(commandeId, nouveauStatut) {
             }
             afficherNotification(`Commande N° ${data.id} : ${data.ancien_statut} → ${data.nouveau_statut}`, 'success');
         }
-    })
-    .catch(error => {
-        console.error('Erreur:', error);
+    }).catch(() => {
         afficherNotification('Erreur lors du changement de statut', 'error');
     });
 }

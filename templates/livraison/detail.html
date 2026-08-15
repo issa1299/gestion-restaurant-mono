@@ -160,8 +160,11 @@
 {% endblock %}
 
 {% block extra_js %}
+{% load static %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="{% static 'js/statut.js' %}"></script>
+<script src="{% static 'js/carte.js' %}"></script>
 <script>
 const livraisonId = {{ livraison.id }};
     const csrftoken = "{{ csrf_token }}";
@@ -189,41 +192,14 @@ const livraisonId = {{ livraison.id }};
     }, {}, { position: 'topright' }).addTo(mapLivraison);
 
     // Bouton plein écran personnalisé
-    L.Control.FullscreenCustom = L.Control.extend({
-        options: { position: 'topright' },
-        onAdd: function (map) {
-            const btn = L.DomUtil.create('button', 'leaflet-bar leaflet-control leaflet-control-custom');
-            btn.innerHTML = '<i class="fas fa-expand"></i>';
-            btn.style.cssText = 'width:30px;height:30px;background:white;border:none;border-radius:4px;cursor:pointer;color:#334155;font-size:13px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 5px rgba(0,0,0,0.4)';
-            btn.title = 'Plein écran';
-            btn.onclick = function (e) { L.DomEvent.stopPropagation(e); L.DomEvent.preventDefault(e); basculerPleinEcran(map); };
-            return btn;
-        }
-    });
-    mapLivraison.addControl(new L.Control.FullscreenCustom());
-
-    function basculerPleinEcran(map) {
-        const conteneur = map.getContainer();
-        if (!document.fullscreenElement) {
-            conteneur.requestFullscreen().catch(() => {});
-        } else {
-            document.exitFullscreen().catch(() => {});
-        }
-    }
+    ajouterControlePleinEcran(mapLivraison);
 
     // Corrige les cartes blanches (conteneur à taille 0 au chargement)
-    setTimeout(() => mapLivraison.invalidateSize(), 300);
-    window.addEventListener('resize', () => mapLivraison.invalidateSize());
+    corrigerTailleCarte(mapLivraison);
 
     // Icônes personnalisées
-    const iconClientLiv = L.divIcon({
-        html: '<div style="background:#f97316;border:3px solid white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);width:24px;height:24px;box-shadow:0 2px 8px rgba(0,0,0,0.3)"></div>',
-        iconSize: [24, 24], iconAnchor: [12, 24], className: ''
-    });
-    const iconLivreurLiv = L.divIcon({
-        html: '<div style="background:#3b82f6;border:3px solid white;border-radius:50%;width:24px;height:24px;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center"><i class="fas fa-motorcycle" style="color:white;font-size:11px"></i></div>',
-        iconSize: [24, 24], iconAnchor: [12, 12], className: ''
-    });
+    const iconClientLiv = iconClientLeaflet(24);
+    const iconLivreurLiv = iconLivreurLeaflet(24);
 
     // Marqueur client (fixe)
     let clientMarkerLiv = null;
@@ -250,23 +226,6 @@ const livraisonId = {{ livraison.id }};
     let fallbackLayerLiv = null;
     let dernierOriginLiv = null;
 
-    function formaterDistanceLiv(m) {
-        const km = m / 1000;
-        return km < 1 ? `${Math.round(m)} m` : `${km.toFixed(1)} km`;
-    }
-    function formaterDureeLiv(s) {
-        const min = Math.round(s / 60);
-        if (min < 60) return `${min} min`;
-        return `${Math.floor(min / 60)} h ${min % 60} min`;
-    }
-    function haversine(lat1, lng1, lat2, lng2) {
-        const R = 6371;
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLng = (lng2 - lng1) * Math.PI / 180;
-        const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    }
-
     async function chargerRouteLiv(lat, lng) {
         if (!clientMarkerLiv) return;
         if (dernierOriginLiv &&
@@ -289,7 +248,7 @@ const livraisonId = {{ livraison.id }};
                     routeLayerLiv.setLatLngs(coords);
                 }
                 document.getElementById('distance-livraison').textContent =
-                    `🛵 ${formaterDureeLiv(data.routes[0].duration)} · ${formaterDistanceLiv(data.routes[0].distance)} du client`;
+                    `🛵 ${formaterDuree(data.routes[0].duration)} · ${formaterDistance(data.routes[0].distance)} du client`;
             } else {
                 fallbackLiv(lat, lng);
             }
@@ -429,26 +388,12 @@ const livraisonId = {{ livraison.id }};
     });
 
     // ===== Changement de statut (AJAX) =====
-    async function changerStatut(statut) {
+    function changerStatut(statut) {
         if (!confirm(`Changer le statut en « ${statut} » ?`)) return;
-        try {
-            const formData = new FormData();
-            formData.append('statut', statut);
-            const response = await fetch(`/livraisons/${livraisonId}/statut/`, {
-                method: 'POST',
-                headers: { 'X-CSRFToken': csrftoken },
-                body: formData
-            });
-            const data = await response.json();
-            if (data.success) {
-                alert(`Statut changé : ${data.statut_display}`);
-                location.reload();
-            } else {
-                alert(data.error || 'Impossible de changer le statut.');
-            }
-        } catch (e) {
-            alert('Erreur réseau');
-        }
+        changerStatutAction(`/livraisons/${livraisonId}/statut/`, statut, {
+            csrf: csrftoken,
+            reload: true,
+        });
     }
 </script>
 {% endblock %}
