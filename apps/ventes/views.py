@@ -5,10 +5,11 @@ from django.db import transaction
 from django.db import models
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.core.paginator import Paginator
 from django.utils import timezone
 from django.contrib import messages
 from django.contrib.sessions.models import Session
-from django.db.models import Q
+from django.db.models import Q, Sum
 from .models import DetailVente, Vente
 from apps.menu.models import Produit
 from apps.accounts.decorators import role_required
@@ -416,7 +417,7 @@ def enregistrer_vente(request):
 @role_required(["ADMIN", "GERANT", "CAISSIER"])
 def ticket(request, vente_id):
     vente = get_object_or_404(
-        Vente,
+        Vente.objects.prefetch_related("details__produit"),
         id=vente_id
     )
     parametre = ParametreRestaurant.load()
@@ -434,7 +435,8 @@ def ticket(request, vente_id):
 @role_required(["ADMIN", "GERANT", "CAISSIER"])
 def detail_vente(request, vente_id):
     vente = get_object_or_404(
-        Vente.objects.select_related("caissier", "annule_par", "commande"),
+        Vente.objects.select_related("caissier", "annule_par", "commande")
+        .prefetch_related("details__produit"),
         id=vente_id
     )
     parametre = ParametreRestaurant.load()
@@ -523,21 +525,27 @@ def historique(request):
         is_active=True
     )
 
-    total = sum(
-        vente.total for vente in ventes
+    total = ventes.aggregate(total=Sum("total"))["total"] or 0
+    total_valides = (
+        ventes.filter(annulee=False).aggregate(total=Sum("total"))["total"] or 0
     )
-    total_valides = sum(
-        vente.total for vente in ventes if not vente.annulee
+    total_annulees = (
+        ventes.filter(annulee=True).aggregate(total=Sum("total"))["total"] or 0
     )
-    total_annulees = sum(
-        vente.total for vente in ventes if vente.annulee
-    )
+
+    paginator = Paginator(ventes, 20)
+    page_num = request.GET.get("page", "1")
+    try:
+        page_obj = paginator.page(page_num)
+    except Exception:
+        page_obj = paginator.page(1)
 
     return render(
         request,
         "ventes/historique.html",
         {
-            "ventes": ventes,
+            "ventes": page_obj.object_list,
+            "page_obj": page_obj,
             "total": total,
             "total_annulees": total_annulees,
             "total_valides": total_valides,

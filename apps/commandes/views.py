@@ -3,6 +3,7 @@ from django.http import JsonResponse
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django.core.paginator import Paginator
 
 from apps.commandes.models import Commande, LigneCommande
 from apps.commandes.forms import CommandeForm, LigneCommandeFormSet
@@ -21,34 +22,16 @@ def index(request):
         "en_preparation": commandes.filter(statut=Commande.EN_PREPARATION).count(),
         "pretes": commandes.filter(statut=Commande.PRETE).count(),
     }
-    commandes_json = []
-    for cmd in commandes:
-        commandes_json.append({
-            "id": cmd.id,
-            "client": str(cmd.client) if cmd.client else "À emporter",
-            "telephone": cmd.telephone_livraison if cmd.type == "LIVRAISON" else (cmd.client.telephone if cmd.client else ""),
-            "table": cmd.table.numero if cmd.table else None,
-            "type": cmd.get_type_display(),
-            "type_code": cmd.type,
-            "statut": cmd.get_statut_display(),
-            "statut_code": cmd.statut,
-            "date": cmd.created_at.strftime("%d/%m/%Y %H:%M"),
-            "serveur": str(cmd.serveur) if cmd.serveur else "-",
-            "adresse": cmd.adresse_livraison,
-            "telephone_livraison": cmd.telephone_livraison,
-            "articles": [{
-                "nom": l.produit.nom,
-                "qte": l.quantite,
-                "prix": float(l.prix),
-                "sous_total": float(l.sous_total),
-            } for l in cmd.lignes.all()],
-            "total": float(cmd.total),
-            "statuts": [{"code": s[0], "label": s[1]} for s in Commande.STATUTS if s[0] != cmd.statut],
-        })
+    paginator = Paginator(commandes, 30)
+    page_num = request.GET.get("page", "1")
+    try:
+        page_obj = paginator.page(page_num)
+    except Exception:
+        page_obj = paginator.page(1)
     return render(request, "commandes/index.html", {
-        "commandes": commandes,
+        "commandes": page_obj.object_list,
+        "page_obj": page_obj,
         "stats": stats,
-        "commandes_json": commandes_json,
         "groupe": "commandes"
     })
 

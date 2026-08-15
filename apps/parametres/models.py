@@ -1,4 +1,6 @@
 from django.db import models
+from django.core.cache import cache
+
 
 class ParametreRestaurant(models.Model):
     nom = models.CharField(max_length=100, default="RestaurantPro")
@@ -39,10 +41,14 @@ class ParametreRestaurant(models.Model):
         # S'assurer qu'il n'y a qu'une seule instance
         self.pk = 1
         super(ParametreRestaurant, self).save(*args, **kwargs)
+        cache.delete("parametres_restaurant")
 
     @classmethod
     def load(cls):
-        obj, created = cls.objects.get_or_create(pk=1)
+        obj = cache.get("parametres_restaurant")
+        if obj is None:
+            obj, created = cls.objects.get_or_create(pk=1)
+            cache.set("parametres_restaurant", obj, 300)
         return obj
 
     def __str__(self):

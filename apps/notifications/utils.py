@@ -1,9 +1,14 @@
 import json
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from django.core.cache import cache
 
 from apps.clients.models import Client
 from apps.commandes.models import Commande
+
+
+def _invalider_cache_navbar():
+    cache.delete("navbar_notifications")
 
 
 def envoyer_notification_broadcast(groupe, evenement, data):
@@ -73,6 +78,7 @@ def notifier_nouvelle_commande(commande):
     envoyer_notification_broadcast('commandes', 'nouvelle_commande', data)
     envoyer_notification_broadcast('dashboard', 'nouvelle_commande', data)
     envoyer_notification_broadcast('cuisine', 'nouvelle_commande', data)
+    _invalider_cache_navbar()
     if commande.type == Commande.LIVRAISON:
         data['type'] = 'LIVRAISON'
         data['adresse'] = commande.adresse_livraison
@@ -91,3 +97,4 @@ def notifier_changement_statut_commande(commande_id, ancien_statut, nouveau_stat
     envoyer_notification_broadcast('commandes', 'statut_commande', data)
     envoyer_notification_broadcast('dashboard', 'statut_commande', data)
     envoyer_notification_broadcast('cuisine', 'statut_commande', data)
+    _invalider_cache_navbar()

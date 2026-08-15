@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
+from django.core.paginator import Paginator
 from .forms import UserCreateForm, UserEditForm
 from .models import CustomUser
 from .decorators import ROLE_HOME, role_required
@@ -80,11 +81,19 @@ def users_list(request):
     if role in [r[0] for r in roles]:
         users = users.filter(role=role)
 
+    paginator = Paginator(users, 20)
+    page_num = request.GET.get("page", "1")
+    try:
+        page_obj = paginator.page(page_num)
+    except Exception:
+        page_obj = paginator.page(1)
+
     return render(
         request,
         "accounts/users_list.html",
         {
-            "users": users,
+            "users": page_obj.object_list,
+            "page_obj": page_obj,
             "q": q,
             "role_selectionne": role,
             "roles": roles,

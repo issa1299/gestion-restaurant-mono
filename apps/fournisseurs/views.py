@@ -1,6 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import JsonResponse
+from django.db.models import Sum, F
+from django.core.paginator import Paginator
 
 from apps.accounts.decorators import role_required
 from apps.menu.models import Produit
@@ -22,8 +24,16 @@ def liste_fournisseurs(request):
     nb_approvisionnements = Approvisionnement.objects.count()
     nb_produits = Produit.objects.count()
 
+    paginator = Paginator(fournisseurs, 20)
+    page_num = request.GET.get("page", "1")
+    try:
+        page_obj = paginator.page(page_num)
+    except Exception:
+        page_obj = paginator.page(1)
+
     return render(request, "fournisseurs/liste.html", {
-        "fournisseurs": fournisseurs,
+        "fournisseurs": page_obj.object_list,
+        "page_obj": page_obj,
         "q": q,
         "total": total,
         "nb_approvisionnements": nb_approvisionnements,
@@ -35,7 +45,11 @@ def liste_fournisseurs(request):
 def detail_fournisseur(request, pk):
     fournisseur = get_object_or_404(Fournisseur, pk=pk)
     approvisionnements = fournisseur.approvisionnements.select_related("produit", "utilisateur")
-    total_depenses = sum(a.total for a in approvisionnements)
+    total_depenses = (
+        fournisseur.approvisionnements.aggregate(
+            total=Sum(F("quantite") * F("prix_unitaire"))
+        )["total"] or 0
+    )
 
     return render(request, "fournisseurs/detail.html", {
         "fournisseur": fournisseur,
@@ -182,10 +196,22 @@ def liste_approvisionnements(request):
             produit__nom__icontains=q
         ) | approvisionnements.filter(fournisseur__nom__icontains=q)
 
-    total_depenses = sum(a.total for a in approvisionnements)
+    total_depenses = (
+        approvisionnements.aggregate(
+            total=Sum(F("quantite") * F("prix_unitaire"))
+        )["total"] or 0
+    )
+
+    paginator = Paginator(approvisionnements, 20)
+    page_num = request.GET.get("page", "1")
+    try:
+        page_obj = paginator.page(page_num)
+    except Exception:
+        page_obj = paginator.page(1)
 
     return render(request, "fournisseurs/approvisionnements.html", {
-        "approvisionnements": approvisionnements,
+        "approvisionnements": page_obj.object_list,
+        "page_obj": page_obj,
         "q": q,
         "nb": approvisionnements.count(),
         "total_depenses": total_depenses,
