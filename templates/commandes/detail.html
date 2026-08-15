@@ -116,7 +116,7 @@
             <div class="flex flex-col sm:flex-row sm:items-center gap-3">
                 {% if commande.statut == 'EN_ATTENTE' %}
                 <button type="button" onclick="changerStatut('EN_PREPARATION', this)"
-                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 text-sm">
+                    class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 text-sm">
                     <i class="fas fa-fire"></i> Démarrer la préparation
                 </button>
                 {% elif commande.statut == 'EN_PREPARATION' %}
@@ -138,7 +138,7 @@
                 {% endif %}
 
                 {% if commande.statut != 'LIVREE' and commande.statut != 'ANNULEE' %}
-                <button type="button" onclick="if(confirm('Annuler cette commande ?')){changerStatut('ANNULEE', this)}"
+                <button type="button" onclick="annulerCommande(this)"
                     class="px-4 py-2.5 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-50 border border-red-200 transition flex items-center justify-center gap-2">
                     Annuler
                 </button>
@@ -153,6 +153,7 @@
 {% block extra_js %}
 {% load static %}
 <script src="{% static 'js/statut.js' %}"></script>
+<script src="{% static 'js/toast.js' %}"></script>
 <script>
 function changerStatut(nouveauStatut, btn) {
     const texteOriginal = btn ? btn.innerHTML : '';
@@ -162,6 +163,12 @@ function changerStatut(nouveauStatut, btn) {
         reload: true,
     }).catch(() => {
         if (btn) { btn.disabled = false; btn.innerHTML = texteOriginal; }
+    });
+}
+
+function annulerCommande(btn) {
+    confirmerAction('Annuler cette commande ?').then(ok => {
+        if (ok) changerStatut('ANNULEE', btn);
     });
 }
 </script>

@@ -112,11 +112,14 @@
 {% endblock %}
 
 {% block extra_js %}
+{% load static %}
+<script src="{% static 'js/toast.js' %}"></script>
 <script>
 function copierLien() {
     const lien = "{{ lien_suivi|escapejs }}";
+    const notif = () => afficherToast("Lien de suivi copié !", "success");
     if (navigator.clipboard) {
-        navigator.clipboard.writeText(lien).then(() => alert('Lien copié !'));
+        navigator.clipboard.writeText(lien).then(notif);
     } else {
         const ta = document.createElement('textarea');
         ta.value = lien;
@@ -124,7 +127,7 @@ function copierLien() {
         ta.select();
         document.execCommand('copy');
         document.body.removeChild(ta);
-        alert('Lien copié !');
+        notif();
     }
 }
 localStorage.removeItem("panier");

@@ -124,9 +124,10 @@
                     {% endif %}
                     {% if not request.user.role == "ADMIN" or request.user.role == "GERANT" and not request.user.is_superuser %}
                     <form method="POST" action="{% url 'restaurant:galerie_supprimer' photo.id %}"
-                          onsubmit="return confirm('Supprimer cette photo ?');">
+                          id="form-supprimer-photo-{{ photo.id }}">
                         {% csrf_token %}
-                        <button type="submit" title="Supprimer la photo"
+                        <button type="button" title="Supprimer la photo"
+                                onclick="supprimerPhoto({{ photo.id }})"
                                 class="absolute top-2 right-2 w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 shadow transition">
                             <i class="fas fa-trash text-xs"></i>
                         </button>
@@ -155,4 +156,16 @@
     </div>
 
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{% load static %}
+<script src="{% static 'js/toast.js' %}"></script>
+<script>
+function supprimerPhoto(id) {
+    confirmerAction("Supprimer cette photo ?", { okText: "Supprimer" }).then(ok => {
+        if (ok) document.getElementById("form-supprimer-photo-" + id).submit();
+    });
+}
+</script>
 {% endblock %}

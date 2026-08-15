@@ -420,13 +420,13 @@
         }
 
         function validerPanierModal() {
-            if (panierModal.length === 0) { alert("Votre panier est vide."); return; }
+            if (panierModal.length === 0) { afficherToast("Votre panier est vide.", "warning"); return; }
             const nom = document.getElementById("modal-nom").value.trim();
             const tel = document.getElementById("modal-tel").value.trim();
             const adresse = document.getElementById("modal-adresse").value.trim();
-            if (!nom) { alert("Veuillez entrer votre nom."); return; }
-            if (!tel) { alert("Veuillez entrer votre numero de telephone."); return; }
-            if (!adresse) { alert("Veuillez entrer votre adresse de livraison."); return; }
+            if (!nom) { afficherToast("Veuillez entrer votre nom.", "error"); return; }
+            if (!tel) { afficherToast("Veuillez entrer votre numéro de téléphone.", "error"); return; }
+            if (!adresse) { afficherToast("Veuillez entrer votre adresse de livraison.", "error"); return; }
 
             const btn = document.getElementById("modal-valider");
             btn.disabled = true;
@@ -457,13 +457,13 @@
                 } else {
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fas fa-check-circle"></i> Valider ma commande';
-                    alert(data.message || "Erreur lors de la creation de la commande.");
+                    afficherToast(data.message || "Erreur lors de la creation de la commande.", "error");
                 }
             })
             .catch(() => {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-check-circle"></i> Valider ma commande';
-                alert("Erreur de connexion. Veuillez reessayer.");
+                afficherToast("Erreur de connexion. Veuillez reessayer.", "error");
             });
         }
 
@@ -474,6 +474,8 @@
     </script>
 
     {% block extra_js %}{% endblock %}
+
+    <script src="{% static 'js/toast.js' %}"></script>
 </body>
 
 </html>

@@ -107,7 +107,7 @@
                         {% if request.user.role == "CUISINIER" %}
                         {% if commande.statut == 'EN_ATTENTE' %}
                         <button onclick="changerStatut({{ commande.id }}, 'EN_PREPARATION')"
-                                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1.5 sm:py-2 rounded text-xs sm:text-sm transition flex items-center justify-center gap-2">
+                                class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-1.5 sm:py-2 rounded text-xs sm:text-sm transition flex items-center justify-center gap-2">
                             <i class="fas fa-fire"></i> Commencer la préparation
                         </button>
                         {% endif %}

@@ -224,7 +224,7 @@
                         <div class="space-y-2">
                             {% if livraison.statut == 'EN_ATTENTE' %}
                                 <button onclick="changerStatutLivraison({{ livraison.id }}, 'EN_COURS')"
-                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2">
+                                    class="w-full bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2">
                                     <i class="fas fa-play"></i> Prendre en charge
                                 </button>
                             {% elif livraison.statut == 'EN_COURS' %}
@@ -280,6 +280,7 @@
 {% block extra_js %}
 {% load static %}
 <script src="{% static 'js/statut.js' %}"></script>
+<script src="{% static 'js/toast.js' %}"></script>
 <script>
 function getCookie(name) {
     const value = `; ${document.cookie}`;
@@ -288,7 +289,8 @@ function getCookie(name) {
 }
 
 async function prendreEnCharge(btn) {
-    if (!confirm("Prendre en charge cette commande ?")) return;
+    const ok = await confirmerAction("Prendre en charge cette commande ?", { okText: "Prendre en charge" });
+    if (!ok) return;
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Prise en charge...';
     const commandeId = btn.dataset.id;
@@ -303,12 +305,12 @@ async function prendreEnCharge(btn) {
         } else {
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-truck"></i> Prendre en charge';
-            alert(data.error || "Erreur lors de la prise en charge.");
+            afficherToast(data.error || "Erreur lors de la prise en charge.", "error");
         }
     } catch (error) {
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-truck"></i> Prendre en charge';
-        alert("Erreur réseau.");
+        afficherToast("Erreur réseau.", "error");
     }
 }
 
@@ -316,7 +318,7 @@ function changerStatutLivraison(id, statut) {
     changerStatutAction(`/livraisons/${id}/statut/`, statut, {
         reload: true,
     }).catch(() => {
-        alert("Erreur réseau.");
+        afficherToast("Erreur réseau.", "error");
     });
 }
 

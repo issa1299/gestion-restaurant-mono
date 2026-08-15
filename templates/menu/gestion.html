@@ -161,6 +161,8 @@
 {% endblock %}
 
 {% block extra_js %}
+{% load static %}
+<script src="{% static 'js/toast.js' %}"></script>
 <script>
 function getCookie(name) {
     const value = `; ${document.cookie}`;
@@ -169,7 +171,8 @@ function getCookie(name) {
 }
 
 async function supprimerElement(url, nom) {
-    if (!confirm(`Voulez-vous vraiment supprimer "${nom}" ?`)) return;
+    const ok = await confirmerAction(`Voulez-vous vraiment supprimer "${nom}" ?`, { okText: "Supprimer" });
+    if (!ok) return;
     try {
         const response = await fetch(url, {
             method: 'POST',
@@ -179,10 +182,10 @@ async function supprimerElement(url, nom) {
         if (data.success) {
             window.location.reload();
         } else {
-            alert(data.error || "Erreur lors de la suppression.");
+            afficherToast(data.error || "Erreur lors de la suppression.", "error");
         }
     } catch (error) {
-        alert("Erreur de connexion. Veuillez réessayer.");
+        afficherToast("Erreur de connexion. Veuillez réessayer.", "error");
     }
 }
 
@@ -208,10 +211,10 @@ async function toggleDisponible(btn, url, nom) {
             }
             btn.title = etat ? 'Cliquer pour désactiver' : 'Cliquer pour activer';
         } else {
-            alert(data.error || `Impossible de modifier "${nom}".`);
+            afficherToast(data.error || `Impossible de modifier "${nom}".`, "error");
         }
     } catch (error) {
-        alert("Erreur de connexion. Veuillez réessayer.");
+        afficherToast("Erreur de connexion. Veuillez réessayer.", "error");
     }
 }
 </script>

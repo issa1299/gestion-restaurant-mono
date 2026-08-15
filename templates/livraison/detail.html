@@ -165,6 +165,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="{% static 'js/statut.js' %}"></script>
 <script src="{% static 'js/carte.js' %}"></script>
+<script src="{% static 'js/toast.js' %}"></script>
 <script>
 const livraisonId = {{ livraison.id }};
     const csrftoken = "{{ csrf_token }}";
@@ -389,10 +390,12 @@ const livraisonId = {{ livraison.id }};
 
     // ===== Changement de statut (AJAX) =====
     function changerStatut(statut) {
-        if (!confirm(`Changer le statut en « ${statut} » ?`)) return;
-        changerStatutAction(`/livraisons/${livraisonId}/statut/`, statut, {
-            csrf: csrftoken,
-            reload: true,
+        confirmerAction(`Changer le statut en « ${statut} » ?`).then(ok => {
+            if (!ok) return;
+            changerStatutAction(`/livraisons/${livraisonId}/statut/`, statut, {
+                csrf: csrftoken,
+                reload: true,
+            });
         });
     }
 </script>

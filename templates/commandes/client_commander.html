@@ -297,6 +297,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'js/toast.js' %}"></script>
 <script>
 let panier = JSON.parse(localStorage.getItem("panier")) || [];
 let mode = "SUR_PLACE";
@@ -398,10 +399,12 @@ function supprimer(index) {
 
 function viderPanier() {
     if (panier.length === 0) return;
-    if (!confirm("Vider le panier ?")) return;
-    panier = [];
-    sauvegarder();
-    afficherPanier();
+    confirmerAction('Vider le panier ?', { okText: 'Vider' }).then(ok => {
+        if (!ok) return;
+        panier = [];
+        sauvegarder();
+        afficherPanier();
+    });
 }
 
 function sauvegarder() {
@@ -472,7 +475,7 @@ async function validerCommande() {
 
     if (mode === "LIVRAISON") {
         const adresse = document.getElementById("adresse-livraison").value.trim();
-        if (!adresse) { alert("Veuillez entrer une adresse de livraison."); return; }
+        if (!adresse) { afficherToast("Veuillez entrer une adresse de livraison.", "error"); return; }
     }
 
     document.getElementById("btn-valider").disabled = true;
@@ -512,11 +515,11 @@ async function validerCommande() {
                 window.location.href = `/livraisons/suivi/${data.commande_id}/${data.token}/`;
             };
         } else {
-            alert(data.message || "Erreur lors de la création de la commande.");
+            afficherToast(data.message || "Erreur lors de la création de la commande.", "error");
         }
     } catch (error) {
         console.error(error);
-        alert("Erreur de connexion. Veuillez réessayer.");
+        afficherToast("Erreur de connexion. Veuillez réessayer.", "error");
     } finally {
         document.getElementById("btn-valider").disabled = false;
         document.getElementById("btn-valider").innerHTML = '<i class="fas fa-check"></i> Valider la commande';
