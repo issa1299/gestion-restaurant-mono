@@ -2,7 +2,6 @@ from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 
 from apps.menu.models import Categorie, Produit
-from apps.stock.models import Stock, MouvementStock
 from apps.fournisseurs.models import Fournisseur, Approvisionnement
 
 User = get_user_model()
@@ -127,10 +126,9 @@ class ApprovisionnementTests(TestCase):
         self.produit = Produit.objects.create(
             categorie=self.categorie, nom="Jus", prix=500,
         )
-        self.stock = Stock.objects.create(produit=self.produit, quantite=5)
         self.fournisseur = Fournisseur.objects.create(nom="Socima")
 
-    def test_approvisionnement_augmente_stock(self):
+    def test_approvisionnement_enregistre(self):
         c = Client()
         c.force_login(self.vendeur)
         resp = c.post("/fournisseurs/approvisionnements/ajouter/", {
@@ -141,15 +139,8 @@ class ApprovisionnementTests(TestCase):
         })
         self.assertEqual(resp.status_code, 302)
 
-        self.stock.refresh_from_db()
-        self.assertEqual(self.stock.quantite, 15)
-
         self.assertTrue(Approvisionnement.objects.filter(
             fournisseur=self.fournisseur, produit=self.produit, quantite=10,
-        ).exists())
-
-        self.assertTrue(MouvementStock.objects.filter(
-            produit=self.produit, type_mouvement="ENTREE", quantite=10,
         ).exists())
 
     def test_approvisionnement_interdit_admin(self):
@@ -161,23 +152,6 @@ class ApprovisionnementTests(TestCase):
             "quantite": 10,
         })
         self.assertEqual(resp.status_code, 302)
-        self.stock.refresh_from_db()
-        self.assertEqual(self.stock.quantite, 5)
-
-    def test_approvisionnement_creer_stock_si_absent(self):
-        nouveau = Produit.objects.create(
-            categorie=self.categorie, nom="Café", prix=300,
-        )
-        c = Client()
-        c.force_login(self.vendeur)
-        resp = c.post("/fournisseurs/approvisionnements/ajouter/", {
-            "fournisseur": self.fournisseur.id,
-            "produit": nouveau.id,
-            "quantite": 4,
-        })
-        self.assertEqual(resp.status_code, 302)
-        stock = Stock.objects.get(produit=nouveau)
-        self.assertEqual(stock.quantite, 4)
 
     def test_approvisionnement_quantite_invalide(self):
         c = Client()
@@ -188,8 +162,6 @@ class ApprovisionnementTests(TestCase):
             "quantite": 0,
         })
         self.assertEqual(resp.status_code, 302)
-        self.stock.refresh_from_db()
-        self.assertEqual(self.stock.quantite, 5)
 
     def test_liste_approvisionnements(self):
         c = Client()

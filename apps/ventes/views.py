@@ -11,27 +11,10 @@ from django.contrib.sessions.models import Session
 from django.db.models import Q
 from .models import DetailVente, Vente
 from apps.menu.models import Produit
-from apps.stock.models import MouvementStock, Stock
 from apps.accounts.decorators import role_required
 from apps.accounts.models import CustomUser
 from apps.parametres.models import ParametreRestaurant
 from apps.commandes.models import Commande, LigneCommande
-
-
-def _deduire_stock(produit, quantite, user, vente_id):
-    """Retire `quantite` du stock d'un produit et trace le mouvement."""
-    stock = Stock.objects.select_for_update().filter(produit=produit).first()
-    if not stock or stock.quantite < quantite:
-        raise Exception(f"Stock insuffisant : {produit.nom}")
-    stock.quantite -= quantite
-    stock.save()
-    MouvementStock.objects.create(
-        produit=produit,
-        type_mouvement="SORTIE",
-        quantite=quantite,
-        utilisateur=user,
-        commentaire=f"Vente N° {vente_id}"
-    )
 
 
 def _clamp_remise(remise):
@@ -72,7 +55,7 @@ def _charger_panier(panier, produits_ok=None):
 def pos(request):
     from apps.menu.models import Categorie
     from apps.tables.models import Table
-    produits = Produit.objects.disponibles().select_related('categorie', 'stock')
+    produits = Produit.objects.disponibles().select_related('categorie')
     categories = Categorie.objects.all()
     parametre = ParametreRestaurant.load()
     tables = Table.objects.all()
@@ -102,7 +85,6 @@ def pos(request):
                     "nom": ligne.produit.nom,
                     "prix": float(ligne.prix),
                     "qte": ligne.quantite,
-                    "stock": getattr(getattr(ligne.produit, "stock", None), "quantite", None) or 9999,
                 }
                 for ligne in commande.lignes.all()
             ],
@@ -138,7 +120,7 @@ def pos(request):
 
 @role_required(["ADMIN", "GERANT", "CAISSIER"], ecriture_autorisee=True)
 def creer_commande(request):
-    """Crée (ou met à jour) une commande envoyée en cuisine. Ne déduit PAS le stock."""
+    """Crée (ou met à jour) une commande envoyée en cuisine."""
     if request.method != "POST":
         return JsonResponse({"success": False, "message": "Méthode non autorisée."}, status=405)
 
@@ -219,7 +201,7 @@ def creer_commande(request):
 
 @role_required(["ADMIN", "GERANT", "CAISSIER"], ecriture_autorisee=True)
 def encaisser_commande(request):
-    """Encaisse une commande : crée la vente, déduit le stock, marque la commande payée."""
+    """Encaisse une commande : crée la vente, marque la commande payée."""
     if request.method != "POST":
         return JsonResponse({"success": False, "message": "Méthode non autorisée."}, status=405)
 
@@ -239,15 +221,6 @@ def encaisser_commande(request):
     lignes = list(commande.lignes.select_related("produit"))
     if not lignes:
         return JsonResponse({"success": False, "message": "La commande est vide."}, status=400)
-
-    # Vérification du stock avant la transaction
-    for ligne in lignes:
-        stock = Stock.objects.filter(produit=ligne.produit).first()
-        if stock is None or stock.quantite < ligne.quantite:
-            return JsonResponse({
-                "success": False,
-                "message": f"Stock insuffisant : {ligne.produit.nom}"
-            }, status=400)
 
     with transaction.atomic():
         vente = Vente.objects.create(
@@ -272,7 +245,6 @@ def encaisser_commande(request):
                 prix=ligne.prix,
                 sous_total=sous_total
             )
-            _deduire_stock(ligne.produit, ligne.quantite, request.user, vente.id)
 
         vente.total = total_brut * (1 - Decimal(str(remise)) / 100)
         vente.save()
@@ -372,14 +344,6 @@ def enregistrer_vente(request):
                 "message": f"Quantité invalide : {produit.nom}"
             }, status=400)
 
-        stock = Stock.objects.filter(produit=produit).first()
-
-        if stock is None or stock.quantite < quantite:
-            return JsonResponse({
-                "success": False,
-                "message": f"Stock insuffisant : {produit.nom}"
-            }, status=400)
-
     total = 0
 
     table = None
@@ -412,22 +376,6 @@ def enregistrer_vente(request):
                 quantite=quantite,
                 prix=prix,
                 sous_total=sous_total
-            )
-
-            stock = Stock.objects.select_for_update().filter(produit=produit).first()
-
-
-            if not stock:
-                raise Exception(f"Stock absent pour {produit.nom}" )
-            stock.quantite -= quantite
-            stock.save()
-
-            MouvementStock.objects.create(
-                produit=produit,
-                type_mouvement="SORTIE",
-                quantite=quantite,
-                utilisateur=request.user,
-                commentaire=f"Vente N° {vente.id}"
             )
 
         vente.total = total * (1 - Decimal(str(remise)) / 100)
@@ -503,7 +451,7 @@ def detail_vente(request, vente_id):
 
 @role_required(["CAISSIER"])
 def annuler_vente(request, vente_id):
-    """Annule une vente et remet les produits en stock."""
+    """Annule une vente."""
     vente = get_object_or_404(Vente, id=vente_id)
 
     if vente.annulee:
@@ -517,22 +465,9 @@ def annuler_vente(request, vente_id):
             vente.annule_par = request.user
             vente.save()
 
-            for detail in vente.details.all():
-                stock, _ = Stock.objects.get_or_create(produit=detail.produit)
-                stock.quantite += detail.quantite
-                stock.save()
-
-                MouvementStock.objects.create(
-                    produit=detail.produit,
-                    type_mouvement="ENTREE",
-                    quantite=detail.quantite,
-                    utilisateur=request.user,
-                    commentaire=f"Retour stock — annulation vente N° {vente.id}",
-                )
-
         messages.success(
             request,
-            f"Vente N° {vente.id} annulée. Les produits ont été remis en stock."
+            f"Vente N° {vente.id} annulée."
         )
         return redirect("ventes:historique")
 

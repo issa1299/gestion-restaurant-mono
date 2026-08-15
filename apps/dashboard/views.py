@@ -4,7 +4,6 @@ from apps.accounts.decorators import role_required
 from apps.ventes.models import Vente
 from apps.clients.models import Client
 from apps.tables.models import Table
-from apps.stock.models import Stock
 from apps.restaurant.models import Reservation, ContactMessage
 from django.db.models import Sum, Count, F
 from django.utils import timezone
@@ -111,11 +110,6 @@ def index(request):
         "client", "table"
     ).prefetch_related("lignes")[:5]
 
-    # Stock faible / rupture
-    stocks = Stock.objects.select_related("produit").all()
-    stock_faible_count = sum(1 for s in stocks if s.stock_faible and s.quantite > 0)
-    stock_rupture_count = sum(1 for s in stocks if s.quantite == 0)
-
     # Ventes des 7 derniers jours (graphique)
     il_y_a_7_jours = timezone.localdate() - timedelta(days=6)
     ventes_7jours = Vente.objects.filter(
@@ -160,8 +154,6 @@ def index(request):
             "total_clients": total_clients,
             "tables_occupees": tables_occupees,
             "dernieres_commandes": dernieres_commandes,
-            "stock_faible_count": stock_faible_count,
-            "stock_rupture_count": stock_rupture_count,
             "dates_chart": dates_chart,
             "ca_chart": ca_chart,
             "reservations_recentes": reservations_recentes,

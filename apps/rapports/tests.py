@@ -3,7 +3,6 @@ from django.contrib.auth import get_user_model
 
 from apps.menu.models import Categorie, Produit
 from apps.ventes.models import Vente, DetailVente
-from apps.stock.models import Stock
 
 User = get_user_model()
 
@@ -23,7 +22,6 @@ class RapportsTests(TestCase):
         self.produit = Produit.objects.create(
             categorie=self.categorie, nom="Jus", prix=500,
         )
-        Stock.objects.create(produit=self.produit, quantite=10)
 
         self.vente = Vente.objects.create(
             caissier=self.caissier, total=1000, mode_paiement="ESPECES",

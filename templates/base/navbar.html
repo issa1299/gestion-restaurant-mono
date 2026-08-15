@@ -75,13 +75,7 @@
                                 {% endif %}
                                 <div class="min-w-0">
                                     <p class="text-xs font-medium text-gray-800">{{ notif.message }}</p>
-                                    {% if notif.type == 'rupture' %}
-                                        <p class="text-[10px] text-red-500">Stock épuisé</p>
-                                    {% elif notif.type == 'faible' %}
-                                        <p class="text-[10px] text-yellow-600">Stock: {{ notif.quantite }}</p>
-                                    {% else %}
-                                        <p class="text-[10px] text-gray-500">{{ notif.client }} - {{ notif.table }}</p>
-                                    {% endif %}
+                                    <p class="text-[10px] text-gray-500">{{ notif.client }} - {{ notif.table }}</p>
                                 </div>
                             </div>
                             {% endfor %}
@@ -92,10 +86,6 @@
                             </div>
                         {% endif %}
                     </div>
-                    <a href="{% url 'stock:liste' %}"
-                       class="block p-3 text-center text-xs font-semibold text-orange-500 hover:bg-orange-50 rounded-b-2xl border-t border-gray-100">
-                        Voir le stock
-                    </a>
                 </div>
             </div>
 

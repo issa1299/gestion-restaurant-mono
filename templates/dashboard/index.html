@@ -203,14 +203,6 @@
         <div class="p-4 sm:p-5">
             <h2 class="text-base sm:text-lg font-bold text-slate-800 mb-4">Alertes systÃ¨me</h2>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <a href="{% url 'stock:liste' %}" class="bg-yellow-50 border border-slate-100 p-3 sm:p-4 rounded-xl transition">
-                    <i class="fas fa-box text-yellow-500 mr-2"></i>
-                    <span class="text-sm text-slate-700">Stock faible : <b>{{ stock_faible_count }}</b></span>
-                </a>
-                <a href="{% url 'stock:liste' %}" class="bg-red-50 border border-slate-100 p-3 sm:p-4 rounded-xl transition">
-                    <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
-                    <span class="text-sm text-slate-700">Rupture : <b>{{ stock_rupture_count }}</b></span>
-                </a>
                 <div class="bg-blue-50 border border-slate-100 p-3 sm:p-4 rounded-xl">
                     <i class="fas fa-bell text-blue-500 mr-2"></i>
                     <span class="text-sm text-slate-700">RÃ©servations : <b>{{ reservations_count }}</b> Â· Messages : <b>{{ messages_non_lus_count }}</b></span>

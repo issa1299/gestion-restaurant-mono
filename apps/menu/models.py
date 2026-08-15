@@ -3,9 +3,9 @@ from django.db import models
 
 class ProduitQuerySet(models.QuerySet):
     def disponibles(self):
-        """Produits visibles au menu / POS : marqués disponibles ET avec stock > 0.
-        Un produit sans ligne de stock suivi reste visible."""
-        return self.filter(disponible=True).exclude(stock__quantite=0)
+        """Produits visibles au menu / POS : uniquement marqués disponibles.
+        (Le suivi de stock est désactivé : les quantités sont ignorées.)"""
+        return self.filter(disponible=True)
 
 
 class Categorie(models.Model):

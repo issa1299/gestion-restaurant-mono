@@ -4,7 +4,6 @@ from django.http import JsonResponse
 
 from apps.accounts.decorators import role_required
 from apps.menu.models import Produit
-from apps.stock.models import Stock, MouvementStock
 
 from .models import Fournisseur, Approvisionnement
 
@@ -147,19 +146,6 @@ def ajouter_approvisionnement(request):
         if fournisseur_id:
             fournisseur = get_object_or_404(Fournisseur, pk=fournisseur_id)
 
-        # Mettre à jour le stock
-        stock, _ = Stock.objects.get_or_create(produit=produit)
-        stock.quantite += quantite
-        stock.save()
-
-        MouvementStock.objects.create(
-            produit=produit,
-            type_mouvement="ENTREE",
-            quantite=quantite,
-            utilisateur=request.user,
-            commentaire=f"Approvisionnement {fournisseur.nom if fournisseur else 'N/A'}",
-        )
-
         Approvisionnement.objects.create(
             fournisseur=fournisseur,
             produit=produit,
@@ -171,12 +157,12 @@ def ajouter_approvisionnement(request):
 
         messages.success(
             request,
-            f"{quantite} x {produit.nom} ajouté(s) au stock via {fournisseur.nom if fournisseur else 'aucun fournisseur'}."
+            f"{quantite} x {produit.nom} enregistré(s) via {fournisseur.nom if fournisseur else 'aucun fournisseur'}."
         )
         return redirect("fournisseurs:approvisionnements")
 
     fournisseurs = Fournisseur.objects.all()
-    produits = Produit.objects.select_related("stock").all()
+    produits = Produit.objects.all()
 
     return render(request, "fournisseurs/approvisionnement_form.html", {
         "fournisseurs": fournisseurs,

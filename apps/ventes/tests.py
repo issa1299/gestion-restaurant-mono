@@ -4,7 +4,6 @@ from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 
 from apps.menu.models import Categorie, Produit
-from apps.stock.models import Stock, MouvementStock
 from apps.ventes.models import Vente, DetailVente
 
 User = get_user_model()
@@ -61,7 +60,7 @@ class VenteAccessTests(TestCase):
 
 
 class EnregistrerVenteTests(TestCase):
-    """La création d'une vente déduit le stock et calcule le total."""
+    """La création d'une vente calcule le total sans gérer le stock."""
 
     def setUp(self):
         self.caissier = User.objects.create_user(
@@ -74,7 +73,6 @@ class EnregistrerVenteTests(TestCase):
         self.produit = Produit.objects.create(
             categorie=self.categorie, nom="Jus", prix=500,
         )
-        self.stock = Stock.objects.create(produit=self.produit, quantite=10)
 
     def _post_vente(self, user, panier=None):
         c = Client()
@@ -87,7 +85,7 @@ class EnregistrerVenteTests(TestCase):
             "/ventes/enregistrer/", data=data, content_type="application/json",
         )
 
-    def test_vente_ok_total_et_stock(self):
+    def test_vente_ok_total(self):
         resp = self._post_vente(self.caissier)
         self.assertEqual(resp.status_code, 200)
         body = json.loads(resp.content)
@@ -96,16 +94,7 @@ class EnregistrerVenteTests(TestCase):
         vente = Vente.objects.get(id=body["vente_id"])
         self.assertEqual(vente.total, 1000)
         self.assertEqual(vente.mode_paiement, "ESPECES")
-
-        self.stock.refresh_from_db()
-        self.assertEqual(self.stock.quantite, 8)
-
         self.assertEqual(DetailVente.objects.filter(vente=vente).count(), 1)
-        self.assertTrue(
-            MouvementStock.objects.filter(
-                produit=self.produit, type_mouvement="SORTIE", quantite=2,
-            ).exists()
-        )
 
     def test_vente_avec_remise_et_table(self):
         from apps.tables.models import Table
@@ -129,15 +118,13 @@ class EnregistrerVenteTests(TestCase):
         self.assertEqual(vente.table, table)
         self.assertEqual(vente.remise_montant, 100)
 
-    def test_vente_stock_insuffisant_refusee(self):
+    def test_vente_grande_quantite_acceptee(self):
         resp = self._post_vente(
             self.caissier, [{"id": self.produit.id, "qte": 99}],
         )
-        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.status_code, 200)
         body = json.loads(resp.content)
-        self.assertFalse(body["success"])
-        self.stock.refresh_from_db()
-        self.assertEqual(self.stock.quantite, 10)
+        self.assertTrue(body["success"])
 
     def test_vente_panier_vide_refuse(self):
         resp = self._post_vente(self.caissier, [])
@@ -146,8 +133,6 @@ class EnregistrerVenteTests(TestCase):
     def test_vente_interdite_pour_client(self):
         resp = self._post_vente(self.client_role)
         self.assertEqual(resp.status_code, 302)
-        self.stock.refresh_from_db()
-        self.assertEqual(self.stock.quantite, 10)
 
     def test_vente_interdite_pour_anonyme(self):
         c = Client()
@@ -160,7 +145,7 @@ class EnregistrerVenteTests(TestCase):
 
 
 class AnnulationVenteTests(TestCase):
-    """L'annulation d'une vente remet les produits en stock."""
+    """L'annulation d'une vente la marque comme annulée."""
 
     def setUp(self):
         self.caissier = User.objects.create_user(
@@ -170,7 +155,6 @@ class AnnulationVenteTests(TestCase):
         self.produit = Produit.objects.create(
             categorie=self.categorie, nom="Jus", prix=500,
         )
-        self.stock = Stock.objects.create(produit=self.produit, quantite=10)
 
         self.vente = Vente.objects.create(
             caissier=self.caissier, total=1000, mode_paiement="ESPECES",
@@ -178,15 +162,13 @@ class AnnulationVenteTests(TestCase):
         DetailVente.objects.create(
             vente=self.vente, produit=self.produit, quantite=2, prix=500, sous_total=1000,
         )
-        self.stock.quantite = 8
-        self.stock.save()
 
     def test_page_annulation_accessible(self):
         c = Client()
         c.force_login(self.caissier)
         self.assertEqual(c.get(f"/ventes/{self.vente.id}/annuler/").status_code, 200)
 
-    def test_annulation_remet_en_stock(self):
+    def test_annulation_validee(self):
         c = Client()
         c.force_login(self.caissier)
         resp = c.post(f"/ventes/{self.vente.id}/annuler/")
@@ -196,25 +178,16 @@ class AnnulationVenteTests(TestCase):
         self.assertTrue(self.vente.annulee)
         self.assertEqual(self.vente.annule_par, self.caissier)
 
-        self.stock.refresh_from_db()
-        self.assertEqual(self.stock.quantite, 10)
-
-        self.assertTrue(
-            MouvementStock.objects.filter(
-                produit=self.produit, type_mouvement="ENTREE", quantite=2,
-            ).exists()
-        )
-
     def test_annulation_double_refusee(self):
         c = Client()
         c.force_login(self.caissier)
         c.post(f"/ventes/{self.vente.id}/annuler/")
 
-        # Deuxième annulation doit être bloquée (pas de double remise en stock)
+        # Deuxième annulation doit être bloquée
         resp = c.get(f"/ventes/{self.vente.id}/annuler/")
         self.assertEqual(resp.status_code, 302)
-        self.stock.refresh_from_db()
-        self.assertEqual(self.stock.quantite, 10)
+        self.vente.refresh_from_db()
+        self.assertTrue(self.vente.annulee)
 
     def test_detail_vente_accessible(self):
         c = Client()

@@ -113,7 +113,6 @@
                         data-id="{{ produit.id }}"
                         data-nom="{{ produit.nom }}"
                         data-prix="{{ produit.prix }}"
-                        data-stock="{% if produit.stock %}{{ produit.stock.quantite }}{% else %}9999{% endif %}"
                         data-categorie="cat-{{ produit.categorie.id }}">
 
                     <div class="relative h-24 sm:h-32 bg-slate-50 overflow-hidden">
@@ -123,13 +122,6 @@
                             <div class="w-full h-full flex items-center justify-center">
                                 <i class="fas fa-utensils text-3xl sm:text-4xl text-slate-300"></i>
                             </div>
-                        {% endif %}
-                        {% if produit.stock %}
-                            {% if produit.stock.quantite <= 0 %}
-                            <span class="absolute top-2 left-2 bg-red-500 text-white px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm">Épuisé</span>
-                            {% elif produit.stock.quantite < 6 %}
-                            <span class="absolute top-2 left-2 bg-amber-500 text-white px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm">Stock : {{ produit.stock.quantite }}</span>
-                            {% endif %}
                         {% endif %}
                     </div>
 
@@ -448,20 +440,11 @@ const totalBtn = document.getElementById("total-btn");
 document.querySelectorAll(".produit-btn").forEach(btn => {
     btn.addEventListener("click", () => {
         const nom = btn.dataset.nom;
-        const stock = parseInt(btn.dataset.stock);
         let p = panier.find(x => x.id == btn.dataset.id);
         if (!p) {
-            if (stock <= 0) {
-                ouvrirModal(`Le produit <b>${nom}</b> est épuisé.`);
-                return;
-            }
-            panier.push({ id: btn.dataset.id, nom, prix: parseFloat(btn.dataset.prix), qte: 1, stock });
+            panier.push({ id: btn.dataset.id, nom, prix: parseFloat(btn.dataset.prix), qte: 1 });
             sonner();
         } else {
-            if (p.qte >= stock) {
-                ouvrirModal(`Stock insuffisant pour <b>${nom}</b>.<br>Disponible : ${stock}.`);
-                return;
-            }
             p.qte++;
             sonner();
         }
@@ -567,10 +550,6 @@ panierDiv.addEventListener("click", (e) => {
 function plus(id) {
     const p = panier.find(x => x.id == id);
     if (!p) return;
-    if (p.qte >= p.stock) {
-        ouvrirModal(`Stock insuffisant pour <b>${p.nom}</b>.<br>Disponible : ${p.stock}.`);
-        return;
-    }
     p.qte++;
     afficherPanier();
 }

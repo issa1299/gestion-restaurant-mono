@@ -161,20 +161,13 @@
             </ul>
         {% endif %}
 
-        <!-- Section : Stock & Livraison -->
+        <!-- Section : Livraison & Fournisseurs -->
         {% if request.user|has_role:"ADMIN,GERANT,VENDEUR,LIVREUR" %}
             <p class="sidebar-section-title px-6 mt-8 mb-3 text-xs uppercase tracking-wider text-gray-400 font-semibold">
-                Stock &amp; Livraison
+                Livraison &amp; Fournisseurs
             </p>
             <ul class="space-y-2 px-3">
                 {% if request.user|has_role:"ADMIN,GERANT,VENDEUR" %}
-                <li>
-                    <a href="{% url 'stock:liste' %}" title="Stock"
-                       class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.namespace == 'stock' %}bg-orange-500 text-white shadow-sm{% else %}hover:bg-gray-100 hover:text-slate-900{% endif %}">
-                        <i class="fas fa-boxes-stacked w-5 text-center"></i>
-                        <span class="sidebar-label">Stock</span>
-                    </a>
-                </li>
                 <li>
                     <a href="{% url 'fournisseurs:liste' %}" title="Fournisseurs"
                        class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.namespace == 'fournisseurs' %}bg-orange-500 text-white shadow-sm{% else %}hover:bg-gray-100 hover:text-slate-900{% endif %}">

@@ -279,7 +279,6 @@
                  data-id="{{ produit.id }}"
                  data-nom="{{ produit.nom }}"
                  data-prix="{{ produit.prix }}"
-                 data-stock="{% if produit.stock %}{{ produit.stock.quantite }}{% endif %}"
                  data-categorie="cat-{{ produit.categorie.id }}"
                  data-image="{% if produit.image %}{{ produit.image.url }}{% endif %}"
                  onclick="ajouterAuPanier({{ produit.id }}, '{{ produit.nom|escapejs }}', {{ produit.prix }})">
@@ -300,13 +299,7 @@
                 <div class="p-2 sm:p-3 lg:p-4 pr-9 sm:pr-10 lg:pr-12">
                     <h3 class="font-bold text-gray-900 text-xs sm:text-sm lg:text-base truncate">{{ produit.nom }}</h3>
                     <p class="text-gray-400 text-[10px] sm:text-xs mt-0.5 flex items-center gap-1 truncate">
-                        {% if produit.stock and produit.stock.quantite > 0 %}
-                            <i class="fas fa-circle text-[6px] text-green-500"></i> <span>En stock : {{ produit.stock.quantite }}</span>
-                        {% elif produit.stock %}
-                            <i class="fas fa-circle text-[6px] text-red-400"></i> <span>Rupture de stock</span>
-                        {% else %}
-                            <i class="fas fa-circle text-[6px] text-green-500"></i> <span>En stock</span>
-                        {% endif %}
+                        <i class="fas fa-circle text-[6px] text-green-500"></i> <span>Disponible</span>
                     </p>
                     <p class="text-orange-600 font-bold text-sm sm:text-base mt-1">{{ produit.prix }} FCFA</p>
                 </div>
@@ -543,24 +536,8 @@ function changerType(type) {
     }
 }
 
-function getStockDispo(id) {
-    const card = document.querySelector(`.produit-card[data-id="${id}"]`);
-    const stock = card ? card.dataset.stock : "";
-    return stock ? parseInt(stock, 10) : null; // null = stock non défini (illimité)
-}
-
 function ajouterAuPanier(id, nom, prix, image) {
-    const stockDispo = getStockDispo(id);
     let produit = panier.find(p => p.id == id);
-    const qteActuelle = produit ? produit.qte : 0;
-    if (stockDispo !== null && qteActuelle >= stockDispo) {
-        alert(`Quantité maximale atteinte : ${stockDispo} en stock.`);
-        return;
-    }
-    if (stockDispo === 0) {
-        alert("Produit en rupture de stock.");
-        return;
-    }
     if (produit) {
         produit.qte++;
         const btn = document.querySelector(`.produit-card[data-id="${id}"]`);
@@ -684,15 +661,6 @@ function supprimer(index) {
 function plus(index) {
     const p = panier[index];
     if (!p) return;
-    const stockDispo = getStockDispo(p.id);
-    if (stockDispo !== null && p.qte >= stockDispo) {
-        alert(`Quantité maximale atteinte : ${stockDispo} en stock.`);
-        return;
-    }
-    if (stockDispo === 0) {
-        alert("Produit en rupture de stock.");
-        return;
-    }
     p.qte++;
     afficherPanier();
 }

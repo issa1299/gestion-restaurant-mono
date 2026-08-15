@@ -57,7 +57,7 @@ def index(request):
 def ajouter(request):
     """Ajouter une nouvelle commande"""
     from apps.menu.models import Categorie
-    produits = Produit.objects.disponibles().select_related('categorie', 'stock')
+    produits = Produit.objects.disponibles().select_related('categorie')
     categories = Categorie.objects.all()
 
     if request.method == "POST":
