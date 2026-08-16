@@ -135,11 +135,11 @@
                            class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center hover:bg-blue-600 hover:text-white transition">
                             <i class="fas fa-eye"></i>
                         </a>
-                        <a href="/clients/${client.id}/edit/" 
+                        <a href="/clients/modifier/${client.id}/" 
                            class="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center hover:bg-green-600 hover:text-white transition">
                             <i class="fas fa-pen"></i>
                         </a>
-                        <button onclick="openDeleteModal('${client.nom}', '/clients/${client.id}/delete/')"
+                        <button onclick="openDeleteModal('${client.nom}', '/clients/supprimer/${client.id}/')"
                            class="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center hover:bg-red-600 hover:text-white transition">
                             <i class="fas fa-trash"></i>
                         </button>
