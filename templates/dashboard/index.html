@@ -35,7 +35,7 @@
                     <p class="text-slate-500 text-xs sm:text-sm">Chiffre d'affaires</p>
                     <span class="w-9 h-9 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center"><i class="fas fa-money-bill-wave"></i></span>
                 </div>
-                <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 mt-2 truncate">{{ ca_total|floatformat:0 }} FCFA</h2>
+                <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 mt-2 truncate" data-stat="ca_total">{{ ca_total|floatformat:0 }} FCFA</h2>
                 <p class="text-xs text-slate-400 mt-1">{{ label_periode }}</p>
             </div>
         </div>
@@ -46,7 +46,7 @@
                     <p class="text-slate-500 text-xs sm:text-sm">Commandes</p>
                     <span class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center"><i class="fas fa-clipboard-list"></i></span>
                 </div>
-                <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">{{ nb_commandes }}</h2>
+                <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 mt-2" data-stat="nb_commandes">{{ nb_commandes }}</h2>
                 <p class="text-xs text-slate-400 mt-1">sur la période</p>
             </div>
         </div>
@@ -319,6 +319,18 @@ function changerPeriode(code) {
     const params = new URLSearchParams(window.location.search);
     params.set("periode", code);
     window.location.href = window.location.pathname + "?" + params.toString();
+}
+
+// Mise à jour temps réel des cartes statistiques du dashboard
+if (typeof socket !== 'undefined' && socket.readyState === WebSocket.OPEN) {
+    socket.addEventListener('message', (event) => {
+        const message = JSON.parse(event.data);
+        const { evenement } = message;
+        if (evenement === 'nouvelle_commande') {
+            const nbCmd = document.querySelector('[data-stat="nb_commandes"]');
+            if (nbCmd) nbCmd.textContent = parseInt(nbCmd.textContent) + 1;
+        }
+    });
 }
 
 document.addEventListener("DOMContentLoaded", function() {
