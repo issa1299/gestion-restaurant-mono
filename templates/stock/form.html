@@ -19,7 +19,7 @@
 
             <div class="flex items-center gap-3 bg-gray-50 rounded-xl p-3 sm:p-4">
                 {% if stock.produit.image %}
-                    <img src="{{ stock.produit.image.url }}" class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover">
+                    <img src="{{ stock.produit.image.url }}" alt="{{ stock.produit.nom }}" class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover">
                 {% else %}
                     <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-orange-100 flex items-center justify-center text-orange-500">
                         <i class="fas fa-utensils"></i>

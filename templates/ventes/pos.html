@@ -117,7 +117,7 @@
 
                     <div class="relative h-24 sm:h-32 bg-slate-50 overflow-hidden">
                         {% if produit.image %}
-                            <img src="{{ produit.image.url }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy">
+                            <img src="{{ produit.image.url }}" alt="{{ produit.nom }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy">
                         {% else %}
                             <div class="w-full h-full flex items-center justify-center">
                                 <i class="fas fa-utensils text-3xl sm:text-4xl text-slate-300"></i>

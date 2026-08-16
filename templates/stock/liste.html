@@ -113,7 +113,7 @@
                         <td class="p-3 sm:p-4">
                             <div class="flex items-center gap-2 sm:gap-3">
                                 {% if stock.produit.image %}
-                                    <img src="{{ stock.produit.image.url }}" class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-cover shrink-0">
+                                    <img src="{{ stock.produit.image.url }}" alt="{{ stock.produit.nom }}" class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-cover shrink-0">
                                 {% else %}
                                     <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-orange-100 flex items-center justify-center text-orange-500 shrink-0">
                                         <i class="fas fa-utensils text-xs sm:text-base"></i>

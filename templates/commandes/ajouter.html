@@ -285,7 +285,7 @@
 
                 <div class="relative h-28 sm:h-36 lg:h-44 bg-gray-50 overflow-hidden">
                     {% if produit.image %}
-                        <img src="{{ produit.image.url }}" class="w-full h-full object-cover" loading="lazy">
+                        <img src="{{ produit.image.url }}" alt="{{ produit.nom }}" class="w-full h-full object-cover" loading="lazy">
                     {% else %}
                         <div class="w-full h-full flex items-center justify-center">
                             <i class="fas fa-utensils text-3xl sm:text-4xl lg:text-5xl text-gray-300"></i>
