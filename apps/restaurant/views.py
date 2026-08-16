@@ -501,6 +501,7 @@ def manifest(request):
         "name": parametre.nom or "RestaurantPro",
         "short_name": parametre.nom[:12] or "Restaurant",
         "description": "Commandez en ligne et suivez vos livraisons.",
+        "id": "/",
         "start_url": "/accueil/",
         "scope": "/",
         "display": "standalone",
