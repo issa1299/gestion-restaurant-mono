@@ -521,6 +521,7 @@ def manifest(request):
         "start_url": "/accueil/",
         "scope": "/",
         "display": "standalone",
+        "display_override": ["standalone", "browser"],
         "background_color": "#f97316",
         "theme_color": "#f97316",
         "orientation": "portrait",
@@ -530,7 +531,7 @@ def manifest(request):
             {"src": icone, "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
         ],
     }
-    return JsonResponse(data)
+    return JsonResponse(data, content_type="application/manifest+json")
 
 
 def pwa_icon(request, taille):
