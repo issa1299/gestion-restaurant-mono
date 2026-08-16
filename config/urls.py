@@ -3,10 +3,13 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from apps.restaurant import views as apps_restaurant_views
 
 
 urlpatterns = [
     path("", include("apps.restaurant.urls")),
+    path("manifest.webmanifest", apps_restaurant_views.manifest, name="manifest"),
+    path("sw.js", apps_restaurant_views.service_worker, name="service_worker"),
     path("admin/", admin.site.urls),
     path("dashboard/", include("apps.dashboard.urls")),
     path("accounts/", include("apps.accounts.urls")),

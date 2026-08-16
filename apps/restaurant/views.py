@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.http import JsonResponse, Http404
+from django.http import HttpResponse, JsonResponse, Http404
 from django.utils import timezone
 from django.db.models import Prefetch
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -490,3 +490,90 @@ def confirmation_commande(request, commande_id, token):
         "commande": commande,
         "lien_suivi": lien_suivi,
     })
+
+
+def manifest(request):
+    """Web App Manifest pour le PWA."""
+    parametre = ParametreRestaurant.load()
+    icone = request.build_absolute_uri("/static/img/icon-512.png")
+    icone_192 = request.build_absolute_uri("/static/img/icon-192.png")
+    data = {
+        "name": parametre.nom or "RestaurantPro",
+        "short_name": parametre.nom[:12] or "Restaurant",
+        "description": "Commandez en ligne et suivez vos livraisons.",
+        "start_url": "/accueil/",
+        "scope": "/",
+        "display": "standalone",
+        "background_color": "#f97316",
+        "theme_color": "#f97316",
+        "orientation": "portrait",
+        "icons": [
+            {"src": icone_192, "sizes": "192x192", "type": "image/png"},
+            {"src": icone, "sizes": "512x512", "type": "image/png"},
+            {"src": icone, "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+        ],
+    }
+    return JsonResponse(data)
+
+
+def service_worker(request):
+    """Service worker servé à la racine pour couvrir tout le site."""
+    return HttpResponse(SERVICE_WORKER_JS, content_type="application/javascript")
+
+
+SERVICE_WORKER_JS = r"""
+const CACHE_VERS = 'restaurantpro-v1';
+const APP_SHELL = [
+  '/accueil/',
+  '/static/js/toast.js',
+  '/static/img/icon-192.png',
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_VERS).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE_VERS).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
+});
+
+// Navigation : réseau d'abord, repli sur le cache
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  if (request.method !== 'GET') return;
+
+  // Les pages HTML : réseau d'abord, sinon cache
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_VERS).then((cache) => cache.put(request, copy));
+          return response;
+        })
+        .catch(() => caches.match(request).then((cached) => cached || caches.match('/accueil/')))
+    );
+    return;
+  }
+
+  // Statiques et images : cache d'abord, sinon réseau puis mise en cache
+  if (request.destination === 'style' || request.destination === 'script' || request.destination === 'image' || request.destination === 'font') {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        return fetch(request).then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_VERS).then((cache) => cache.put(request, copy));
+          return response;
+        });
+      })
+    );
+  }
+});
+"""
