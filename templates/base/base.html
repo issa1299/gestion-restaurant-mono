@@ -208,6 +208,66 @@ setTimeout(function(){
 
 </script>
 
+    <script src="{% static 'js/toast.js' %}"></script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register("{% url 'service_worker' %}").catch(function (err) {
+                    console.warn('Service worker non enregistré:', err);
+                });
+            });
+        }
+    </script>
+
+    <!-- Bouton installation PWA -->
+    <button id="btn-installer-pwa" class="hidden fixed bottom-5 left-5 z-50 items-center gap-2 px-4 py-3 rounded-2xl bg-orange-600 text-white text-sm font-bold shadow-lg hover:bg-orange-700 transition"
+            style="display:none">
+        <i class="fas fa-download"></i> Installer l'application
+    </button>
+
+    <script>
+        (function () {
+            var deferredPrompt = null;
+            var btn = document.getElementById('btn-installer-pwa');
+            var ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+
+            window.addEventListener('beforeinstallprompt', function (e) {
+                e.preventDefault();
+                deferredPrompt = e;
+                if (btn) { btn.style.display = 'flex'; btn.classList.remove('hidden'); }
+            });
+
+            window.addEventListener('appinstalled', function () {
+                if (btn) btn.style.display = 'none';
+            });
+
+            if (btn) {
+                btn.addEventListener('click', function () {
+                    if (!deferredPrompt) return;
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then(function (choice) {
+                        if (choice.outcome === 'accepted') {
+                            btn.style.display = 'none';
+                        }
+                        deferredPrompt = null;
+                    });
+                });
+            }
+
+            if (ios && !window.navigator.standalone) {
+                setTimeout(function () {
+                    if (!btn) return;
+                    btn.style.display = 'flex';
+                    btn.classList.remove('hidden');
+                    btn.addEventListener('click', function () {
+                        afficherToast("Sur iPhone : touchez l'icône Partager puis \"Sur l'écran d'accueil\".", "info");
+                    }, { once: true });
+                }, 4000);
+            }
+        })();
+    </script>
+
 </body>
 
 </html>
