@@ -1,6 +1,9 @@
+import os
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import HttpResponse, JsonResponse, Http404
+from django.urls import reverse
 from django.utils import timezone
 from django.db.models import Prefetch
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -495,8 +498,8 @@ def confirmation_commande(request, commande_id, token):
 def manifest(request):
     """Web App Manifest pour le PWA."""
     parametre = ParametreRestaurant.load()
-    icone = request.build_absolute_uri("/static/img/icon-512.png")
-    icone_192 = request.build_absolute_uri("/static/img/icon-192.png")
+    icone = request.build_absolute_uri(reverse("pwa_icon", kwargs={"taille": 512}))
+    icone_192 = request.build_absolute_uri(reverse("pwa_icon", kwargs={"taille": 192}))
     data = {
         "name": parametre.nom or "RestaurantPro",
         "short_name": parametre.nom[:12] or "Restaurant",
@@ -515,6 +518,41 @@ def manifest(request):
         ],
     }
     return JsonResponse(data)
+
+
+def pwa_icon(request, taille):
+    """Icône PWA générée depuis le logo du restaurant (repli : icône statique)."""
+    from PIL import Image
+    from django.conf import settings
+    from io import BytesIO
+
+    taille = int(taille)
+    parametre = ParametreRestaurant.load()
+
+    chemin = None
+    if parametre.logo:
+        p = parametre.logo.path
+        if os.path.exists(p):
+            chemin = p
+    if chemin is None:
+        chemin = os.path.join(settings.STATIC_ROOT if not settings.DEBUG else settings.BASE_DIR, "static", "img", "icon-512.png")
+        if not os.path.exists(chemin):
+            chemin = os.path.join(settings.BASE_DIR, "static", "img", "icon-512.png")
+
+    img = Image.open(chemin)
+    if img.mode in ("RGBA", "LA") or (img.mode == "P" and "transparency" in img.info):
+        img = img.convert("RGBA")
+    else:
+        img = img.convert("RGB")
+
+    if img.size != (taille, taille):
+        img = img.resize((taille, taille), Image.LANCZOS)
+
+    buf = BytesIO()
+    img.save(buf, format="PNG")
+    response = HttpResponse(buf.getvalue(), content_type="image/png")
+    response["Cache-Control"] = "public, max-age=86400"
+    return response
 
 
 def service_worker(request):
