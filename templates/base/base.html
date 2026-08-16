@@ -6,6 +6,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23f97316'/%3E%3Ctext x='50' y='72' font-size='62' font-family='Arial' font-weight='bold' text-anchor='middle' fill='white'%3ER%3C/text%3E%3C/svg%3E">
+    <!-- PWA -->
+    <meta name="theme-color" content="#f97316">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="RestaurantPro">
+    <link rel="manifest" href="{% url 'manifest' %}">
+    <link rel="apple-touch-icon" href="{% url 'pwa_icon' 192 %}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{% url 'pwa_icon' 192 %}">
+    <link rel="icon" type="image/png" sizes="512x512" href="{% url 'pwa_icon' 512 %}">
     <title>
         {% block title %}
         RestaurantPro
