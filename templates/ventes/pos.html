@@ -65,7 +65,7 @@
             <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                 <div class="relative flex-1 sm:w-64 search-box">
                     <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                    <input type="text" id="recherche" placeholder="Rechercher un produit..."
+                    <input type="text" id="recherche" placeholder="Rechercher un produit..." aria-label="Rechercher un produit"
                            class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border-2 border-transparent rounded-xl focus:outline-none focus:bg-white focus:border-orange-400 text-sm"
                            oninput="filtrerProduits()">
                 </div>
@@ -316,11 +316,11 @@
                         <i class="fas fa-truck-fast mr-1"></i> Livraison
                     </label>
                     <div class="space-y-2.5">
-                        <input id="nomClientLivraison" type="text" placeholder="Nom du client"
+                        <input id="nomClientLivraison" type="text" placeholder="Nom du client" aria-label="Nom du client"
                                class="w-full px-3 py-2.5 border-2 border-slate-200 rounded-xl focus:border-orange-400 focus:outline-none text-sm bg-white font-semibold">
-                        <input id="telephoneLivraison" type="tel" placeholder="Téléphone du client"
+                        <input id="telephoneLivraison" type="tel" placeholder="Téléphone du client" aria-label="Téléphone du client"
                                class="w-full px-3 py-2.5 border-2 border-slate-200 rounded-xl focus:border-orange-400 focus:outline-none text-sm bg-white font-semibold">
-                        <textarea id="adresseLivraison" rows="2" placeholder="Adresse de livraison"
+                        <textarea id="adresseLivraison" rows="2" placeholder="Adresse de livraison" aria-label="Adresse de livraison"
                                   class="w-full px-3 py-2.5 border-2 border-slate-200 rounded-xl focus:border-orange-400 focus:outline-none text-sm bg-white font-semibold resize-none"></textarea>
                     </div>
                 </div>
@@ -362,7 +362,7 @@
                     <label class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Montant reçu</label>
                     <div class="relative">
                         <i class="fas fa-money-bill absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input id="montantRecu" type="number" min="0" oninput="calculerMonnaie()" placeholder="Ex: 10000"
+                        <input id="montantRecu" type="number" min="0" oninput="calculerMonnaie()" placeholder="Ex: 10000" aria-label="Montant reçu"
                                class="w-full pl-10 pr-4 py-3.5 border-2 border-slate-200 rounded-xl focus:border-orange-400 focus:outline-none text-base font-semibold">
                     </div>
                     <div class="flex flex-wrap gap-1.5 mt-2" id="montants-rapides"></div>
@@ -376,7 +376,7 @@
                     <div class="flex items-center gap-2">
                         <div class="relative flex-1 min-w-0 search-box">
                             <i class="fas fa-percent absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                            <input id="remiseInput" type="number" min="0" max="100" value="0" oninput="calculerTotalAvecRemise()"
+                            <input id="remiseInput" type="number" min="0" max="100" value="0" oninput="calculerTotalAvecRemise()" aria-label="Remise en pourcentage"
                                    class="w-full pl-8 pr-2 py-2.5 border-2 border-slate-200 rounded-xl focus:border-orange-400 focus:outline-none text-sm font-semibold" placeholder="0">
                         </div>
                         <button type="button" onclick="setRemise(10)" class="px-3 py-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs transition shrink-0">10%</button>
