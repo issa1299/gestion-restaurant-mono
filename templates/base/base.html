@@ -223,7 +223,13 @@ setTimeout(function(){
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function () {
-                navigator.serviceWorker.register("{% url 'service_worker' %}").catch(function (err) {
+                navigator.serviceWorker.register("{% url 'service_worker' %}").then(function (reg) {
+                    if (!navigator.serviceWorker.controller) {
+                        navigator.serviceWorker.addEventListener('controllerchange', function () {
+                            window.location.reload();
+                        });
+                    }
+                }).catch(function (err) {
                     console.warn('Service worker non enregistré:', err);
                 });
             });

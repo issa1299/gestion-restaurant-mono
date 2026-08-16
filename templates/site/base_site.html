@@ -491,7 +491,15 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function () {
-                navigator.serviceWorker.register("{% url 'service_worker' %}").catch(function (err) {
+                navigator.serviceWorker.register("{% url 'service_worker' %}").then(function (reg) {
+                    // Si le SW vient d'être installé, recharger une fois pour qu'il
+                    // prenne le contrôle (requis pour une installation standalone)
+                    if (!navigator.serviceWorker.controller) {
+                        navigator.serviceWorker.addEventListener('controllerchange', function () {
+                            window.location.reload();
+                        });
+                    }
+                }).catch(function (err) {
                     console.warn('Service worker non enregistré:', err);
                 });
             });
