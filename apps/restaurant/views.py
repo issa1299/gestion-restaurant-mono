@@ -495,11 +495,24 @@ def confirmation_commande(request, commande_id, token):
     })
 
 
+def _logo_version(parametre):
+    """Version (hash) du logo pour invalider le cache des icônes."""
+    if parametre.logo:
+        try:
+            p = parametre.logo.path
+            if os.path.exists(p):
+                return str(int(os.path.getmtime(p)))
+        except Exception:
+            pass
+    return "defaut"
+
+
 def manifest(request):
     """Web App Manifest pour le PWA."""
     parametre = ParametreRestaurant.load()
-    icone = request.build_absolute_uri(reverse("pwa_icon", kwargs={"taille": 512}))
-    icone_192 = request.build_absolute_uri(reverse("pwa_icon", kwargs={"taille": 192}))
+    version = _logo_version(parametre)
+    icone = request.build_absolute_uri(reverse("pwa_icon", kwargs={"taille": 512}) + f"?v={version}")
+    icone_192 = request.build_absolute_uri(reverse("pwa_icon", kwargs={"taille": 192}) + f"?v={version}")
     data = {
         "name": parametre.nom or "RestaurantPro",
         "short_name": parametre.nom[:12] or "Restaurant",
