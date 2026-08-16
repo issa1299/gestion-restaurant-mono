@@ -23,38 +23,38 @@
         {% csrf_token %}
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Nom complet *</label>
-                <input type="text" name="nom" required
+                <label for="id_nom" class="block text-sm font-semibold text-slate-700 mb-1.5">Nom complet *</label>
+                <input type="text" id="id_nom" name="nom" required
                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-orange-400 focus:bg-white transition">
             </div>
             <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Téléphone *</label>
-                <input type="tel" name="telephone" required
+                <label for="id_telephone" class="block text-sm font-semibold text-slate-700 mb-1.5">Téléphone *</label>
+                <input type="tel" id="id_telephone" name="telephone" required
                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-orange-400 focus:bg-white transition">
             </div>
             <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Email</label>
-                <input type="email" name="email"
+                <label for="id_email" class="block text-sm font-semibold text-slate-700 mb-1.5">Email</label>
+                <input type="email" id="id_email" name="email"
                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-orange-400 focus:bg-white transition">
             </div>
             <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Nombre de personnes</label>
-                <input type="number" name="nombre_personnes" min="1" value="2"
+                <label for="id_nombre_personnes" class="block text-sm font-semibold text-slate-700 mb-1.5">Nombre de personnes</label>
+                <input type="number" id="id_nombre_personnes" name="nombre_personnes" min="1" value="2"
                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-orange-400 focus:bg-white transition">
             </div>
             <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Date *</label>
-                <input type="date" name="date" required
+                <label for="id_date" class="block text-sm font-semibold text-slate-700 mb-1.5">Date *</label>
+                <input type="date" id="id_date" name="date" required
                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-orange-400 focus:bg-white transition">
             </div>
             <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Heure *</label>
-                <input type="time" name="heure" required
+                <label for="id_heure" class="block text-sm font-semibold text-slate-700 mb-1.5">Heure *</label>
+                <input type="time" id="id_heure" name="heure" required
                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-orange-400 focus:bg-white transition">
             </div>
             <div class="sm:col-span-2">
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Message (facultatif)</label>
-                <textarea name="message" rows="4" placeholder="Occasion spéciale, demande particulière..."
+                <label for="id_message" class="block text-sm font-semibold text-slate-700 mb-1.5">Message (facultatif)</label>
+                <textarea id="id_message" name="message" rows="4" placeholder="Occasion spéciale, demande particulière..."
                           class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-orange-400 focus:bg-white transition"></textarea>
             </div>
         </div>
