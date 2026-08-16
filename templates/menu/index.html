@@ -39,7 +39,7 @@
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
                 {% for produit in categorie.produits.all %}
                 {% if produit.disponible %}
-                <div class="produit-ligne bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col">
+                <div class="produit-ligne bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col" data-nom="{{ produit.nom|lower }}">
                     <div class="relative h-32 sm:h-36 bg-orange-100 overflow-hidden">
                         {% if produit.image %}
                         <img src="{{ produit.image.url }}" alt="{{ produit.nom }}" class="w-full h-full object-cover">
@@ -90,34 +90,17 @@ socketMenu.onmessage = (event) => {
     const message = JSON.parse(event.data);
     const { evenement, data } = message;
     if (evenement === 'produit_ajoute') {
-        afficherNotification(`<strong>🆕 Nouveau produit</strong><br>${data.nom} - ${data.prix} FCFA<br><small>${data.categorie}</small>`, 'success');
+        afficherToast(`<strong>🆕 Nouveau produit</strong><br>${data.nom} - ${data.prix} FCFA<br><small>${data.categorie}</small>`, 'success');
         setTimeout(() => window.location.reload(), 2000);
     }
 };
 
 socketMenu.onerror = (error) => { console.error('Erreur WebSocket:', error); };
 
-function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
-}
-
-function afficherNotification(message, type = 'info') {
-    const couleurs = { 'success': 'bg-green-500', 'error': 'bg-red-500', 'warning': 'bg-yellow-500', 'info': 'bg-blue-500' };
-    const container = document.getElementById('notifications-container');
-    if (!container) return;
-    const notif = document.createElement('div');
-    notif.className = `${couleurs[type]} text-white px-6 py-3 rounded-lg shadow-lg mb-2 transform transition-all duration-500`;
-    notif.innerHTML = message;
-    container.appendChild(notif);
-    setTimeout(() => { notif.style.opacity = '0'; notif.style.transform = 'translateX(120px)'; setTimeout(() => notif.remove(), 500); }, 4000);
-}
-
 function filtrerProduits() {
     const recherche = document.getElementById("recherche-menu").value.toLowerCase();
     document.querySelectorAll(".produit-ligne").forEach(ligne => {
-        const nom = ligne.querySelector("p.font-bold").textContent.toLowerCase();
+        const nom = (ligne.dataset.nom || "").toLowerCase();
         ligne.style.display = nom.includes(recherche) ? "" : "none";
     });
     document.querySelectorAll(".categorie-card").forEach(card => {
