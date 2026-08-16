@@ -241,39 +241,45 @@ setTimeout(function(){
             var deferredPrompt = null;
             var btn = document.getElementById('btn-installer-pwa');
             var ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+            var dejaInstalle = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
             window.addEventListener('beforeinstallprompt', function (e) {
                 e.preventDefault();
                 deferredPrompt = e;
-                if (btn) { btn.style.display = 'flex'; btn.classList.remove('hidden'); }
             });
 
             window.addEventListener('appinstalled', function () {
                 if (btn) btn.style.display = 'none';
             });
 
-            if (btn) {
-                btn.addEventListener('click', function () {
-                    if (!deferredPrompt) return;
-                    deferredPrompt.prompt();
-                    deferredPrompt.userChoice.then(function (choice) {
-                        if (choice.outcome === 'accepted') {
-                            btn.style.display = 'none';
-                        }
-                        deferredPrompt = null;
-                    });
-                });
+            function showInstallBtn() {
+                if (!btn) return;
+                btn.style.display = 'flex';
+                btn.classList.remove('hidden');
             }
 
-            if (ios && !window.navigator.standalone) {
-                setTimeout(function () {
-                    if (!btn) return;
-                    btn.style.display = 'flex';
-                    btn.classList.remove('hidden');
-                    btn.addEventListener('click', function () {
+            if (!dejaInstalle && btn) {
+                setTimeout(showInstallBtn, 1500);
+            }
+
+            if (btn) {
+                btn.addEventListener('click', function () {
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        deferredPrompt.userChoice.then(function (choice) {
+                            if (choice.outcome === 'accepted') {
+                                btn.style.display = 'none';
+                            }
+                            deferredPrompt = null;
+                        });
+                        return;
+                    }
+                    if (ios) {
                         afficherToast("Sur iPhone : touchez l'icône Partager puis \"Sur l'écran d'accueil\".", "info");
-                    }, { once: true });
-                }, 4000);
+                        return;
+                    }
+                    afficherToast("L'installation sera disponible dans un instant. Revenez dans quelques minutes si elle n'apparaît pas.", "info");
+                });
             }
         })();
     </script>

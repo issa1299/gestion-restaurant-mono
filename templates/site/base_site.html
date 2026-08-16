@@ -509,12 +509,12 @@
             var deferredPrompt = null;
             var btn = document.getElementById('btn-installer-pwa');
             var ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+            var dejaInstalle = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
             // Chromium / Android / Desktop
             window.addEventListener('beforeinstallprompt', function (e) {
                 e.preventDefault();
                 deferredPrompt = e;
-                showInstallBtn();
             });
 
             // Déjà installé ? Ne rien afficher
@@ -528,30 +528,31 @@
                 btn.classList.remove('hidden');
             }
 
-            if (btn) {
-                btn.addEventListener('click', function () {
-                    if (!deferredPrompt) return;
-                    deferredPrompt.prompt();
-                    deferredPrompt.userChoice.then(function (choice) {
-                        if (choice.outcome === 'accepted') {
-                            btn.style.display = 'none';
-                        }
-                        deferredPrompt = null;
-                    });
-                });
+            // Afficher le bouton immédiatement (sauf si déjà installé)
+            if (!dejaInstalle && btn) {
+                setTimeout(showInstallBtn, 1500);
             }
 
-            // iOS Safari : pas d'événement beforeinstallprompt,
-            // on propose une aide quand l'utilisateur n'est pas en mode standalone
-            if (ios && !window.navigator.standalone) {
-                setTimeout(function () {
-                    if (!btn) return;
-                    btn.style.display = 'flex';
-                    btn.classList.remove('hidden');
-                    btn.addEventListener('click', function () {
+            if (btn) {
+                btn.addEventListener('click', function () {
+                    // Installation native dispo (Chrome/Android/desktop)
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        deferredPrompt.userChoice.then(function (choice) {
+                            if (choice.outcome === 'accepted') {
+                                btn.style.display = 'none';
+                            }
+                            deferredPrompt = null;
+                        });
+                        return;
+                    }
+                    // iOS Safari : instructions
+                    if (ios) {
                         afficherToast("Sur iPhone : touchez l'icône Partager puis \"Sur l'écran d'accueil\".", "info");
-                    }, { once: true });
-                }, 4000);
+                        return;
+                    }
+                    afficherToast("L'installation sera disponible dans un instant. Revenez dans quelques minutes si elle n'apparaît pas.", "info");
+                });
             }
         })();
     </script>
