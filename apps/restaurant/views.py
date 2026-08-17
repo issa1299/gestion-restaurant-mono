@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.db.models import Prefetch
 from django.views.decorators.csrf import ensure_csrf_cookie
 from apps.accounts.decorators import role_required
+from apps.menu.models import Produit
 from apps.notifications.utils import envoyer_notification_broadcast
 from apps.parametres.models import ParametreRestaurant
 from .email_utils import envoyer_reponse_message, envoyer_confirmation_reservation
@@ -21,7 +22,8 @@ def bienvenue(request):
 
 def accueil(request):
     """Page d'accueil publique du restaurant"""
-    return render(request, "site/accueil.html")
+    produits = Produit.objects.disponibles().select_related("categorie")[:8]
+    return render(request, "site/accueil.html", {"produits_accueil": produits})
 
 
 def a_propos(request):

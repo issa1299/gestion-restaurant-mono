@@ -88,6 +88,55 @@
     </div>
 </section>
 
+<!-- ===== PLATS POPULAIRES ===== -->
+<section class="py-16 sm:py-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 mb-10 anim-fade-up">
+            <div>
+                <p class="text-orange-600 font-semibold text-sm uppercase tracking-widest">Nos incontournables</p>
+                <h2 class="text-2xl sm:text-4xl font-extrabold text-slate-900 mt-2">Plats populaires</h2>
+                <p class="text-slate-500 mt-2">Les plats préférés de nos clients, prêts à être livrés.</p>
+            </div>
+            <a href="{% url 'menu:accueil' %}" class="inline-flex items-center gap-2 text-orange-600 hover:text-orange-700 font-semibold text-sm transition hover:gap-3 shrink-0">
+                Voir tout le menu <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {% for produit in produits_accueil %}
+            <div class="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col">
+                <div class="relative h-32 sm:h-36 bg-orange-100 overflow-hidden">
+                    {% if produit.image %}
+                    <img src="{{ produit.image.url }}" alt="{{ produit.nom }}" class="w-full h-full object-cover" loading="lazy">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center">
+                        <i class="fas fa-utensils text-orange-400 text-3xl"></i>
+                    </div>
+                    {% endif %}
+                    <button type="button"
+                            onclick="ajouterAuPanier({{ produit.id }}, '{{ produit.nom|escapejs }}', {{ produit.prix }})"
+                            class="absolute bottom-2 right-2 w-9 h-9 rounded-full bg-orange-500 hover:bg-orange-600 active:scale-95 text-white flex items-center justify-center transition-all shadow-lg shadow-orange-200">
+                        <i class="fas fa-plus text-sm"></i>
+                    </button>
+                </div>
+                <div class="p-3 flex flex-col flex-1">
+                    <p class="font-bold text-slate-800 text-sm leading-snug">{{ produit.nom }}</p>
+                    {% if produit.description %}
+                    <p class="text-xs text-slate-500 mt-1 line-clamp-2">{{ produit.description }}</p>
+                    {% endif %}
+                    <p class="text-orange-600 font-bold mt-auto pt-2">{{ produit.prix }} FCFA</p>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-2 sm:col-span-3 lg:col-span-4 bg-slate-50 rounded-2xl p-12 text-center text-slate-400">
+                <i class="fas fa-utensils text-4xl mb-3"></i>
+                <p>Le menu n'est pas encore disponible.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
 <!-- ===== RESERVATION CTA ===== -->
 <section class="py-16 sm:py-20">
     <div class="max-w-7xl mx-auto px-4 sm:px-6">
@@ -136,4 +185,16 @@
         </div>
     </div>
 </section>
+
+<script>
+let panier = JSON.parse(localStorage.getItem("panier")) || [];
+
+function ajouterAuPanier(id, nom, prix) {
+    const existant = panier.find(p => p.id === id);
+    if (existant) { existant.qte++; } else { panier.push({ id, nom, prix: parseFloat(prix), qte: 1 }); }
+    localStorage.setItem("panier", JSON.stringify(panier));
+    window.dispatchEvent(new Event("panier-maj"));
+    afficherToast(nom + " ajouté au panier", "success");
+}
+</script>
 {% endblock %}
