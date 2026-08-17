@@ -1,3 +1,5 @@
+import hashlib
+
 from django.db import models
 from django.core.cache import cache
 
@@ -71,3 +73,9 @@ class ParametreRestaurant(models.Model):
         if not numero:
             return ""
         return f"https://wa.me/{numero}"
+
+    @property
+    def version_manifest(self):
+        """Version courte (hash) du nom + logo pour invalider le cache du manifest PWA."""
+        base = f"{self.nom}-{self.logo.name if self.logo else ''}"
+        return hashlib.md5(base.encode("utf-8")).hexdigest()[:8]
