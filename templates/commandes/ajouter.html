@@ -347,7 +347,7 @@
             </button>
         </div>
 
-        <form method="POST" id="form-commande" class="flex flex-col flex-1 min-h-0 bg-gray-50">
+        <form method="POST" id="form-commande" class="flex flex-col flex-1 min-h-0 bg-gray-50" onsubmit="if (!IS_EDITION) localStorage.removeItem('panier_commande');">
             {% csrf_token %}
 
             <div class="px-4 sm:px-5 pt-4 pb-2">
