@@ -238,7 +238,7 @@
                     Des plats savoureux préparés avec des produits frais, livrés avec le sourire.
                     En livraison à domicile.
                 </p>
-                {% if parametre.lien_whatsapp or parametre.facebook or parametre.instagram %}
+                {% if parametre.lien_whatsapp or parametre.facebook or parametre.instagram or parametre.tiktok %}
                 <div class="flex items-center gap-2 mt-5">
                     {% if parametre.lien_whatsapp %}
                     <a href="{{ parametre.lien_whatsapp }}" target="_blank" rel="noopener" title="WhatsApp"
@@ -256,6 +256,12 @@
                     <a href="{{ parametre.instagram }}" target="_blank" rel="noopener" title="Instagram"
                        class="w-10 h-10 rounded-xl bg-pink-500/20 text-pink-400 hover:bg-pink-500 hover:text-white flex items-center justify-center transition">
                         <i class="fab fa-instagram"></i>
+                    </a>
+                    {% endif %}
+                    {% if parametre.tiktok %}
+                    <a href="{{ parametre.tiktok }}" target="_blank" rel="noopener" title="TikTok"
+                       class="w-10 h-10 rounded-xl bg-slate-500/20 text-slate-300 hover:bg-slate-700 hover:text-white flex items-center justify-center transition">
+                        <i class="fab fa-tiktok"></i>
                     </a>
                     {% endif %}
                 </div>

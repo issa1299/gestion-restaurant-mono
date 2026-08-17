@@ -13,6 +13,7 @@ class ParametreRestaurant(models.Model):
 
     facebook = models.URLField(blank=True, default="")
     instagram = models.URLField(blank=True, default="")
+    tiktok = models.URLField(blank=True, default="")
     whatsapp = models.CharField(max_length=20, blank=True, default="")
 
     devise = models.CharField(max_length=10, default="FCFA")
