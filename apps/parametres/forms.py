@@ -13,8 +13,9 @@ class ParametreForm(forms.ModelForm):
 
     class Meta:
         model = ParametreRestaurant
-        fields = ['nom', 'adresse', 'telephone', 'email', 'logo', 'devise', 'message_ticket', 'impression_silencieuse',
+        fields = ['nom', 'adresse', 'telephone', 'email', 'logo', 'image_fond', 'devise', 'message_ticket', 'impression_silencieuse',
                   'jours_ouverture', 'ouverture_midi', 'fermeture_midi', 'ouverture_soir', 'fermeture_soir',
+                  'facebook', 'instagram', 'whatsapp',
                   'smtp_host', 'smtp_port', 'smtp_utilisateur', 'smtp_mot_de_passe', 'smtp_use_tls', 'email_expediteur',
                   'url_site']
         widgets = {
@@ -27,6 +28,10 @@ class ParametreForm(forms.ModelForm):
             ]),
             'message_ticket': forms.Textarea(attrs={'class': 'w-full rounded-xl border-2 border-gray-200 p-3 focus:border-orange-500 focus:outline-none', 'rows': 2}),
             'logo': forms.FileInput(attrs={'class': 'w-full rounded-xl border-2 border-gray-200 p-3 focus:border-orange-500 focus:outline-none'}),
+            'image_fond': forms.FileInput(attrs={'class': 'w-full rounded-xl border-2 border-gray-200 p-3 focus:border-orange-500 focus:outline-none'}),
+            'facebook': forms.URLInput(attrs={'class': 'w-full rounded-xl border-2 border-gray-200 p-3 focus:border-orange-500 focus:outline-none', 'placeholder': 'https://facebook.com/...'}),
+            'instagram': forms.URLInput(attrs={'class': 'w-full rounded-xl border-2 border-gray-200 p-3 focus:border-orange-500 focus:outline-none', 'placeholder': 'https://instagram.com/...'}),
+            'whatsapp': forms.TextInput(attrs={'class': 'w-full rounded-xl border-2 border-gray-200 p-3 focus:border-orange-500 focus:outline-none', 'placeholder': 'Ex : +221 76 123 45 67'}),
             'jours_ouverture': forms.TextInput(attrs={'class': 'w-full rounded-xl border-2 border-gray-200 p-3 focus:border-orange-500 focus:outline-none', 'placeholder': 'Ex : Lundi au Dimanche'}),
             'ouverture_midi': forms.TimeInput(attrs={'class': 'w-full rounded-xl border-2 border-gray-200 p-3 focus:border-orange-500 focus:outline-none', 'type': 'time'}),
             'fermeture_midi': forms.TimeInput(attrs={'class': 'w-full rounded-xl border-2 border-gray-200 p-3 focus:border-orange-500 focus:outline-none', 'type': 'time'}),

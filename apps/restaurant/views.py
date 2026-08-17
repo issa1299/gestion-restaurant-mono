@@ -23,7 +23,13 @@ def bienvenue(request):
 def accueil(request):
     """Page d'accueil publique du restaurant"""
     produits = Produit.objects.disponibles().select_related("categorie")[:8]
-    return render(request, "site/accueil.html", {"produits_accueil": produits})
+    temoignages = Temoignage.objects.filter(actif=True)[:3]
+    photos = PhotoGalerie.objects.all()[:4]
+    return render(request, "site/accueil.html", {
+        "produits_accueil": produits,
+        "temoignages_accueil": temoignages,
+        "photos_accueil": photos,
+    })
 
 
 def a_propos(request):

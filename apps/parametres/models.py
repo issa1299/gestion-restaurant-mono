@@ -9,7 +9,12 @@ class ParametreRestaurant(models.Model):
     email = models.EmailField(blank=True, null=True)
     
     logo = models.ImageField(upload_to="parametres/", blank=True, null=True)
-    
+    image_fond = models.ImageField(upload_to="parametres/", blank=True, null=True, verbose_name="Image de fond du site")
+
+    facebook = models.URLField(blank=True, default="")
+    instagram = models.URLField(blank=True, default="")
+    whatsapp = models.CharField(max_length=20, blank=True, default="")
+
     devise = models.CharField(max_length=10, default="FCFA")
     
     message_ticket = models.TextField(blank=True, default="Merci de votre visite et à bientôt !")
@@ -53,3 +58,15 @@ class ParametreRestaurant(models.Model):
 
     def __str__(self):
         return "Paramètres du Restaurant"
+
+    @property
+    def numero_whatsapp(self):
+        numero = self.whatsapp or self.telephone or ""
+        return "".join(ch for ch in numero if ch.isdigit())
+
+    @property
+    def lien_whatsapp(self):
+        numero = self.numero_whatsapp
+        if not numero:
+            return ""
+        return f"https://wa.me/{numero}"

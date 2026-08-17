@@ -5,6 +5,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% block meta_description %}{{ parametre.nom|default:'Restaurant' }} — Commandez vos plats en ligne, livraison à domicile. Découvrez notre menu, réservez une table et suivez votre commande en temps réel.{% endblock %}">
+    <meta name="theme-color" content="#f97316">
+    <meta property="og:title" content="{{ parametre.nom|default:'Restaurant' }}">
+    <meta property="og:description" content="Commandez vos plats en ligne et faites-vous livrer à domicile.">
+    <meta property="og:type" content="website">
+    {% if parametre.logo %}<meta property="og:image" content="{{ request.build_absolute_uri }}{{ parametre.logo.url }}">{% endif %}
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23f97316'/%3E%3Ctext x='50' y='72' font-size='62' font-family='Arial' font-weight='bold' text-anchor='middle' fill='white'%3ER%3C/text%3E%3C/svg%3E">
     <title>
         {% block title %}{{ parametre.nom|default:"Restaurant" }}{% endblock %}
@@ -12,6 +18,20 @@
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        };
+    </script>
+
+    <script>
+        (function() {
+            const saved = localStorage.getItem("theme");
+            if (saved === "dark" || (!saved && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+                document.documentElement.classList.add("dark");
+            }
+        })();
+    </script>
 
     <!-- Google Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -84,6 +104,22 @@
         .anim-float { animation: floatY 5s ease-in-out infinite; }
         .anim-pulse-soft { animation: pulseSoft 2.5s ease-in-out infinite; }
         .anim-fade-in { animation: fadeIn 1s ease forwards; }
+
+        /* ===== Mode sombre : surcharge des couleurs principales ===== */
+        .dark body { background-color: #0f172a; color: #e2e8f0; }
+        .dark .bg-white { background-color: #1e293b !important; }
+        .dark .bg-slate-50 { background-color: #0f172a !important; }
+        .dark .bg-slate-100 { background-color: #1e293b !important; }
+        .dark .bg-gray-50 { background-color: #1e293b !important; }
+        .dark .bg-orange-50 { background-color: #431407 !important; }
+        .dark .text-slate-900, .dark .text-slate-800, .dark .text-slate-700 { color: #f1f5f9 !important; }
+        .dark .text-slate-600, .dark .text-slate-500 { color: #94a3b8 !important; }
+        .dark .border-gray-100, .dark .border-gray-200, .dark .border-slate-100, .dark .border-slate-200 { border-color: #334155 !important; }
+        .dark .divide-gray-100, .dark .divide-gray-50 { border-color: #334155 !important; }
+        .dark header.bg-white { background-color: #0f172a !important; }
+        .dark footer { background-color: #020617 !important; }
+        .dark #panier-modal .bg-white { background-color: #1e293b !important; }
+        .dark .text-slate-400 { color: #64748b !important; }
     </style>
 
     {% block extra_css %}{% endblock %}
@@ -142,6 +178,10 @@
                 </nav>
 
                 <div class="flex items-center gap-2">
+                    <button type="button" onclick="toggleTheme()" title="Mode sombre / clair"
+                            class="w-10 h-10 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center transition hover:bg-orange-100 hover:text-orange-600">
+                        <i id="icone-theme" class="fas fa-moon"></i>
+                    </button>
                     <button type="button" onclick="ouvrirPanier()" title="Mon panier"
                             class="relative w-10 h-10 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center transition hover:bg-orange-100 hover:scale-105 active:scale-95">
                         <i class="fas fa-shopping-cart"></i>
@@ -184,7 +224,7 @@
 
     <!-- ===== FOOTER ===== -->
     <footer class="bg-slate-900 text-slate-300 mt-16">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             <div>
                 <div class="flex items-center gap-3 mb-3">
                     {% if parametre.logo %}
@@ -198,6 +238,28 @@
                     Des plats savoureux préparés avec des produits frais, livrés avec le sourire.
                     En livraison à domicile.
                 </p>
+                {% if parametre.lien_whatsapp or parametre.facebook or parametre.instagram %}
+                <div class="flex items-center gap-2 mt-5">
+                    {% if parametre.lien_whatsapp %}
+                    <a href="{{ parametre.lien_whatsapp }}" target="_blank" rel="noopener" title="WhatsApp"
+                       class="w-10 h-10 rounded-xl bg-green-500/20 text-green-400 hover:bg-green-500 hover:text-white flex items-center justify-center transition">
+                        <i class="fab fa-whatsapp"></i>
+                    </a>
+                    {% endif %}
+                    {% if parametre.facebook %}
+                    <a href="{{ parametre.facebook }}" target="_blank" rel="noopener" title="Facebook"
+                       class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white flex items-center justify-center transition">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    {% endif %}
+                    {% if parametre.instagram %}
+                    <a href="{{ parametre.instagram }}" target="_blank" rel="noopener" title="Instagram"
+                       class="w-10 h-10 rounded-xl bg-pink-500/20 text-pink-400 hover:bg-pink-500 hover:text-white flex items-center justify-center transition">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
             </div>
             <div>
                 <h4 class="font-bold text-white mb-3">Navigation</h4>
@@ -226,11 +288,41 @@
                     {% endif %}
                 </ul>
             </div>
+            <div>
+                <h4 class="font-bold text-white mb-3">Horaires d'ouverture</h4>
+                <ul class="space-y-3 text-sm">
+                    <li class="flex items-start gap-3">
+                        <i class="fas fa-calendar-alt text-orange-500 mt-1"></i>
+                        <span>{{ parametre.jours_ouverture|default:"Lundi au Dimanche" }}</span>
+                    </li>
+                    {% if parametre.ouverture_midi and parametre.fermeture_midi %}
+                    <li class="flex items-start gap-3">
+                        <i class="fas fa-sun text-orange-500 mt-1"></i>
+                        <span>Midi : {{ parametre.ouverture_midi|time:"H:i" }} - {{ parametre.fermeture_midi|time:"H:i" }}</span>
+                    </li>
+                    {% endif %}
+                    {% if parametre.ouverture_soir and parametre.fermeture_soir %}
+                    <li class="flex items-start gap-3">
+                        <i class="fas fa-moon text-orange-500 mt-1"></i>
+                        <span>Soir : {{ parametre.ouverture_soir|time:"H:i" }} - {{ parametre.fermeture_soir|time:"H:i" }}</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
         </div>
         <div class="border-t border-slate-800 py-4 text-center text-xs text-slate-500">
             © {% now "Y" %} {{ parametre.nom|default:"Restaurant" }}. Tous droits réservés.
         </div>
     </footer>
+
+    <!-- ===== BOUTON WHATSAPP FLOTTANT ===== -->
+    {% if parametre.lien_whatsapp %}
+    <a href="{{ parametre.lien_whatsapp }}" target="_blank" rel="noopener"
+       title="Commander sur WhatsApp"
+       class="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center text-2xl shadow-xl shadow-green-500/30 hover:scale-110 active:scale-95 transition-all">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+    {% endif %}
 
     <!-- ===== MODAL PANIER ===== -->
     <div id="panier-modal" class="hidden fixed inset-0 z-[100] flex items-end sm:items-center justify-center">
@@ -488,6 +580,19 @@
         window.addEventListener("storage", majNavbarPanier);
         window.addEventListener("panier-maj", majNavbarPanier);
         document.addEventListener("keydown", (e) => { if (e.key === "Escape") fermerPanier(); });
+
+        function majIconeTheme() {
+            const icone = document.getElementById("icone-theme");
+            if (icone) {
+                icone.className = document.documentElement.classList.contains("dark") ? "fas fa-sun" : "fas fa-moon";
+            }
+        }
+        function toggleTheme() {
+            const sombre = document.documentElement.classList.toggle("dark");
+            localStorage.setItem("theme", sombre ? "dark" : "light");
+            majIconeTheme();
+        }
+        majIconeTheme();
     </script>
 
     {% block extra_js %}{% endblock %}

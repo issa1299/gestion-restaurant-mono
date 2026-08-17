@@ -205,6 +205,45 @@
             </div>
         </div>
 
+        <!-- Réseaux sociaux & image de fond -->
+        <div class="bg-white rounded-xl sm:rounded-2xl shadow p-4 sm:p-6">
+            <h2 class="text-base sm:text-lg font-bold text-slate-900 mb-1 flex items-center gap-2">
+                <span class="w-9 h-9 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center">
+                    <i class="fas fa-share-nodes text-sm"></i>
+                </span>
+                Site : réseaux sociaux & image de fond
+            </h2>
+            <p class="text-sm text-slate-500 mb-4">Ces informations sont affichées sur le site public (bouton WhatsApp flottant, footer, fond de la page d'accueil).</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5 block">Facebook</label>
+                    {{ form.facebook }}
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5 block">Instagram</label>
+                    {{ form.instagram }}
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5 block">WhatsApp (numéro)</label>
+                    {{ form.whatsapp }}
+                    <p class="text-xs text-slate-500 mt-1"><i class="fas fa-info-circle mr-1"></i>Si vide, le téléphone du restaurant est utilisé.</p>
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5 block">Image de fond (page d'accueil)</label>
+                    <div class="flex items-center gap-4">
+                        {% if form.instance.image_fond %}
+                        <img src="{{ form.instance.image_fond.url }}" alt="Image de fond" class="w-28 h-16 object-cover rounded-xl border border-slate-200">
+                        {% else %}
+                        <div class="w-28 h-16 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400">
+                            <i class="fas fa-image text-xl"></i>
+                        </div>
+                        {% endif %}
+                        <div class="flex-1">{{ form.image_fond }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="flex gap-3">
             <button type="submit"
                     class="flex-1 sm:flex-none bg-orange-600 hover:bg-orange-700 text-white font-bold px-8 py-3 rounded-xl transition text-sm sm:text-base flex items-center justify-center gap-2">
