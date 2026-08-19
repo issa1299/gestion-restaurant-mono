@@ -4,8 +4,8 @@ from . import views
 app_name = "restaurant"
 
 urlpatterns = [
-    path("", views.bienvenue, name="bienvenue"),
-    path("accueil/", views.accueil, name="accueil"),
+    path("", views.accueil, name="accueil"),
+    path("accueil/", views.accueil, name="accueil_alt"),
     path("a-propos/", views.a_propos, name="a_propos"),
     path("galerie/", views.galerie, name="galerie"),
     path("livraison/", views.livraison, name="livraison"),
