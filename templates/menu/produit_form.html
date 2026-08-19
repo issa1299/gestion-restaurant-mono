@@ -86,9 +86,47 @@
                     </div>
                     {% endif %}
                     <div class="relative">
-                        <input type="file" name="image" id="image" accept="image/*"
-                               class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100">
+                        <input type="file" name="image" id="image" accept="image/*" class="hidden">
+                        <input type="file" id="image-camera" accept="image/*" capture="environment" class="hidden">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <button type="button" onclick="document.getElementById('image').click()"
+                                    class="flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed border-orange-300 text-orange-600 hover:bg-orange-50 transition font-semibold text-sm">
+                                <i class="fas fa-folder-open"></i> Choisir une image
+                            </button>
+                            <button type="button" onclick="document.getElementById('image-camera').click()"
+                                    class="flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 transition font-semibold text-sm">
+                                <i class="fas fa-camera"></i> Prendre une photo
+                            </button>
+                        </div>
                     </div>
+                    <div id="apercu-image" class="hidden mt-3">
+                        <img id="apercu-img" src="" alt="Aperçu" class="w-32 h-32 object-cover rounded-lg border shadow">
+                        <p class="text-xs text-slate-500 mt-1">Aperçu de la nouvelle image</p>
+                    </div>
+                    <script>
+                        function apercuImage() {
+                            const input = document.getElementById("image");
+                            const fichier = input.files && input.files[0];
+                            const cadre = document.getElementById("apercu-image");
+                            if (!fichier) { cadre.classList.add("hidden"); return; }
+                            const lecteur = new FileReader();
+                            lecteur.onload = function(e) {
+                                document.getElementById("apercu-img").src = e.target.result;
+                                cadre.classList.remove("hidden");
+                            };
+                            lecteur.readAsDataURL(fichier);
+                        }
+                        document.getElementById("image").addEventListener("change", apercuImage);
+                        document.getElementById("image-camera").addEventListener("change", function() {
+                            const fichier = this.files && this.files[0];
+                            if (!fichier) return;
+                            const dt = new DataTransfer();
+                            dt.items.add(fichier);
+                            const input = document.getElementById("image");
+                            input.files = dt.files;
+                            apercuImage();
+                        });
+                    </script>
                 </div>
 
                 <div class="flex items-center gap-3">
