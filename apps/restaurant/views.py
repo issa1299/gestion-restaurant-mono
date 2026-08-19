@@ -240,7 +240,7 @@ def liste_messages(request):
     })
 
 
-@role_required(["ADMIN", "GERANT"])
+@role_required(["ADMIN", "GERANT"], ecriture_autorisee=True)
 def galerie_gestion(request):
     """Gestion interne des photos de la galerie"""
     if request.method == "POST":
@@ -264,7 +264,7 @@ def galerie_gestion(request):
     })
 
 
-@role_required(["ADMIN", "GERANT"])
+@role_required(["ADMIN", "GERANT"], ecriture_autorisee=True)
 def galerie_supprimer(request, pk):
     """Supprimer une photo de la galerie"""
     if request.method != "POST":
