@@ -190,6 +190,7 @@ def client_passer_commande(request):
     telephone = data.get("telephone", "")
     guest_nom = data.get("guest_nom", "").strip()
     guest_telephone = data.get("guest_telephone", "").strip()
+    guest_email = data.get("guest_email", "").strip()
     numero_table = str(data.get("table", "")).strip()
     latitude = data.get("latitude", "")
     longitude = data.get("longitude", "")
@@ -238,7 +239,7 @@ def client_passer_commande(request):
                 return JsonResponse({"success": False, "message": "Votre téléphone est requis."}, status=400)
             nom = guest_nom
             tel = guest_telephone
-            email = ""
+            email = guest_email
 
         client, _ = Client.objects.get_or_create(
             nom=nom,
@@ -248,6 +249,9 @@ def client_passer_commande(request):
                 "adresse": adresse,
             }
         )
+        if email and not client.email:
+            client.email = email
+            client.save()
 
     try:
         ids_produits = [int(item.get("id")) for item in panier]

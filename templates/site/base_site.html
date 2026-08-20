@@ -367,6 +367,11 @@
                                class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm transition">
                     </div>
                     <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1">Email <span class="text-gray-400 normal-case font-medium">(optionnel - pour recevoir votre ticket)</span></label>
+                        <input id="modal-email" type="email" placeholder="Ex : vous@exemple.com"
+                               class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm transition">
+                    </div>
+                    <div>
                         <label class="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1">Adresse de livraison *</label>
                         <textarea id="modal-adresse" rows="2" placeholder="Ex : Quartier Almamya, rue 34..."
                                   class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm transition resize-none"></textarea>
@@ -538,10 +543,12 @@
             if (panierModal.length === 0) { afficherToast("Votre panier est vide.", "warning"); return; }
             const nom = document.getElementById("modal-nom").value.trim();
             const tel = document.getElementById("modal-tel").value.trim();
+            const email = document.getElementById("modal-email").value.trim();
             const adresse = document.getElementById("modal-adresse").value.trim();
             if (!nom) { afficherToast("Veuillez entrer votre nom.", "error"); return; }
             if (!tel) { afficherToast("Veuillez entrer votre numéro de téléphone.", "error"); return; }
             if (!adresse) { afficherToast("Veuillez entrer votre adresse de livraison.", "error"); return; }
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { afficherToast("Adresse email invalide.", "error"); return; }
 
             const btn = document.getElementById("modal-valider");
             btn.disabled = true;
@@ -557,6 +564,7 @@
                     telephone: tel,
                     guest_nom: nom,
                     guest_telephone: tel,
+                    guest_email: email,
                     latitude: document.getElementById("modal-lat").value,
                     longitude: document.getElementById("modal-lng").value
                 })
