@@ -54,4 +54,10 @@ urlpatterns = [
         name="ticket"
     ),
 
+    path(
+        "recu/<int:vente_id>/whatsapp/",
+        views.recu_whatsapp,
+        name="recu_whatsapp"
+    ),
+
 ]

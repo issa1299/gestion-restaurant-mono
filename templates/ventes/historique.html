@@ -184,6 +184,11 @@
                                    class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg bg-orange-100 text-orange-600 hover:bg-orange-200 transition" title="Voir le ticket">
                                     <i class="fas fa-print text-xs"></i>
                                 </a>
+                                <a href="{% url 'ventes:recu_whatsapp' vente.id %}"
+                                   class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition" title="Envoyer le reçu par WhatsApp"
+                                   {% if not vente.commande.telephone_livraison %}onclick="alert('Aucun numéro de livraison pour cette vente.'); return false;"{% endif %}>
+                                    <i class="fab fa-whatsapp text-xs"></i>
+                                </a>
                                 {% if not vente.annulee and request.user|has_role:"CAISSIER" %}
                                 <a href="{% url 'ventes:annuler' vente.id %}"
                                    class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition" title="Annuler la vente">

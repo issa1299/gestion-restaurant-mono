@@ -428,8 +428,61 @@ def ticket(request, vente_id):
         {
             "vente": vente,
             "parametre": parametre,
+            "impression_auto": bool(parametre.impression_silencieuse),
         }
     )
+
+
+@role_required(["ADMIN", "GERANT", "CAISSIER"])
+def recu_whatsapp(request, vente_id):
+    """Génère le reçu en texte et ouvre WhatsApp vers le client."""
+    from urllib.parse import quote
+
+    vente = get_object_or_404(
+        Vente.objects.select_related("commande").prefetch_related("details__produit"),
+        id=vente_id,
+    )
+    parametre = ParametreRestaurant.load()
+
+    telephone = request.GET.get("telephone", "").strip()
+    if not telephone:
+        commande = getattr(vente, "commande", None)
+        telephone = (commande.telephone_livraison if commande else "") or ""
+    telephone = "".join(ch for ch in telephone if ch.isdigit())
+
+    if not telephone:
+        messages.error(
+            request,
+            "Aucun numéro WhatsApp pour ce client : "
+            "renseignez le téléphone de la commande ou passez-le en paramètre.",
+        )
+        return redirect("ventes:detail", vente_id=vente.id)
+
+    devise = parametre.devise or "FCFA"
+    lignes = []
+    for d in vente.details.all():
+        lignes.append(
+            f"• {d.quantite} x {d.produit.nom} = {d.sous_total} {devise}"
+        )
+
+    message = "\n".join([
+        f"*{parametre.nom or 'Restaurant'}*",
+        f"Ticket N° {vente.id}",
+        f"Date : {vente.created_at.strftime('%d/%m/%Y %H:%M')}",
+        f"Paiement : {vente.get_mode_paiement_display()}",
+        "",
+        "— VOS ARTICLES —",
+        *lignes,
+        "",
+        f"*TOTAL : {vente.total} {devise}*",
+    ])
+    if vente.remise_pourcent:
+        message += f"\nRemise : {vente.remise_pourcent}%"
+    message += f"\n\n{parametre.message_ticket or 'Merci pour votre confiance !'}"
+    message += f"\n{parametre.nom or 'Restaurant'}"
+
+    url = f"https://wa.me/{telephone}?text={quote(message)}"
+    return redirect(url)
 
 
 @role_required(["ADMIN", "GERANT", "CAISSIER"])
@@ -441,12 +494,16 @@ def detail_vente(request, vente_id):
     )
     parametre = ParametreRestaurant.load()
 
+    commande = getattr(vente, "commande", None)
+    commande_telephone = (commande.telephone_livraison if commande else "") or ""
+
     return render(
         request,
         "ventes/detail.html",
         {
             "vente": vente,
             "parametre": parametre,
+            "commande_telephone": commande_telephone,
         }
     )
 

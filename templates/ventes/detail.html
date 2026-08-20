@@ -29,6 +29,10 @@
                    class="flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 sm:px-5 py-2.5 rounded-xl font-semibold text-sm transition w-full sm:w-auto">
                     <i class="fas fa-print"></i> Ticket
                 </a>
+                <button type="button" onclick="document.getElementById('modal-whatsapp').classList.remove('hidden')"
+                   class="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 sm:px-5 py-2.5 rounded-xl font-semibold text-sm transition w-full sm:w-auto">
+                    <i class="fab fa-whatsapp text-base"></i> WhatsApp
+                </button>
                 {% if request.user|has_role:"CAISSIER" %}
                 <a href="{% url 'ventes:annuler' vente.id %}"
                    class="flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 px-4 sm:px-5 py-2.5 rounded-xl font-semibold text-sm transition w-full sm:w-auto">
@@ -133,6 +137,32 @@
                     {% endif %}
                 </tfoot>
             </table>
+        </div>
+    </div>
+
+    <!-- Modale WhatsApp -->
+    <div id="modal-whatsapp" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-5 sm:p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fab fa-whatsapp text-green-500 text-lg"></i> Envoyer par WhatsApp
+                </h3>
+                <button type="button" onclick="document.getElementById('modal-whatsapp').classList.add('hidden')"
+                        class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+            </div>
+            <p class="text-sm text-gray-500 mb-3">
+                Numéro du client avec l'indicatif (ex : 22370000000).
+                {% if commande_telephone %}Numéro de la livraison : <b class="text-slate-700">{{ commande_telephone }}</b>{% endif %}
+            </p>
+            <form method="get" action="{% url 'ventes:recu_whatsapp' vente.id %}" class="space-y-3">
+                <input type="tel" name="telephone" value="{{ commande_telephone }}"
+                       placeholder="22370000000" required
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition text-sm">
+                <button type="submit"
+                        class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 rounded-xl transition flex items-center justify-center gap-2">
+                    <i class="fab fa-whatsapp"></i> Ouvrir WhatsApp
+                </button>
+            </form>
         </div>
     </div>
 

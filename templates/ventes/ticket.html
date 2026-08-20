@@ -186,10 +186,45 @@
 
 <button onclick="window.print()">🖨 Imprimer</button>
 
+<div id="whatsapp-box" style="margin-top:8px;">
+    <input id="whatsapp-num" type="tel" placeholder="Numéro client (2237...)"
+           style="width:100%;padding:11px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box;">
+    <a id="whatsapp-link" target="_blank" rel="noopener"
+       style="display:block;width:100%;padding:11px;margin-top:8px;background:#25D366;color:white;text-align:center;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none;cursor:pointer;">
+       💬 Envoyer par WhatsApp
+    </a>
+</div>
+
 <script>
 window.onload = function() {
-    window.print();
+    if ({{ impression_auto|yesno:"true,false" }}) {
+        window.print();
+    }
 };
+document.getElementById('whatsapp-link').addEventListener('click', function(e) {
+    e.preventDefault();
+    var num = document.getElementById('whatsapp-num').value.replace(/[^0-9]/g, '');
+    if (!num) { alert('Saisissez le numéro du client.'); return; }
+    var msg = [
+        '*{{ parametre.nom|default:"RestaurantPro" }}*',
+        'Ticket N° {{ vente.id }}',
+        'Date : {{ vente.created_at|date:"d/m/Y H:i" }}',
+        'Paiement : {{ vente.get_mode_paiement_display }}',
+        '',
+        '— VOS ARTICLES —',
+        {% for d in vente.details.all %}
+        '• {{ d.quantite }} x {{ d.produit.nom }} = {{ d.sous_total }} {{ parametre.devise|default:"FCFA" }}',
+        {% endfor %}
+        '',
+        '*TOTAL : {{ vente.total }} {{ parametre.devise|default:"FCFA" }}*'
+        {% if vente.remise_pourcent %},
+        'Remise : {{ vente.remise_pourcent }}%'
+        {% endif %},
+        '',
+        '{{ parametre.message_ticket|default:"Merci pour votre confiance !" }}'
+    ].join('\n');
+    window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(msg), '_blank');
+});
 </script>
 
 </body>
