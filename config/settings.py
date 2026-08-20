@@ -51,7 +51,6 @@ INSTALLED_APPS = [
     'apps.commandes',
     'apps.cuisine',
     'apps.stock',
-    'apps.fournisseurs',
     'apps.livraison',
     'apps.clients',
     'apps.notifications',

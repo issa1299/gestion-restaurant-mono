@@ -161,21 +161,12 @@
             </ul>
         {% endif %}
 
-        <!-- Section : Livraison & Fournisseurs -->
+        <!-- Section : Livraison -->
         {% if request.user|has_role:"ADMIN,GERANT,VENDEUR,LIVREUR" %}
             <p class="sidebar-section-title px-6 mt-8 mb-3 text-xs uppercase tracking-wider text-gray-400 font-semibold">
-                Livraison &amp; Fournisseurs
+                Livraison
             </p>
             <ul class="space-y-2 px-3">
-                {% if request.user|has_role:"ADMIN,GERANT,VENDEUR" %}
-                <li>
-                    <a href="{% url 'fournisseurs:liste' %}" title="Fournisseurs"
-                       class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.resolver_match.namespace == 'fournisseurs' %}bg-orange-500 text-white shadow-sm{% else %}hover:bg-gray-100 hover:text-slate-900{% endif %}">
-                        <i class="fas fa-truck-field w-5 text-center"></i>
-                        <span class="sidebar-label">Fournisseurs</span>
-                    </a>
-                </li>
-                {% endif %}
                 {% if request.user|has_role:"ADMIN,GERANT,LIVREUR" %}
                 <li>
                     <a href="{% url 'livraison:liste' %}" title="Livraison"
