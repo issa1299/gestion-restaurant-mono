@@ -439,7 +439,7 @@ def recu_whatsapp(request, vente_id):
     from urllib.parse import quote
 
     vente = get_object_or_404(
-        Vente.objects.select_related("commande").prefetch_related("details__produit"),
+        Vente.objects.select_related("commande__client").prefetch_related("details__produit"),
         id=vente_id,
     )
     parametre = ParametreRestaurant.load()
@@ -448,6 +448,10 @@ def recu_whatsapp(request, vente_id):
     if not telephone:
         commande = getattr(vente, "commande", None)
         telephone = (commande.telephone_livraison if commande else "") or ""
+    if not telephone:
+        commande = getattr(vente, "commande", None)
+        client = getattr(commande, "client", None)
+        telephone = (client.telephone if client else "") or ""
     telephone = "".join(ch for ch in telephone if ch.isdigit())
 
     if not telephone:
@@ -488,7 +492,7 @@ def recu_whatsapp(request, vente_id):
 @role_required(["ADMIN", "GERANT", "CAISSIER"])
 def detail_vente(request, vente_id):
     vente = get_object_or_404(
-        Vente.objects.select_related("caissier", "annule_par", "commande")
+        Vente.objects.select_related("caissier", "annule_par", "commande__client")
         .prefetch_related("details__produit"),
         id=vente_id
     )
@@ -496,6 +500,8 @@ def detail_vente(request, vente_id):
 
     commande = getattr(vente, "commande", None)
     commande_telephone = (commande.telephone_livraison if commande else "") or ""
+    if not commande_telephone and getattr(commande, "client", None):
+        commande_telephone = commande.client.telephone or ""
 
     return render(
         request,
