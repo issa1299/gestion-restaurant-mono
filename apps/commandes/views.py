@@ -298,6 +298,10 @@ def client_passer_commande(request):
         commande.delete()
         return JsonResponse({"success": False, "message": "Panier invalide."}, status=400)
 
+    # Envoyer le ticket (reçu) par e-mail au client
+    from apps.restaurant.email_utils import envoyer_ticket_commande
+    envoyer_ticket_commande(commande)
+
     notifier_nouvelle_commande(commande)
 
     return JsonResponse({

@@ -185,3 +185,84 @@ def envoyer_confirmation_reservation(reservation):
     if not reservation.email:
         return False, "Aucun email renseigné sur cette réservation."
     return envoyer_email(sujet, corps_texte, reservation.email, corps_html, parametres, logo_bytes)
+
+
+def envoyer_ticket_commande(commande):
+    """Envoie au client un e-mail récapitulatif (ticket) de sa commande en ligne.
+    Retourne (ok, erreur)."""
+    from apps.commandes.models import Commande
+
+    parametres = ParametreRestaurant.load()
+    client = commande.client
+    if not client or not client.email:
+        return False, "Aucun email client renseigné sur cette commande."
+
+    logo_html, logo_bytes = charger_logo(parametres)
+    devise = parametres.devise or "FCFA"
+
+    lignes_html = []
+    for ligne in commande.lignes.all():
+        lignes_html.append(f"""
+        <tr>
+          <td style="padding:8px 4px;font-size:13px;color:#0f172a;">{escape(ligne.produit.nom)}<br><span style="font-size:11px;color:#94a3b8;">{ligne.prix} {devise} × {ligne.quantite}</span></td>
+          <td style="padding:8px 4px;font-size:13px;color:#0f172a;text-align:right;font-weight:600;">{ligne.sous_total} {devise}</td>
+        </tr>""")
+
+    total = commande.total
+    type_libelle = commande.get_type_display()
+    detail_type = f"<br><span style='font-size:12px;color:#94a3b8;'>{escape(type_libelle)}</span>" if type_libelle else ""
+    lien_suivi = ""
+    if parametres.url_site:
+        lien_suivi = (
+            f"<p style='margin:20px 0 0 0;text-align:center;'>"
+            f"<a href='{escape(parametres.url_site)}' style='display:inline-block;background:#f97316;color:#ffffff;"
+            f"font-weight:700;padding:12px 24px;border-radius:10px;text-decoration:none;'>Suivre ma commande</a></p>"
+        )
+
+    contenu = f"""
+    <tr>
+      <td style="padding:36px 32px 24px 32px;">
+        <p style="margin:0 0 8px 0;font-size:16px;color:#334155;line-height:1.6;">
+          Bonjour <strong style="color:#0f172a;">{escape(client.nom)}</strong>,
+        </p>
+        <p style="margin:0 0 24px 0;font-size:15px;color:#475569;line-height:1.7;">
+          Merci pour votre commande ! Voici votre ticket{detail_type} :
+        </p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;margin:0 0 20px 0;">
+          <tr>
+            <td style="padding:14px 20px;">
+              <span style="display:inline-block;background:#fff7ed;color:#c2410c;font-weight:700;padding:6px 14px;border-radius:999px;font-size:13px;">Commande N° {commande.id}</span>
+            </td>
+            <td style="padding:14px 20px;text-align:right;font-size:12px;color:#94a3b8;">{commande.created_at.strftime('%d/%m/%Y %H:%M')}</td>
+          </tr>
+        </table>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-bottom:1px solid #e2e8f0;margin:0 0 8px 0;">
+          {''.join(lignes_html)}
+        </table>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="padding:10px 4px;font-size:14px;color:#0f172a;font-weight:700;">TOTAL</td>
+            <td style="padding:10px 4px;font-size:16px;color:#f97316;font-weight:700;text-align:right;">{total} {devise}</td>
+          </tr>
+        </table>
+        {f"<p style='margin:14px 0 0 0;font-size:13px;color:#334155;'>Adresse de livraison : {escape(commande.adresse_livraison)}</p>" if commande.adresse_livraison else ""}
+        <p style="margin:20px 0 0 0;font-size:14px;color:#334155;line-height:1.6;">{escape(parametres.message_ticket or 'Merci pour votre confiance !')}</p>
+        {lien_suivi}
+      </td>
+    </tr>
+    """
+    sujet = f"Votre commande N° {commande.id} - {parametres.nom}"
+    corps_texte = (
+        f"Bonjour {client.nom},\n\n"
+        f"Merci pour votre commande N° {commande.id} du "
+        f"{commande.created_at.strftime('%d/%m/%Y %H:%M')}.\n\n"
+        + "\n".join(
+            f"- {ligne.quantite} x {ligne.produit.nom} = {ligne.sous_total} {devise}"
+            for ligne in commande.lignes.all()
+        )
+        + f"\n\nTOTAL : {total} {devise}\n\n"
+        + (f"Adresse de livraison : {commande.adresse_livraison}\n" if commande.adresse_livraison else "")
+        + f"\n{parametres.message_ticket or 'Merci pour votre confiance !'}\n{parametres.nom}"
+    )
+    corps_html = _enveloppe_html(logo_html, contenu, parametres, timezone.now().year)
+    return envoyer_email(sujet, corps_texte, client.email, corps_html, parametres, logo_bytes)
