@@ -470,7 +470,7 @@ def recu_whatsapp(request, vente_id):
         )
 
     message = "\n".join([
-        f"*{parametre.nom or 'Restaurant'}*",
+        f"{parametre.nom or 'Restaurant'}",
         f"Ticket N° {vente.id}",
         f"Date : {vente.created_at.strftime('%d/%m/%Y %H:%M')}",
         f"Paiement : {vente.get_mode_paiement_display()}",
@@ -478,7 +478,7 @@ def recu_whatsapp(request, vente_id):
         "— VOS ARTICLES —",
         *lignes,
         "",
-        f"*TOTAL : {vente.total} {devise}*",
+        f"TOTAL : {vente.total} {devise}",
     ])
     if vente.remise_pourcent:
         message += f"\nRemise : {vente.remise_pourcent}%"

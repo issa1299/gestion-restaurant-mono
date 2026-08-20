@@ -206,7 +206,7 @@ document.getElementById('whatsapp-link').addEventListener('click', function(e) {
     var num = document.getElementById('whatsapp-num').value.replace(/[^0-9]/g, '');
     if (!num) { alert('Saisissez le numéro du client.'); return; }
     var msg = [
-        '*{{ parametre.nom|default:"RestaurantPro" }}*',
+        '{{ parametre.nom|default:"RestaurantPro" }}',
         'Ticket N° {{ vente.id }}',
         'Date : {{ vente.created_at|date:"d/m/Y H:i" }}',
         'Paiement : {{ vente.get_mode_paiement_display }}',
@@ -216,7 +216,7 @@ document.getElementById('whatsapp-link').addEventListener('click', function(e) {
         '• {{ d.quantite }} x {{ d.produit.nom }} = {{ d.sous_total }} {{ parametre.devise|default:"FCFA" }}',
         {% endfor %}
         '',
-        '*TOTAL : {{ vente.total }} {{ parametre.devise|default:"FCFA" }}*'
+        'TOTAL : {{ vente.total }} {{ parametre.devise|default:"FCFA" }}'
         {% if vente.remise_pourcent %},
         'Remise : {{ vente.remise_pourcent }}%'
         {% endif %},
