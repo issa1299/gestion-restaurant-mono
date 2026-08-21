@@ -168,7 +168,7 @@ def changer_statut_reservation(request, pk):
     return redirect("dashboard:index")
 
 
-@role_required(["ADMIN", "GERANT", "SERVEUR", "CAISSIER"])
+@role_required(["ADMIN", "GERANT", "SERVEUR", "CAISSIER"], ecriture_autorisee=True)
 def marquer_message_lu(request, pk):
     """Marquer un message de contact comme lu (ou non lu)"""
     message = get_object_or_404(ContactMessage, pk=pk)
@@ -292,7 +292,7 @@ def temoignages_gestion(request):
     })
 
 
-@role_required(["ADMIN", "GERANT"])
+@role_required(["ADMIN", "GERANT"], ecriture_autorisee=True)
 def temoignage_ajouter(request):
     """Créer un témoignage"""
     if request.method == "POST":
@@ -324,7 +324,7 @@ def temoignage_ajouter(request):
     return render(request, "restaurant/temoignage_form.html", {"edition": False})
 
 
-@role_required(["ADMIN", "GERANT"])
+@role_required(["ADMIN", "GERANT"], ecriture_autorisee=True)
 def temoignage_modifier(request, pk):
     """Modifier un témoignage"""
     temoignage = get_object_or_404(Temoignage, pk=pk)
@@ -361,7 +361,7 @@ def temoignage_modifier(request, pk):
     })
 
 
-@role_required(["ADMIN", "GERANT"])
+@role_required(["ADMIN", "GERANT"], ecriture_autorisee=True)
 def temoignage_supprimer(request, pk):
     """Supprimer un témoignage"""
     temoignage = get_object_or_404(Temoignage, pk=pk)
@@ -377,7 +377,7 @@ def temoignage_supprimer(request, pk):
     })
 
 
-@role_required(["ADMIN", "GERANT"])
+@role_required(["ADMIN", "GERANT"], ecriture_autorisee=True)
 def temoignage_toggle(request, pk):
     """Activer / désactiver un témoignage"""
     if request.method != "POST":

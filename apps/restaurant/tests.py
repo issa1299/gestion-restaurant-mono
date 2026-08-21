@@ -36,8 +36,8 @@ class TemoignageCRUDTests(TestCase):
         resp = c.get("/temoignages/gestion/")
         self.assertEqual(resp.status_code, 302)
 
-    def test_ajouter_temoignage_interdit_pour_direction_lecture_seule(self):
-        """Admin/Gérant sont en lecture seule : ils ne peuvent pas créer un témoignage."""
+    def test_ajouter_temoignage_admin(self):
+        """Admin/Gérant gèrent les témoignages : ils peuvent en créer."""
         c = Client()
         c.force_login(self.admin)
         resp = c.post("/temoignages/ajouter/", {
@@ -47,9 +47,9 @@ class TemoignageCRUDTests(TestCase):
             "actif": "on",
         })
         self.assertEqual(resp.status_code, 302)
-        self.assertFalse(Temoignage.objects.filter(nom="Moussa").exists())
+        self.assertTrue(Temoignage.objects.filter(nom="Moussa").exists())
 
-    def test_modifier_temoignage_interdit_pour_direction_lecture_seule(self):
+    def test_modifier_temoignage_admin(self):
         c = Client()
         c.force_login(self.admin)
         resp = c.post("/temoignages/%d/modifier/" % self.temoignage.id, {
@@ -60,22 +60,35 @@ class TemoignageCRUDTests(TestCase):
         })
         self.assertEqual(resp.status_code, 302)
         self.temoignage.refresh_from_db()
-        self.assertEqual(self.temoignage.nom, "Awa")
+        self.assertEqual(self.temoignage.nom, "Awa D.")
 
-    def test_supprimer_temoignage_interdit_pour_direction_lecture_seule(self):
+    def test_supprimer_temoignage_admin(self):
         c = Client()
         c.force_login(self.admin)
         resp = c.post("/temoignages/%d/supprimer/" % self.temoignage.id)
         self.assertEqual(resp.status_code, 302)
-        self.assertTrue(Temoignage.objects.filter(id=self.temoignage.id).exists())
+        self.assertFalse(Temoignage.objects.filter(id=self.temoignage.id).exists())
 
-    def test_toggle_actif_interdit_pour_direction_lecture_seule(self):
+    def test_toggle_actif_admin(self):
         c = Client()
         c.force_login(self.admin)
         resp = c.post("/temoignages/%d/toggle/" % self.temoignage.id)
         self.assertEqual(resp.status_code, 302)
         self.temoignage.refresh_from_db()
-        self.assertTrue(self.temoignage.actif)
+        self.assertFalse(self.temoignage.actif)
+
+    def test_ajout_temoignage_interdit_serveur(self):
+        """Les rôles non-direction ne peuvent pas créer de témoignage."""
+        c = Client()
+        c.force_login(self.serveur)
+        resp = c.post("/temoignages/ajouter/", {
+            "nom": "Intrus",
+            "note": "4",
+            "message": "Tentative",
+            "actif": "on",
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.assertFalse(Temoignage.objects.filter(nom="Intrus").exists())
 
     def test_page_publique_cache_inactifs(self):
         Temoignage.objects.create(nom="Caché", note=1, message="x", actif=False)
