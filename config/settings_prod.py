@@ -21,7 +21,10 @@ ALLOWED_HOSTS = os.environ.get(
     "issa72.pythonanywhere.com,www.issa72.pythonanywhere.com",
 ).split(",")
 
-CSRF_TRUSTED_ORIGINS = ["https://*.pythonanywhere.com"]
+CSRF_TRUSTED_ORIGINS = os.environ.get(
+    "CSRF_TRUSTED_ORIGINS",
+    "https://*.pythonanywhere.com",
+).split(",")
 
 # Le plan gratuit de PythonAnywhere n'expose pas de WebSockets.
 # Channels reste installé mais l'app tourne en WSGI ; les notifications
