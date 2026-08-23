@@ -14,7 +14,7 @@
             </h1>
             <p class="text-slate-600 text-sm mt-0.5">Gestion des commandes du restaurant</p>
         </div>
-        {% if request.user|has_role:"SERVEUR" %}
+        {% if request.user.role == "SERVEUR" %}
         <a href="{% url 'commandes:ajouter' %}" class="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg text-sm transition flex items-center gap-2 w-full sm:w-auto justify-center">
             <i class="fas fa-plus"></i> Ajouter commande
         </a>
@@ -184,7 +184,7 @@
                 </div>
 
                 <!-- Actions -->
-                {% if request.user|has_role:"SERVEUR,CUISINIER" %}
+                {% if request.user.role == "SERVEUR" or request.user.role == "CUISINIER" %}
                 <div class="flex gap-2">
                     {% if commande.statut == 'EN_ATTENTE' %}
                     <button onclick="changerStatut('{{ commande.id }}', 'EN_PREPARATION', this)"

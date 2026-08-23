@@ -189,7 +189,7 @@
                                    {% if not vente.commande.telephone_livraison %}onclick="alert('Aucun numéro de livraison pour cette vente.'); return false;"{% endif %}>
                                     <i class="fab fa-whatsapp text-xs"></i>
                                 </a>
-                                {% if not vente.annulee and request.user|has_role:"CAISSIER" %}
+                                {% if not vente.annulee and request.user.role == "CAISSIER" %}
                                 <a href="{% url 'ventes:annuler' vente.id %}"
                                    class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition" title="Annuler la vente">
                                     <i class="fas fa-ban text-xs"></i>
