@@ -30,13 +30,37 @@ CSRF_TRUSTED_ORIGINS = os.environ.get(
 # Channels reste installé mais l'app tourne en WSGI ; les notifications
 # temps réel sont silencieusement ignorées (try/except dans utils.py).
 
-# SQLite est utilisé pour ce test (stockage sur le serveur PythonAnywhere).
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+# Base de données : PostgreSQL si DB_NAME est défini (VPS OVH),
+# sinon SQLite par défaut (PythonAnywhere).
+if os.environ.get("DB_NAME"):
+    DATABASES = {
+        "default": {
+            "ENGINE": os.environ.get("DB_ENGINE", "django.db.backends.postgresql"),
+            "NAME": os.environ["DB_NAME"],
+            "USER": os.environ.get("DB_USER", ""),
+            "PASSWORD": os.environ.get("DB_PASSWORD", ""),
+            "HOST": os.environ.get("DB_HOST", "127.0.0.1"),
+            "PORT": os.environ.get("DB_PORT", "5432"),
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+
+# Channels : Redis si REDIS_URL est défini, sinon mémoire locale
+# (suffisant car une instance = un seul processus Daphne).
+_redis_url = os.environ.get("REDIS_URL")
+if _redis_url:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {"hosts": [_redis_url]},
+        }
+    }
 
 # Sécurité HTTP (PythonAnywhere termine le TLS à son niveau de proxy)
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
