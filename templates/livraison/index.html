@@ -193,7 +193,14 @@
                         <!-- Informations -->
                         <div class="space-y-1.5 text-sm text-slate-600 mb-3">
                             <p class="flex items-start gap-2"><i class="fas fa-map-pin text-slate-400 w-4 mt-0.5"></i> <span class="flex-1">{{ livraison.adresse|default:"Adresse non renseignée" }}</span></p>
-                            <p class="flex items-center gap-2"><i class="fas fa-phone text-slate-400 w-4"></i> {{ livraison.telephone|default:"—" }}</p>
+                            <p class="flex items-center gap-2">
+                                <i class="fas fa-phone text-slate-400 w-4"></i>
+                                {% if livraison.telephone and request.user.role == "LIVREUR" %}
+                                <a href="tel:{{ livraison.telephone }}" class="text-blue-600 hover:text-blue-700 hover:underline font-medium">{{ livraison.telephone }}</a>
+                                {% else %}
+                                {{ livraison.telephone|default:"—" }}
+                                {% endif %}
+                            </p>
                             {% if livraison.livreur %}
                             <p class="flex items-center gap-2">
                                 <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold flex items-center justify-center shrink-0">
@@ -222,6 +229,12 @@
                         <!-- Actions -->
                         {% if request.user.role == "LIVREUR" %}
                         <div class="space-y-2">
+                            {% if livraison.telephone and livraison.statut == 'EN_ATTENTE' or livraison.statut == 'EN_COURS' %}
+                            <a href="tel:{{ livraison.telephone }}"
+                                class="w-full bg-green-500 hover:bg-green-600 text-white text-sm font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2">
+                                <i class="fas fa-phone"></i> Appeler le client
+                            </a>
+                            {% endif %}
                             {% if livraison.statut == 'EN_ATTENTE' %}
                                 <button onclick="changerStatutLivraison({{ livraison.id }}, 'EN_COURS')"
                                     class="w-full bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2">

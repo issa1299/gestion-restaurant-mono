@@ -20,6 +20,12 @@
             </div>
         </div>
         <div class="flex gap-2 w-full sm:w-auto">
+            {% if livraison.telephone and request.user.role == "LIVREUR" %}
+            <a href="tel:{{ livraison.telephone }}"
+               class="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 sm:px-5 py-2.5 rounded-xl font-semibold text-sm transition w-full sm:w-auto">
+                <i class="fas fa-phone"></i> Appeler le client
+            </a>
+            {% endif %}
             {% if request.user.role == "LIVREUR" %}
             <a href="{% url 'livraison:modifier' livraison.id %}"
                class="flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 sm:px-5 py-2.5 rounded-xl font-semibold text-sm transition w-full sm:w-auto">
@@ -90,7 +96,20 @@
             <h3 class="font-bold text-gray-800 mb-4"><i class="fas fa-location-dot text-orange-500 mr-2"></i>Informations de livraison</h3>
             <div class="space-y-3 text-sm">
                 <p class="flex items-start gap-2 text-gray-600"><i class="fas fa-map-pin text-gray-400 mt-0.5 w-4"></i> {{ livraison.adresse|default:"Adresse non renseignée" }}</p>
-                <p class="flex items-center gap-2 text-gray-600"><i class="fas fa-phone text-gray-400 w-4"></i> {{ livraison.telephone|default:"—" }}</p>
+                <p class="flex items-center gap-2 text-gray-600">
+                    <i class="fas fa-phone text-gray-400 w-4"></i>
+                    {% if livraison.telephone and request.user.role == "LIVREUR" %}
+                    <a href="tel:{{ livraison.telephone }}" class="text-blue-600 hover:text-blue-700 hover:underline font-semibold">{{ livraison.telephone }}</a>
+                    {% else %}
+                    {{ livraison.telephone|default:"—" }}
+                    {% endif %}
+                </p>
+                {% if livraison.telephone and request.user.role == "LIVREUR" %}
+                <a href="tel:{{ livraison.telephone }}"
+                   class="inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2.5 rounded-xl font-bold text-sm transition">
+                    <i class="fas fa-phone"></i> Appeler le client
+                </a>
+                {% endif %}
                 {% if livraison.notes %}
                 <p class="flex items-start gap-2 text-gray-600"><i class="fas fa-sticky-note text-gray-400 mt-0.5 w-4"></i> {{ livraison.notes }}</p>
                 {% endif %}
@@ -118,11 +137,19 @@
 <!-- Carte de suivi -->
     {% if request.user.role == "LIVREUR" %}
     <div class="no-print bg-white rounded-xl sm:rounded-2xl shadow p-5 sm:p-6">
-        <div class="flex items-center justify-between gap-3 mb-4">
+        <div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
             <h3 class="font-bold text-gray-800"><i class="fas fa-map-location-dot text-orange-500 mr-2"></i>Position du livreur</h3>
-            <button type="button" id="btn-partager-position" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl font-semibold text-sm transition">
-                <i class="fas fa-location-crosshairs mr-1"></i> ▶ Démarrer le partage GPS
-            </button>
+            <div class="flex gap-2">
+                {% if livraison.telephone %}
+                <a href="tel:{{ livraison.telephone }}"
+                   class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl font-semibold text-sm transition inline-flex items-center gap-2">
+                    <i class="fas fa-phone"></i> Appeler le client
+                </a>
+                {% endif %}
+                <button type="button" id="btn-partager-position" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl font-semibold text-sm transition">
+                    <i class="fas fa-location-crosshairs mr-1"></i> ▶ Démarrer le partage GPS
+                </button>
+            </div>
         </div>
         <div id="map-livraison" class="h-72 w-full rounded-2xl border border-slate-200"></div>
         <div class="flex items-center gap-4 mt-3 flex-wrap text-xs text-slate-500">
