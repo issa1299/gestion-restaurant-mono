@@ -182,13 +182,32 @@
 
     // Marqueur livreur (mobile)
     let livreurMarker = null;
+
+    // Animation fluide entre deux positions (comme Google Maps)
+    function deplacerEnDouceur(marker, lat, lng, duree = 2500) {
+        const from = marker.getLatLng();
+        const to = L.latLng(lat, lng);
+        if (marker._animRaf) cancelAnimationFrame(marker._animRaf);
+        const debut = performance.now();
+        function step(t) {
+            const p = Math.min(1, (t - debut) / duree);
+            const e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+            marker.setLatLng([
+                from.lat + (to.lat - from.lat) * e,
+                from.lng + (to.lng - from.lng) * e
+            ]);
+            if (p < 1) marker._animRaf = requestAnimationFrame(step);
+        }
+        marker._animRaf = requestAnimationFrame(step);
+    }
+
     function updateLivreur(lat, lng) {
         if (!lat || !lng) return;
         if (!livreurMarker) {
             livreurMarker = L.marker([lat, lng], { icon: iconLivreur })
                 .addTo(map).bindPopup('<b>Votre livreur</b>');
         } else {
-            livreurMarker.setLatLng([lat, lng]);
+            deplacerEnDouceur(livreurMarker, lat, lng);
         }
         chargerRoute(lat, lng);
     }

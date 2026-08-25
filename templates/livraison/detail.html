@@ -238,13 +238,32 @@ const livraisonId = {{ livraison.id }};
 
     // Marqueur livreur (mobile)
     let markerLivraison = null;
+
+    // Animation fluide entre deux positions (comme Google Maps)
+    function deplacerEnDouceur(marker, lat, lng, duree = 2500) {
+        const from = marker.getLatLng();
+        const to = L.latLng(lat, lng);
+        if (marker._animRaf) cancelAnimationFrame(marker._animRaf);
+        const debut = performance.now();
+        function step(t) {
+            const p = Math.min(1, (t - debut) / duree);
+            const e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+            marker.setLatLng([
+                from.lat + (to.lat - from.lat) * e,
+                from.lng + (to.lng - from.lng) * e
+            ]);
+            if (p < 1) marker._animRaf = requestAnimationFrame(step);
+        }
+        marker._animRaf = requestAnimationFrame(step);
+    }
+
     function updateMarker(lat, lng) {
         if (!lat || !lng) return;
         if (!markerLivraison) {
             markerLivraison = L.marker([lat, lng], { icon: iconLivreurLiv })
                 .addTo(mapLivraison).bindPopup('<b>🛵 Vous</b>');
         } else {
-            markerLivraison.setLatLng([lat, lng]);
+            deplacerEnDouceur(markerLivraison, lat, lng);
         }
         chargerRouteLiv(lat, lng);
     }
@@ -314,7 +333,7 @@ const livraisonId = {{ livraison.id }};
         el.className = 'text-sm mt-3 ' + (color || 'text-slate-500');
     }
 
-    async function envoyerPosition(lat, lng) {
+    async function envoyerPosition(lat, lng, precision = null) {
         const maintenant = Date.now();
         if (maintenant - dernierEnvoi < 5000) return; // throttle toutes les 5s
         dernierEnvoi = maintenant;
@@ -327,7 +346,15 @@ const livraisonId = {{ livraison.id }};
             const data = await response.json();
             if (data.success) {
                 updateMarker(data.latitude, data.longitude);
-                setStatus('📍 Position transmise en temps réel (toutes les 5s).', 'text-green-600');
+                if (partageActif) {
+                    mapLivraison.panTo([data.latitude, data.longitude], { animate: true, duration: 1 });
+                }
+                setStatus(
+                    precision
+                        ? `📍 Position transmise en temps réel · précision ±${precision} m`
+                        : '📍 Position transmise en temps réel.',
+                    'text-green-600'
+                );
             } else {
                 setStatus(data.message || 'Erreur serveur.', 'text-red-600');
             }
@@ -336,10 +363,29 @@ const livraisonId = {{ livraison.id }};
         }
     }
 
+    // ===== Écran maintenu allumé pendant la livraison (Wake Lock) =====
+    let wakeLock = null;
+    async function garderEcranAllume() {
+        try {
+            if ('wakeLock' in navigator) {
+                wakeLock = await navigator.wakeLock.request('screen');
+                wakeLock.addEventListener('release', () => { wakeLock = null; });
+            }
+        } catch (e) { /* non supporté : pas bloquant */ }
+    }
+    function libererEcran() {
+        try { wakeLock && wakeLock.release(); } catch (e) {}
+        wakeLock = null;
+    }
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && partageActif) garderEcranAllume();
+    });
+
     function arreterPartage() {
         if (watchId !== null) navigator.geolocation.clearWatch(watchId);
         watchId = null;
         partageActif = false;
+        libererEcran();
         const btn = document.getElementById('btn-partager-position');
         btn.innerHTML = '<i class="fas fa-location-crosshairs mr-1"></i> ▶ Démarrer le partage GPS';
         btn.classList.remove('bg-red-500', 'hover:bg-red-600');
@@ -360,7 +406,7 @@ const livraisonId = {{ livraison.id }};
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
                 updateMarker(lat, lng);
-                await envoyerPosition(lat, lng);
+                await envoyerPosition(lat, lng, Math.round(position.coords.accuracy));
             },
             (err) => {
                 if (err.code === 1) {
@@ -380,7 +426,7 @@ const livraisonId = {{ livraison.id }};
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
                 updateMarker(lat, lng);
-                await envoyerPosition(lat, lng);
+                await envoyerPosition(lat, lng, Math.round(position.coords.accuracy));
             },
             (err) => {
                 if (err.code === 1) {
@@ -392,6 +438,7 @@ const livraisonId = {{ livraison.id }};
         );
 
         partageActif = true;
+        garderEcranAllume();
         const btn = document.getElementById('btn-partager-position');
         btn.innerHTML = '<i class="fas fa-stop mr-1"></i> ■ Arrêter le partage GPS';
         btn.classList.remove('bg-orange-500', 'hover:bg-orange-600');
