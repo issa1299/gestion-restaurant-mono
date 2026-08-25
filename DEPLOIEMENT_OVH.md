@@ -192,8 +192,9 @@ nano /root/sauvegarde.sh
 ```bash
 #!/bin/bash
 DATE=$(date +%Y-%m-%d)
-for CLIENT in moussa; do            # ajoute les autres clients ici
-    DIR="/home/$CLIENT/RestaurantPro"
+for d in /home/*/RestaurantPro; do    # detection auto de tous les clients
+    CLIENT=$(basename "$(dirname "$d")")
+    DIR="$d"
     sudo -u postgres pg_dump ${CLIENT}_db | gzip > /root/backups/${CLIENT}_db_$DATE.sql.gz
     tar czf /root/backups/${CLIENT}_media_$DATE.tar.gz $DIR/media
 done
@@ -216,17 +217,33 @@ ufw enable
 
 ---
 
-## Résumé : ajouter un nouveau client
+## Résumé : ajouter un nouveau client (automatique)
 
-| Étape | Commande clé |
-|---|---|
-| Utilisateur Linux | `adduser --disabled-password client2` |
-| Cloner + venv | `git clone ... && pip install -r requirements.txt` |
-| Base | `CREATE DATABASE client2_db OWNER client2;` |
-| .env | Port service suivant (8002), domaine client2 |
-| Service systemd | Copier `moussa.service` → `client2.service`, port 8002 |
-| Nginx | Copier la config, changer domaine + port |
-| SSL | `certbot --nginx -d client2.example.com` |
+Le script `scripts/creer_client.sh` fait **tout** en une commande :
+
+```bash
+cd /root && git clone https://github.com/issa1299/gestion-restaurant-mono.git outils 2>/dev/null
+cp outils/scripts/*.sh /root/ && chmod +x /root/*.sh
+
+./creer_client.sh fatou chez-fatou.example.com
+```
+
+Il crée automatiquement : utilisateur Linux, code, venv, base PostgreSQL,
+`.env` avec clé secrete unique, migrations, service systemd (port libre auto),
+config Nginx, puis demande le compte administrateur.
+
+**Ensuite il ne reste que :**
+1. Pointer le domaine OVH vers l'IP du serveur
+2. `certbot --nginx -d chez-fatou.example.com` (HTTPS)
+3. Configurer l'identité du restaurant dans `/parametres/`
+4. Ajouter la sauvegarde (auto-détectée par la boucle ci-dessus)
+
+**Mettre à jour tous les clients** (détection automatique) :
+
+```bash
+./maj_instances.sh              # tous les clients installes
+./maj_instances.sh moussa       # un seul client
+```
 
 Un petit VPS Value supporte facilement **5 à 10 restaurants**.
 
