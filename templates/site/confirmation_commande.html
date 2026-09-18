@@ -15,7 +15,7 @@
     </div>
 </section>
 
-<div class="max-w-3xl mx-auto px-4 py-10">
+<div class="max-w-3xl mx-auto px-4 py-10" id="zone-ticket">
     <!-- Statut de la commande -->
     <div class="mb-8 bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
         <div class="flex items-center justify-between mb-6">
@@ -124,6 +124,33 @@
     </div>
     {% endif %}
 
+    <style>
+        @media print {
+            body * { visibility: hidden; }
+            #zone-ticket, #zone-ticket * { visibility: visible; }
+            #zone-ticket { position: absolute; inset: 0; margin: 0; padding: 16px; }
+            .no-print { display: none !important; }
+        }
+    </style>
+
+    <!-- Ticket : imprimer / WhatsApp -->
+    <div class="mt-6 bg-white rounded-3xl shadow-sm border border-gray-100 p-6 no-print">
+        <h2 class="font-bold text-slate-900 flex items-center gap-2 mb-4">
+            <i class="fas fa-ticket text-orange-500"></i> Mon ticket
+        </h2>
+        <div class="flex flex-col sm:flex-row gap-3">
+            <button type="button" onclick="window.print()"
+                    class="flex-1 bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-xl font-bold text-sm transition shadow-lg">
+                <i class="fas fa-print mr-2"></i>Imprimer mon ticket
+            </button>
+            <a id="whatsapp-link" href="#" target="_blank" rel="noopener"
+               class="flex-1 bg-[#25D366] hover:bg-[#1eb856] text-white py-3 rounded-xl font-bold text-sm transition shadow-lg text-center">
+                <i class="fab fa-whatsapp mr-2"></i>Recevoir par WhatsApp
+            </a>
+        </div>
+        <p class="text-xs text-slate-400 mt-3 text-center">Le ticket est envoyé par e-mail si vous avez renseigné votre email ci-dessus ✉️</p>
+    </div>
+
     <!-- Suivi en direct -->
     {% if commande.type == "LIVRAISON" %}
     <div class="mt-8 bg-gradient-to-br from-orange-500 to-amber-600 rounded-3xl p-8 text-center text-white overflow-hidden relative">
@@ -184,6 +211,43 @@ function copierLien() {
         notif();
     }
 }
+// === Ticket WhatsApp ===
+document.getElementById('whatsapp-link').addEventListener('click', function(e) {
+    e.preventDefault();
+    var num = (document.getElementById('wa-num')?.value || '').replace(/[^0-9]/g, '');
+    if (!num) { afficherToast("Entrez d'abord le numéro WhatsApp (ex : 221761234567).", "warning"); return; }
+    var msg = [
+        '{{ parametre.nom|default:"Restaurant" }}',
+        'Ticket Commande N° {{ commande.id }}',
+        'Date : {{ commande.created_at|date:"d/m/Y H:i" }}',
+        'Type : {{ commande.get_type_display }}',
+        '',
+        '— VOS ARTICLES —',
+        {% for l in commande.lignes.all %}
+        '• {{ l.quantite }} x {{ l.produit.nom }} = {{ l.sous_total }} {{ parametre.devise|default:"FCFA" }}',
+        {% endfor %}
+        '',
+        'TOTAL : {{ commande.total }} {{ parametre.devise|default:"FCFA" }}'
+        {% if commande.adresse_livraison %},
+        'Adresse : {{ commande.adresse_livraison|escapejs }}'
+        {% endif %},
+        '',
+        'Suivi : {{ lien_suivi|escapejs }}',
+        '',
+        '{{ parametre.message_ticket|default:"Merci pour votre confiance !" }}'
+    ].join('\n');
+    window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(msg), '_blank');
+});
+
+// Champ numéro WhatsApp (prérempli avec le téléphone de la commande)
+var waBox = document.getElementById('whatsapp-link');
+if (waBox) {
+    waBox.parentElement.insertAdjacentHTML('afterend',
+        '<input id="wa-num" type="tel" placeholder="N° WhatsApp du client (ex : 221761234567)"' +
+        ' class="w-full mt-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 no-print"' +
+        ' value="{{ commande.telephone_livraison }}">');
+}
+
 localStorage.removeItem("panier");
 localStorage.removeItem("panier_nom");
 localStorage.removeItem("panier_tel");

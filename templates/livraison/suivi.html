@@ -131,10 +131,10 @@
 {% endblock %}
 
 {% block extra_js %}
-{% load static %}
+{% load static static_version %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="{% static 'js/carte.js' %}"></script>
+<script src="{% static_version 'js/carte.js' %}"></script>
 <script>
     // ===== Données initiales =====
     const commandeId = {{ commande.id }};
@@ -147,17 +147,15 @@
     // ===== Carte (fond de carte + satellite à la Google Maps) =====
     const map = L.map('map').setView([clientLat || initialLat || 12.6392, clientLng || initialLng || -8.0029], 13);
 
-    const coucheCarte = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap contributors'
-    });
+    // Fond "routes" résilient : si OpenStreetMap bloque les tuiles (403),
+    // bascule automatiquement vers un fournisseur de secours (voir carte.js).
+    const coucheCarte = creerCoucheFondResiliente(map);
 
     const coucheSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: 19,
         attribution: '&copy; Esri, Maxar, Earthstar Geographics'
     });
 
-    coucheCarte.addTo(map);
     L.control.layers({
         'Carte (routes)': coucheCarte,
         'Satellite': coucheSatellite

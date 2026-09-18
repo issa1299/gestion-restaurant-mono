@@ -187,11 +187,11 @@
 {% endblock %}
 
 {% block extra_js %}
-{% load static %}
+{% load static static_version %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="{% static 'js/statut.js' %}"></script>
-<script src="{% static 'js/carte.js' %}"></script>
+<script src="{% static_version 'js/carte.js' %}"></script>
 <script src="{% static 'js/toast.js' %}"></script>
 <script>
 const livraisonId = {{ livraison.id }};
@@ -201,33 +201,52 @@ const livraisonId = {{ livraison.id }};
 
     const mapInitLat = clientLat || {{ livraison.latitude|stringformat:"f"|default:'12.6392' }};
     const mapInitLng = clientLng || {{ livraison.longitude|stringformat:"f"|default:'-8.0029' }};
-    const mapLivraison = L.map('map-livraison').setView([mapInitLat, mapInitLng], 13);
-
-    const coucheCarteLiv = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap contributors'
+    const mapLivraison = L.map('map-livraison', {
+        center: [mapInitLat, mapInitLng],
+        zoom: 13,
+        preferCanvas: true,
+        scrollWheelZoom: true,
+        doubleClickZoom: true
     });
+
+    // Contrôle d'échelle Google-like
+    L.control.scale({maxWidth: 200, imperial: false}).addTo(mapLivraison);
+
+    // Fonds de carte — le fond "routes" bascule automatiquement vers un
+    // fournisseur de secours si OpenStreetMap bloque les tuiles (403).
+    const coucheCarteLiv = creerCoucheFondResiliente(mapLivraison);
 
     const coucheSatelliteLiv = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: 19,
         attribution: '&copy; Esri, Maxar, Earthstar Geographics'
     });
 
-    coucheCarteLiv.addTo(mapLivraison);
     L.control.layers({
         'Carte (routes)': coucheCarteLiv,
-        'Satellite': coucheSatelliteLiv
+        'Satellite': coucheSatelliteLiv,
+        'Terrain': L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            maxZoom: 17,
+            attribution: '&copy; OpenTopoMap (CC-BY-SA)'
+        })
     }, {}, { position: 'topright' }).addTo(mapLivraison);
 
-    // Bouton plein écran personnalisé
-    ajouterControlePleinEcran(mapLivraison);
+    // Effet "flyTo" fluide quand le marqueur bouge
+    function flyToMarker(lat, lng) {
+        mapLivraison.flyTo([lat, lng], mapLivraison.getZoom(), {
+            duration: 1,
+            easeLinearity: 0.9
+        });
+    }
 
-    // Corrige les cartes blanches (conteneur à taille 0 au chargement)
-    corrigerTailleCarte(mapLivraison);
+    // Icônes marqueurs (mêmes icônes que la page de suivi client)
+    const iconClientLiv = iconClientLeaflet(26);
+    const iconLivreurLiv = iconLivreurLeaflet(26);
 
-    // Icônes personnalisées
-    const iconClientLiv = iconClientLeaflet(24);
-    const iconLivreurLiv = iconLivreurLeaflet(24);
+    // Fonction de rotation du marqueur (comme Google Maps)
+    function rotateMarker(marker, angle) {
+        marker.options.rotationAngle = angle;
+        marker.update();
+    }
 
     // Marqueur client (fixe)
     let clientMarkerLiv = null;

@@ -43,6 +43,10 @@
 
 {% block content %}
 {% csrf_token %}
+<!-- Temps réel : la caisse reçoit les nouvelles commandes / changements de
+     statut des autres postes (serveurs, site client, cuisine) et se recharge
+     automatiquement — le panier en cours est conservé via localStorage. -->
+{% include "components/notifications.html" with groupe="commandes" %}
 {{ commandes_ouvertes_data|json_script:"commandes-ouvertes-data" }}
 
 <div id="pos-screen" class="pos-screen">

@@ -39,7 +39,9 @@
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
                 {% for produit in categorie.produits.all %}
                 {% if produit.disponible %}
-                <div class="produit-ligne bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col" data-nom="{{ produit.nom|lower }}">
+                <div class="produit-ligne bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col cursor-pointer"
+                    data-nom="{{ produit.nom|lower }}"
+                    onclick="ajouterAuPanier({{ produit.id }}, '{{ produit.nom|escapejs }}', {{ produit.prix }})">
                     <div class="relative h-32 sm:h-36 bg-orange-100 overflow-hidden">
                         {% if produit.image %}
                         <img src="{{ produit.image.url }}" alt="{{ produit.nom }}" class="w-full h-full object-cover">
@@ -48,11 +50,6 @@
                             <i class="fas fa-utensils text-orange-400 text-3xl"></i>
                         </div>
                         {% endif %}
-                        <button type="button"
-                                onclick="ajouterAuPanier({{ produit.id }}, '{{ produit.nom|escapejs }}', {{ produit.prix }})"
-                                class="absolute bottom-2 right-2 w-9 h-9 rounded-full bg-orange-500 hover:bg-orange-600 active:scale-95 text-white flex items-center justify-center transition-all shadow-lg shadow-orange-200">
-                            <i class="fas fa-plus text-sm"></i>
-                        </button>
                     </div>
                     <div class="p-3 flex flex-col flex-1">
                         <p class="font-bold text-slate-800 text-sm leading-snug">{{ produit.nom }}</p>
@@ -74,7 +71,6 @@
         </div>
         {% endfor %}
     </div>
-
 {% include "components/notifications.html" with groupe="menu" %}
 {% endblock %}
 
@@ -110,9 +106,13 @@ function filtrerProduits() {
 }
 
 /* ==================== PANIER CLIENT ==================== */
-let panier = JSON.parse(localStorage.getItem("panier")) || [];
-
+// Le localStorage est la source de vérité (partagé avec le panier de la barre
+// de navigation et les autres onglets) : on le relit à chaque ajout pour ne
+// jamais ressusciter des articles supprimés après un vidage du panier.
 function ajouterAuPanier(id, nom, prix) {
+    let panier;
+    try { panier = JSON.parse(localStorage.getItem("panier")) || []; }
+    catch (e) { panier = []; }
     let produit = panier.find(p => p.id == id);
     if (produit) { produit.qte++; }
     else { panier.push({ id, nom, prix, qte: 1 }); }
@@ -124,3 +124,16 @@ function ajouterAuPanier(id, nom, prix) {
 document.getElementById("nb-plats-dispo").textContent = document.querySelectorAll(".produit-ligne").length;
 </script>
 {% endblock %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var cards = document.querySelectorAll('.produit-ligne');
+    cards.forEach(function(card) {
+        if (!card.onclick) {
+            card.onclick = function() {
+                // onclick already in template - this is just fallback
+            };
+        }
+    });
+});
+</script>

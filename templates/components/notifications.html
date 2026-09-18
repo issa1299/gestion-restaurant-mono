@@ -43,29 +43,48 @@
                 break;
             case 'nouvelle_commande':
                 afficherNotificationCommande(data);
+                rafraichirPage();
                 break;
             case 'statut_commande':
                 afficherNotificationStatut(data);
+                rafraichirPage();
                 break;
             case 'nouvelle_reservation':
                 afficherNotification(
                     `<strong>🪑 Nouvelle réservation</strong><br>${data.nom} - ${data.personnes} pers.<br><small>${data.date} à ${data.heure}</small>`,
                     'info'
                 );
+                rafraichirPage();
                 break;
             case 'statut_reservation':
                 afficherNotification(
                     `<strong>🪑 Réservation</strong><br>${data.nom}<br><small>${data.statut}</small>`,
                     'success'
                 );
+                rafraichirPage();
                 break;
             case 'nouveau_message':
                 afficherNotification(
                     `<strong>✉️ Nouveau message</strong><br>${data.nom} - ${data.sujet}`,
                     'info'
                 );
+                rafraichirPage();
                 break;
         }
+    }
+
+    /* Recharge la page peu après un événement qui modifie des données
+       (commandes, réservations, messages), pour que les listes et les
+       statistiques affichent l'état réel. Une page qui gère elle-même la
+       mise à jour du DOM peut désactiver ce rechargement en définissant
+       `window.TEMPS_REEL_SANS_RELOAD = true` AVANT l'inclusion de ce
+       composant. */
+    let reloadPlanifie = false;
+    function rafraichirPage() {
+        if (reloadPlanifie) return; // un seul rechargement même si plusieurs événements arrivent en rafale
+        if (window.TEMPS_REEL_SANS_RELOAD) return;
+        reloadPlanifie = true;
+        setTimeout(() => window.location.reload(), 1500);
     }
 
     function afficherNotificationClient(data, type, titre) {
@@ -78,9 +97,9 @@
     }
 
     function afficherNotificationCommande(data) {
-        const articles = data.articles.map(a => `${a.quantite} × ${a.nom}`).join(', ');
+        const articles = (data.articles || []).map(a => `${a.quantite} × ${a.nom}`).join(', ');
         afficherNotification(
-            `<strong>🆕 Commande N° ${data.id}</strong><br>Table ${data.table}<br>${articles}`,
+            `<strong>🆕 Commande N° ${data.id}</strong><br>${data.table || 'Nouvelle commande'}<br>${articles}`,
             'info'
         );
     }

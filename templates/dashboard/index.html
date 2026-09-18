@@ -322,7 +322,10 @@ function changerPeriode(code) {
 }
 
 // Mise à jour temps réel des cartes statistiques du dashboard
-if (typeof socket !== 'undefined' && socket.readyState === WebSocket.OPEN) {
+// NB : on attache l'écouteur sans vérifier readyState — au chargement de ce
+// script le socket (créé dans le composant de notifications) est encore en
+// CONNECTING, et une vérification OPEN ne passerait jamais.
+if (typeof socket !== 'undefined') {
     socket.addEventListener('message', (event) => {
         const message = JSON.parse(event.data);
         const { evenement } = message;

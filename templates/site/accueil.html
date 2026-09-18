@@ -263,9 +263,13 @@
 </section>
 
 <script>
-let panier = JSON.parse(localStorage.getItem("panier")) || [];
-
+// Le localStorage est la source de vérité (partagé avec le panier de la barre
+// de navigation et les autres onglets) : on le relit à chaque ajout pour ne
+// jamais ressusciter des articles supprimés après un vidage du panier.
 function ajouterAuPanier(id, nom, prix) {
+    let panier;
+    try { panier = JSON.parse(localStorage.getItem("panier")) || []; }
+    catch (e) { panier = []; }
     const existant = panier.find(p => p.id === id);
     if (existant) { existant.qte++; } else { panier.push({ id, nom, prix: parseFloat(prix), qte: 1 }); }
     localStorage.setItem("panier", JSON.stringify(panier));

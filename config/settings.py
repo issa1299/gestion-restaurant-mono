@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +21,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-7*6lxbjk!=n@je@u*016xotus4i)hzcb61oim812*0rlr=7**8'
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*', 'localhost', '127.0.0.1', '192.168.1.156']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 # CSRF settings for development (allow all origins)
 CSRF_TRUSTED_ORIGINS = ['http://*', 'https://*']
@@ -34,6 +35,13 @@ CSRF_TRUSTED_ORIGINS = ['http://*', 'https://*']
 # Application definition
 
 INSTALLED_APPS = [
+    # DOIT être en premier : permet à `runserver` de démarrer via Daphne (ASGI)
+    # et donc de servir les WebSockets (temps réel) en développement.
+    'daphne',
+    # Sert les fichiers statiques via WhiteNoise avec `runserver` en dev :
+    # headers de cache corrects → le navigateur ne garde plus de vieux JS/CSS
+    # en cache (qui causaient des bugs fantômes après chaque modification).
+    'whitenoise.runserver_nostatic',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -171,10 +179,32 @@ CHANNEL_LAYERS = {
     },
 }
 
+# Channels Configuration (sans Redis pour le développement local)
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
+
 # Cache en mémoire (per-process) pour les données lues fréquemment
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': 'restaurantpro',
-    },
+    }
 }
+
+# Security headers for development (HTTP only, disabled in production)
+# These settings are safe for dev when NOT using HTTPS.
+# In production (settings_prod.py), proper HTTPS headers are set.
+if DEBUG:
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_HSTS_SECONDS = 0  # Déactivé en dev (HTTPS requis obligatoirement)
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+else:
+    # En production, ces settings devraient être activés via settings_prod.py
+    pass

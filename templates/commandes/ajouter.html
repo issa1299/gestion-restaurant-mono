@@ -226,6 +226,9 @@
 
 {% block content %}
 
+<!-- La page de saisie gère elle-même son état (panier non rechargeable) :
+     on désactive le rechargement auto des notifications temps réel. -->
+<script>window.TEMPS_REEL_SANS_RELOAD = true;</script>
 {% include "components/notifications.html" with groupe="commandes" %}
 
 <div class="cmd-container p-3 sm:p-4 lg:p-6">

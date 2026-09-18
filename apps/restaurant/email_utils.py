@@ -211,11 +211,19 @@ def envoyer_ticket_commande(commande):
     total = commande.total
     type_libelle = commande.get_type_display()
     detail_type = f"<br><span style='font-size:12px;color:#94a3b8;'>{escape(type_libelle)}</span>" if type_libelle else ""
+    # Lien de suivi RÉEL (avec le jeton secret) — pas l'accueil du site.
+    base = parametres.url_site.rstrip("/") if parametres.url_site else ""
+    lien_suivi_url = ""
+    if base:
+        if commande.type == Commande.LIVRAISON:
+            lien_suivi_url = f"{base}/livraisons/suivi/{commande.id}/{commande.token}/"
+        else:
+            lien_suivi_url = f"{base}/commander/confirmation/{commande.id}/{commande.token}/"
     lien_suivi = ""
-    if parametres.url_site:
+    if lien_suivi_url:
         lien_suivi = (
             f"<p style='margin:20px 0 0 0;text-align:center;'>"
-            f"<a href='{escape(parametres.url_site)}' style='display:inline-block;background:#f97316;color:#ffffff;"
+            f"<a href='{escape(lien_suivi_url)}' style='display:inline-block;background:#f97316;color:#ffffff;"
             f"font-weight:700;padding:12px 24px;border-radius:10px;text-decoration:none;'>Suivre ma commande</a></p>"
         )
 
@@ -262,6 +270,7 @@ def envoyer_ticket_commande(commande):
         )
         + f"\n\nTOTAL : {total} {devise}\n\n"
         + (f"Adresse de livraison : {commande.adresse_livraison}\n" if commande.adresse_livraison else "")
+        + (f"\nSuivre ma commande : {lien_suivi_url}\n" if lien_suivi_url else "")
         + f"\n{parametres.message_ticket or 'Merci pour votre confiance !'}\n{parametres.nom}"
     )
     corps_html = _enveloppe_html(logo_html, contenu, parametres, timezone.now().year)

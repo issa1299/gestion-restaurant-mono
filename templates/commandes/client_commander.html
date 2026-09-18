@@ -113,7 +113,7 @@
                  data-id="{{ produit.id }}" data-nom="{{ produit.nom|escapejs }}" data-prix="{{ produit.prix }}"
                  data-desc="{{ produit.description|escapejs }}" data-cat="{{ produit.categorie.id }}"
                  data-cat-nom="{{ produit.categorie.nom }}"
-                 onclick="ouvrirProduit({{ produit.id }})">
+                 onclick="ajouterDirectement({{ produit.id }})">
                 <div class="relative shrink-0">
                     {% if produit.image %}
                         <img src="{{ produit.image.url }}" alt="{{ produit.nom }}"
@@ -184,6 +184,8 @@
                         <input type="text" id="guest-telephone" placeholder="Téléphone"
                                class="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-orange-500">
                     </div>
+                    <input type="email" id="guest-email" placeholder="Email (optionnel) — ✉️ pour recevoir votre ticket"
+                           class="w-full mt-2 px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-orange-500">
                 </div>
                 <div class="bg-white rounded-2xl p-4 shadow-sm mb-3">
                     <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Mode de commande</p>
@@ -303,6 +305,16 @@ let panier = JSON.parse(localStorage.getItem("panier")) || [];
 let mode = "SUR_PLACE";
 let mpId = null, mpQte = 1;
 
+// Recharge le panier depuis localStorage avant chaque opération : c'est la
+// source de vérité partagée avec les autres pages/onglets. Sans cela, un
+// article supprimé (panier vidé via la barre de navigation ou un autre
+// onglet) ressusciterait à partir de cette copie périmée.
+function chargerPanier() {
+    try { panier = JSON.parse(localStorage.getItem("panier")) || []; }
+    catch (e) { panier = []; }
+    return panier;
+}
+
 /* ---- Modal produit ---- */
 function ouvrirProduit(id) {
     const el = document.querySelector('.list-item[data-id="' + id + '"]');
@@ -317,6 +329,17 @@ function ouvrirProduit(id) {
     document.getElementById('mp-qte').textContent = '1';
     document.getElementById('modal-produit-overlay').classList.remove('hidden');
     setTimeout(() => document.querySelector('.modal-produit').classList.add('open'), 10);
+}
+
+function ajouterDirectement(id) {
+    // Ajoute au panier avec quantité 1
+    ajouterAuPanier(id, null, null, 1);
+    
+    // Petite confirmation visuelle
+    afficherToast("✅ " + document.querySelector('.list-item[data-id="' + id + '"]').dataset.nom + " ajouté au panier", "success");
+    
+    // OPTIONNEL : Ouvrir automatiquement le panier
+    // ouvrirPanier();
 }
 
 function fermerProduit() {
@@ -384,6 +407,7 @@ function filtrerProduits() {
 
 function ajouterAuPanier(id, nom, prix, qte) {
     qte = qte || 1;
+    chargerPanier();
     let produit = panier.find(p => p.id == id);
     if (produit) { produit.qte += qte; }
     else { panier.push({ id, nom, prix, qte }); }
@@ -392,16 +416,19 @@ function ajouterAuPanier(id, nom, prix, qte) {
 }
 
 function supprimer(index) {
+    chargerPanier();
     panier.splice(index, 1);
     sauvegarder();
     afficherPanier();
 }
 
 function viderPanier() {
+    chargerPanier();
     if (panier.length === 0) return;
     confirmerAction('Vider le panier ?', { okText: 'Vider' }).then(ok => {
         if (!ok) return;
         panier = [];
+        localStorage.setItem("panier", JSON.stringify(panier));
         sauvegarder();
         afficherPanier();
     });
@@ -412,6 +439,7 @@ function sauvegarder() {
 }
 
 function afficherPanier() {
+    chargerPanier();
     const panierDiv = document.getElementById("panier");
     const totalSpan = document.getElementById("total");
     const badge = document.getElementById("badge-panier");
@@ -464,6 +492,7 @@ function afficherPanier() {
 }
 
 function modifierQte(index, delta) {
+    chargerPanier();
     panier[index].qte += delta;
     if (panier[index].qte <= 0) { panier.splice(index, 1); }
     sauvegarder();
@@ -471,6 +500,7 @@ function modifierQte(index, delta) {
 }
 
 async function validerCommande() {
+    chargerPanier();
     if (panier.length === 0) return;
 
     if (mode === "LIVRAISON") {
@@ -497,7 +527,8 @@ async function validerCommande() {
                 adresse: document.getElementById("adresse-livraison")?.value || "",
                 telephone: document.getElementById("tel-livraison")?.value || "",
                 guest_nom: document.getElementById("guest-nom")?.value || "",
-                guest_telephone: document.getElementById("guest-telephone")?.value || ""
+                guest_telephone: document.getElementById("guest-telephone")?.value || "",
+                guest_email: document.getElementById("guest-email")?.value || ""
             })
         });
 

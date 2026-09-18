@@ -13,7 +13,7 @@ rem   - --start-maximized : plein ecran
 rem   - --guest : aucune session enregistree
 rem ============================================
 
-set URL=http://127.0.0.1:8001/ventes/
+set URL=http://127.0.0.1:1000/ventes/
 
 rem Chemin vers Microsoft Edge
 set EDGE=C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe
