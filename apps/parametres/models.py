@@ -22,6 +22,15 @@ class ParametreRestaurant(models.Model):
     
     message_ticket = models.TextField(blank=True, default="Merci de votre visite et à bientôt !")
 
+    # Largeur du papier thermique : 58mm (XPrinter 58mm) ou 80mm
+    LARGEUR_TICKET_CHOICES = [
+        ("58", "58 mm (XPrinter 58mm)"),
+        ("80", "80 mm"),
+    ]
+    largeur_ticket = models.CharField(
+        max_length=5, choices=LARGEUR_TICKET_CHOICES, default="58"
+    )
+
     # Impression automatique silencieuse du ticket (PC caisse)
     impression_silencieuse = models.BooleanField(default=False)
 

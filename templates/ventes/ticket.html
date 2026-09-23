@@ -4,100 +4,105 @@
 <meta charset="UTF-8">
 <title>Ticket N° {{ vente.id }}</title>
 <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', monospace; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { background: #f3f4f6; font-family: 'Courier New', Courier, monospace; color: #000; }
 
     body {
-        width: 80mm;
-        margin: auto;
-        padding: 12px;
-        font-size: 11px;
-        color: #111827;
+        width: {% if parametre.largeur_ticket == "80" %}80mm{% else %}58mm{% endif %};
+        margin: 10px auto;
+    }
+    .ticket {
+        background: #fff;
+        width: 100%;
+        padding: {% if parametre.largeur_ticket == "80" %}4mm 3mm{% else %}2mm 2mm{% endif %};
+        font-size: {% if parametre.largeur_ticket == "80" %}12px{% else %}11px{% endif %};
+        line-height: 1.45;
+        overflow-wrap: break-word;
     }
 
     .header { text-align: center; }
 
     .logo {
-        width: 52px;
-        height: 52px;
-        margin: 0 auto 6px;
-        border-radius: 14px;
-        background: #f97316;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 26px;
+        width: 44px;
+        height: 44px;
+        margin: 0 auto 4px;
+        border-radius: 10px;
         object-fit: cover;
+    }
+    .logo-fallback {
+        width: 44px; height: 44px; margin: 0 auto 4px;
+        border: 1.5px solid #000; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 22px;
     }
 
     h1 {
-        font-size: 17px;
+        font-size: 14px;
         font-weight: 700;
-        letter-spacing: 1px;
-        color: #111827;
+        letter-spacing: 0.5px;
+        color: #000;
         text-transform: uppercase;
     }
 
     .sub {
         font-size: 10px;
-        color: #6b7280;
-        margin-top: 2px;
+        color: #000;
+        margin-top: 1px;
     }
 
-    hr {
+    hr.sep {
         border: none;
-        border-top: 1.5px dashed #9ca3af;
-        margin: 10px 0;
+        border-top: 1px dashed #000;
+        margin: 7px 0;
     }
 
-    .info { line-height: 1.6; font-size: 11px; }
-    .info b { color: #111827; }
+    .info { line-height: 1.55; font-size: 11px; }
 
-    table { width: 100%; border-collapse: collapse; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 
     th {
         font-size: 10px;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: #6b7280;
-        border-bottom: 1.5px dashed #9ca3af;
-        padding-bottom: 5px;
+        color: #000;
+        border-bottom: 1px dashed #000;
+        padding-bottom: 4px;
+        text-align: left;
     }
 
-    td { padding: 5px 0; font-size: 11px; }
+    td { padding: 4px 0; font-size: 11px; vertical-align: top; }
+    td.nom { word-break: break-word; padding-right: 2px; }
+    td.nom small { font-size: 9px; }
 
     .center { text-align: center; }
     .right { text-align: right; }
 
     .total-box {
-        background: #fff7ed;
-        border: 1.5px solid #fdba74;
-        border-radius: 8px;
-        padding: 8px 10px;
+        border: 1.5px solid #000;
+        border-radius: 6px;
+        padding: 6px 8px;
         display: flex;
         justify-content: space-between;
         align-items: center;
         font-weight: 700;
         font-size: 15px;
     }
-    .total-box .label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+    .total-box .label { font-size: 11px; text-transform: uppercase; }
 
     .meta {
         display: flex;
         justify-content: space-between;
         font-size: 10px;
-        color: #6b7280;
-        margin-top: 8px;
+        color: #000;
+        margin-top: 6px;
     }
 
-    .footer { text-align: center; margin-top: 14px; font-size: 11px; line-height: 1.7; }
-    .footer .merci { font-weight: 700; font-size: 12px; color: #f97316; }
-    .footer .stars { letter-spacing: 2px; color: #9ca3af; margin-top: 6px; }
+    .footer { text-align: center; margin-top: 10px; font-size: 11px; line-height: 1.6; }
+    .footer .merci { font-weight: 700; font-size: 11px; color: #000; }
 
-    button {
+    .no-print-btn {
         width: 100%;
         padding: 11px;
-        margin-top: 18px;
+        margin-top: 10px;
         background: #f97316;
         color: white;
         border: none;
@@ -105,115 +110,142 @@
         font-size: 14px;
         font-weight: 700;
         cursor: pointer;
+        font-family: Arial, sans-serif;
     }
-    button:hover { background: #ea580c; }
+    #whatsapp-box { margin-top: 8px; font-family: Arial, sans-serif; }
+    #whatsapp-box input {
+        width: 100%; padding: 11px; border: 1.5px solid #d1d5db;
+        border-radius: 8px; font-size: 13px; box-sizing: border-box;
+    }
+    #whatsapp-link {
+        display: block; width: 100%; padding: 11px; margin-top: 8px;
+        background: #25D366; color: white; text-align: center; border-radius: 8px;
+        font-size: 14px; font-weight: 700; text-decoration: none; cursor: pointer;
+    }
+    .reglages-print {
+        font-family: Arial, sans-serif; font-size: 12px; color: #374151;
+        background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px;
+        padding: 10px 12px; margin-top: 10px; line-height: 1.6;
+    }
 
+    @page {
+        size: {% if parametre.largeur_ticket == "80" %}80mm{% else %}58mm{% endif %} auto;
+        margin: 0;
+    }
     @media print {
-        button { display: none; }
-        body { width: 80mm; }
+        html, body { background: #fff; margin: 0; width: auto; }
+        body { width: {% if parametre.largeur_ticket == "80" %}80mm{% else %}58mm{% endif %}; margin: 0 auto; }
+        .ticket { padding: {% if parametre.largeur_ticket == "80" %}3mm{% else %}2mm{% endif %}; }
+        .no-print, .no-print-btn, #whatsapp-box, .reglages-print { display: none !important; }
     }
 </style>
 </head>
 
 <body>
 
+<div class="ticket">
 <div class="header">
     {% if parametre.logo %}
     <img src="{{ parametre.logo.url }}" class="logo" alt="Logo">
     {% else %}
-    <div class="logo">🍽️</div>
+    <div class="logo-fallback">🍽️</div>
     {% endif %}
     <h1>{{ parametre.nom|default:"RestaurantPro" }}</h1>
     <p class="sub">{% if parametre.adresse %}{{ parametre.adresse }}{% else %}Management System{% endif %}</p>
-    <p class="sub">{% if parametre.telephone %}☎ {{ parametre.telephone }}{% endif %} {% if parametre.email %}{{ parametre.email }}{% endif %}</p>
+    <p class="sub">{% if parametre.telephone %}Tel : {{ parametre.telephone }}{% endif %}{% if parametre.email %} — {{ parametre.email }}{% endif %}</p>
 </div>
 
-<hr>
+<hr class="sep">
 
 <div class="info">
     Ticket : <b>N° {{ vente.id }}</b><br>
     Date : {{ vente.created_at|date:"d/m/Y H:i" }}<br>
     Caissier : {{ vente.caissier.username|default:"—" }}<br>
-    {% if vente.table %}<span style="background:#fee2e2;color:#b91c1c;font-weight:700;padding:1px 6px;border-radius:4px;">Table {{ vente.table.numero }}</span><br>{% endif %}
+    {% if vente.table %}<b>Table {{ vente.table.numero }}</b><br>{% endif %}
     Paiement : <b>{{ vente.get_mode_paiement_display }}</b>
 </div>
 
-<hr>
+<hr class="sep">
 
 <table>
     <thead>
         <tr>
-            <th class="left">Article</th>
-            <th class="center">Qté</th>
-            <th class="right">Montant</th>
+            <th>Article</th>
+            <th class="center" style="width:11mm;">Qte</th>
+            <th class="right" style="width:16mm;">Montant</th>
         </tr>
     </thead>
     <tbody>
         {% for d in vente.details.all %}
         <tr>
-            <td>{{ d.produit.nom }}<br><span style="font-size:9px;color:#6b7280;">{{ d.prix }} FCFA × {{ d.quantite }}</span></td>
+            <td class="nom">{{ d.produit.nom }}<br><small>{{ d.prix }} x {{ d.quantite }}</small></td>
             <td class="center">{{ d.quantite }}</td>
-            <td class="right">{{ d.sous_total }} FCFA</td>
+            <td class="right">{{ d.sous_total }}</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 
-<hr>
+<hr class="sep">
 
 <div class="total-box">
     <span class="label">Total</span>
     <span>{{ vente.total }} {{ parametre.devise|default:"FCFA" }}</span>
 </div>
 {% if vente.remise_pourcent %}
-<div class="meta" style="justify-content:space-between;">
+<div class="meta">
     <span>Remise {{ vente.remise_pourcent }}%</span>
+    <span>-{{ vente.remise_montant }} {{ parametre.devise|default:"FCFA" }}</span>
 </div>
 {% endif %}
 
 <div class="meta">
-    <span>Articles: {{ vente.details.count }}</span>
+    <span>Articles : {{ vente.details.count }}</span>
 </div>
 
-<hr>
+<hr class="sep">
 
 <div class="footer">
-    <div class="merci">{{ parametre.message_ticket|default:"Merci pour votre confiance ❤️" }}</div>
-    <div>À bientôt !</div>
-    <div class="stars">****************</div>
+    <div class="merci">{{ parametre.message_ticket|default:"Merci pour votre confiance !" }}</div>
+    <div>A bientot !</div>
+    <div>****************</div>
     <div>{{ parametre.nom|default:"RestaurantPro" }}</div>
 </div>
+</div>
 
-<button onclick="window.print()">🖨 Imprimer</button>
+<button class="no-print-btn no-print" onclick="window.print()">Imprimer ({{ parametre.largeur_ticket|default:"58" }}mm)</button>
 
-<div id="whatsapp-box" style="margin-top:8px;">
-    <input id="whatsapp-num" type="tel" placeholder="Numéro client (2237...)"
-           style="width:100%;padding:11px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box;">
-    <a id="whatsapp-link" target="_blank" rel="noopener"
-       style="display:block;width:100%;padding:11px;margin-top:8px;background:#25D366;color:white;text-align:center;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none;cursor:pointer;">
-       💬 Envoyer par WhatsApp
-    </a>
+<div class="reglages-print no-print">
+    <b>Reglage XPrinter 58mm (une seule fois) :</b><br>
+    1. Panneau de configuration - Imprimantes - XPrinter - Preferences : papier <b>58 x 210mm</b>.<br>
+    2. Au moment d'imprimer : Format papier = <b>58mm</b>, Marges = <b>Aucune</b>, Echelle = <b>100%</b>, decocher « En-tetes et pieds de page ».<br>
+    3. Largeur choisie ici : <b>{{ parametre.largeur_ticket|default:"58" }}mm</b> (Parametres - Facturation).
+</div>
+
+<div id="whatsapp-box" class="no-print">
+    <input id="whatsapp-num" type="tel" placeholder="Numero client (2237...)">
+    <a id="whatsapp-link">Envoyer par WhatsApp</a>
 </div>
 
 <script>
 window.onload = function() {
     if ({{ impression_auto|yesno:"true,false" }}) {
-        window.print();
+        setTimeout(function(){ window.print(); }, 400);
     }
 };
 document.getElementById('whatsapp-link').addEventListener('click', function(e) {
     e.preventDefault();
     var num = document.getElementById('whatsapp-num').value.replace(/[^0-9]/g, '');
-    if (!num) { alert('Saisissez le numéro du client.'); return; }
+    if (!num) { alert('Saisissez le numero du client.'); return; }
     var msg = [
-        '{{ parametre.nom|default:"RestaurantPro" }}',
+        '{{ parametre.nom|default:"RestaurantPro"|escapejs }}',
         'Ticket N° {{ vente.id }}',
         'Date : {{ vente.created_at|date:"d/m/Y H:i" }}',
-        'Paiement : {{ vente.get_mode_paiement_display }}',
+        'Paiement : {{ vente.get_mode_paiement_display|escapejs }}',
         '',
-        '— VOS ARTICLES —',
+        '--- VOS ARTICLES ---',
         {% for d in vente.details.all %}
-        '• {{ d.quantite }} x {{ d.produit.nom }} = {{ d.sous_total }} {{ parametre.devise|default:"FCFA" }}',
+        '- {{ d.quantite }} x {{ d.produit.nom|escapejs }} = {{ d.sous_total }} {{ parametre.devise|default:"FCFA" }}',
         {% endfor %}
         '',
         'TOTAL : {{ vente.total }} {{ parametre.devise|default:"FCFA" }}'
@@ -221,7 +253,7 @@ document.getElementById('whatsapp-link').addEventListener('click', function(e) {
         'Remise : {{ vente.remise_pourcent }}%'
         {% endif %},
         '',
-        '{{ parametre.message_ticket|default:"Merci pour votre confiance !" }}'
+        '{{ parametre.message_ticket|default:"Merci pour votre confiance !"|escapejs }}'
     ].join('\n');
     window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(msg), '_blank');
 });
