@@ -2,6 +2,15 @@
 {% load role_tags %}
 {% block title %}Livraison N° {{ livraison.id }}{% endblock %}
 
+{% block extra_css %}
+<style>
+@media (max-width: 768px) {
+    #map-livraison { height: 50vh !important; min-height: 280px; }
+    #btn-gps { min-height: 48px; font-size: 0.9375rem; border-radius: 0.875rem; }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="space-y-4 sm:space-y-6">
 
@@ -151,7 +160,7 @@
                 </button>
             </div>
         </div>
-        <div id="map-livraison" class="h-72 w-full rounded-2xl border border-slate-200"></div>
+        <div id="map-livraison" class="h-72 sm:h-96 w-full rounded-2xl border border-slate-200"></div>
         <div class="flex items-center gap-4 mt-3 flex-wrap text-xs text-slate-500">
             <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-orange-500 inline-block"></span> 🏠 Client</span>
             <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span> 🛵 Vous</span>
@@ -308,7 +317,8 @@ const livraisonId = {{ livraison.id }};
                 if (fallbackLayerLiv) { mapLivraison.removeLayer(fallbackLayerLiv); fallbackLayerLiv = null; }
                 const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
                 if (!routeLayerLiv) {
-                    routeLayerLiv = L.polyline(coords, { color: '#f97316', weight: 5, opacity: 0.85 }).addTo(mapLivraison);
+                    L.polyline(coords, { color: '#fff', weight: 8, opacity: 0.9, lineCap: 'round', lineJoin: 'round' }).addTo(mapLivraison);
+                    routeLayerLiv = L.polyline(coords, { color: '#4285F4', weight: 5, opacity: 1, lineCap: 'round', lineJoin: 'round' }).addTo(mapLivraison);
                     mapLivraison.fitBounds(routeLayerLiv.getBounds(), { padding: [40, 40] });
                 } else {
                     routeLayerLiv.setLatLngs(coords);
@@ -328,7 +338,7 @@ const livraisonId = {{ livraison.id }};
         if (!clientMarkerLiv) return;
         const client = clientMarkerLiv.getLatLng();
         if (!fallbackLayerLiv) {
-            fallbackLayerLiv = L.polyline([[lat, lng], client], { color: '#f97316', weight: 3, dashArray: '6,6' }).addTo(mapLivraison);
+            fallbackLayerLiv = L.polyline([[lat, lng], client], { color: '#4285F4', weight: 4, dashArray: '8,8', opacity: 0.7 }).addTo(mapLivraison);
         } else {
             fallbackLayerLiv.setLatLngs([[lat, lng], client]);
         }

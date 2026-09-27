@@ -3,7 +3,14 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- PWA : installable comme une vraie app mobile -->
+    <meta name="theme-color" content="#f97316">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="{% url 'manifest' %}?v={{ parametre.version_manifest }}">
+    <link rel="apple-touch-icon" href="{% url 'pwa_icon' 192 %}">
     <title>
         {% block title %}
         RestaurantPro - Client
@@ -23,8 +30,23 @@
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 
     <style>
-        body{
-            font-family:'Poppins',sans-serif;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            padding-left: env(safe-area-inset-left, 0px);
+            padding-right: env(safe-area-inset-right, 0px);
+            -webkit-font-smoothing: antialiased;
+            overscroll-behavior-y: contain;
+            overflow-x: hidden;
+        }
+        @media (max-width: 768px) {
+            button, a { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        }
+        @media (display-mode: standalone), (display-mode: fullscreen) {
+            body { -webkit-user-select: none; user-select: none; }
+            input, textarea, p, span { -webkit-user-select: text; user-select: text; }
         }
     </style>
 
@@ -35,5 +57,16 @@
     {% endblock %}
 
     {% block extra_js %}{% endblock %}
+
+    <script>
+    // PWA : rend l'espace client installable comme une vraie app
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+            navigator.serviceWorker.register("{% url 'service_worker' %}")
+                .catch(function (err) { console.warn('Service worker non enregistre:', err); });
+        });
+    }
+    </script>
+    {% include "components/install_pwa.html" %}
 </body>
 </html>

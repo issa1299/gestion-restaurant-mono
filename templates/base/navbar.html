@@ -1,4 +1,4 @@
-<nav class="bg-white border-b border-gray-200 px-3 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 relative">
+<nav class="bg-white/95 backdrop-blur-md border-b border-gray-200/80 px-2 sm:px-4 lg:px-6 py-1.5 sm:py-3 lg:py-4 relative sticky top-0 z-30">
     <div class="flex items-center justify-between gap-2">
 
         <!-- Partie gauche -->
@@ -7,7 +7,7 @@
             <!-- Bouton hamburger (mobile) -->
             <button id="hamburger-btn"
                     onclick="toggleSidebar()"
-                    class="lg:hidden text-gray-600 text-xl hover:text-orange-500 transition w-10 h-10 rounded-lg hover:bg-gray-100 flex items-center justify-center">
+                    class="lg:hidden text-gray-600 text-xl hover:text-orange-500 transition w-11 h-11 rounded-xl hover:bg-gray-100 flex items-center justify-center active:scale-95">
                 <i class="fas fa-bars"></i>
             </button>
 
@@ -177,11 +177,11 @@
     </div>
     <!-- Fin flex container -->
 
-    <!-- Barre recherche mobile -->
-    <div class="md:hidden mt-2">
+    <!-- Barre recherche mobile (cachée par défaut pour look app ; afficher avec .show-mobile-search) -->
+    <div class="md:hidden mt-2 hidden show-mobile-search:block">
         <div class="relative">
             <input type="text" placeholder="Rechercher..."
-                   class="w-full rounded-xl border border-gray-300 py-2 pl-9 pr-4 focus:border-orange-500 focus:outline-none text-sm">
+                   class="w-full rounded-xl border border-gray-300 py-2.5 pl-9 pr-4 focus:border-orange-500 focus:outline-none text-sm">
             <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
         </div>
     </div>

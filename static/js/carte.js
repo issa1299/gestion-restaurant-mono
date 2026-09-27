@@ -48,20 +48,41 @@ function haversine(lat1, lng1, lat2, lng2) {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+/* Marqueurs style Google Maps */
 function iconClientLeaflet(taille) {
-    taille = taille || 24;
+    taille = taille || 36;
     return L.divIcon({
-        html: `<div style="background:#f97316;border:3px solid white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);width:${taille}px;height:${taille}px;box-shadow:0 2px 8px rgba(0,0,0,0.3)"></div>`,
-        iconSize: [taille, taille], iconAnchor: [taille / 2, taille], className: ''
+        html: `<div style="position:relative;width:${taille}px;height:${taille + 8}px">
+            <div style="width:${taille}px;height:${taille}px;background:#EA4335;border:3px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 3px 10px rgba(0,0,0,.35)"></div>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-65%);width:${Math.round(taille*0.4)}px;height:${Math.round(taille*0.4)}px;background:#fff;border-radius:50%"></div>
+        </div>`,
+        iconSize: [taille, taille + 8],
+        iconAnchor: [taille / 2, taille + 4],
+        className: 'gm-marker'
     });
 }
 
 function iconLivreurLeaflet(taille) {
-    taille = taille || 24;
+    taille = taille || 40;
     return L.divIcon({
-        html: `<div style="background:#3b82f6;border:3px solid white;border-radius:50%;width:${taille}px;height:${taille}px;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center"><i class="fas fa-motorcycle" style="color:white;font-size:${Math.round(taille / 2)}px"></i></div>`,
-        iconSize: [taille, taille], iconAnchor: [taille / 2, taille / 2], className: ''
+        html: `<div style="width:${taille}px;height:${taille}px;background:#4285F4;border:3px solid #fff;border-radius:50%;box-shadow:0 3px 12px rgba(66,133,244,.45);display:flex;align-items:center;justify-content:center">
+            <i class="fas fa-motorcycle" style="color:#fff;font-size:${Math.round(taille*0.42)}px"></i>
+        </div>`,
+        iconSize: [taille, taille],
+        iconAnchor: [taille / 2, taille / 2],
+        className: 'gm-marker'
     });
+}
+
+/* Polyline style Google Maps (bleu + bordure blanche) */
+function tracerRouteGoogle(map, coords) {
+    const bordure = L.polyline(coords, {
+        color: '#fff', weight: 8, opacity: 0.9, lineCap: 'round', lineJoin: 'round'
+    }).addTo(map);
+    const ligne = L.polyline(coords, {
+        color: '#4285F4', weight: 5, opacity: 1, lineCap: 'round', lineJoin: 'round'
+    }).addTo(map);
+    return { bordure: bordure, ligne: ligne };
 }
 
 /* ===== Fond de carte "routes" résilient =====
@@ -77,13 +98,21 @@ function iconLivreurLeaflet(taille) {
    différentes et on compare leur contenu binaire — s'il est identique,
    le serveur est bloqué et on bascule sur le fournisseur suivant. */
 const FOURNISSEURS_FOND = [
-    {   // Serveur officiel OpenStreetMap (prioritaire dès que le blocage est levé)
-        url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-        attribution: '&copy; Contributeurs <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    {   // Esri World Street Map — rendu proche Google Maps, sans clé
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+        attribution: 'Tiles &copy; Esri'
     },
-    {   // CARTO Voyager (raster, gratuit avec attribution, CORS ouvert)
-        url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-        attribution: '&copy; Contributeurs <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    {   // OpenStreetMap officiel
+        url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    },
+    {   // Miroir OSM Allemagne
+        url: 'https://tile.openstreetmap.de/{z}/{x}/{y}.png',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    },
+    {   // Esri World Imagery (satellite)
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        attribution: 'Tiles &copy; Esri, Maxar'
     }
 ];
 

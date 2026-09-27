@@ -4,9 +4,18 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{% block meta_description %}{{ parametre.nom|default:'Restaurant' }} — Commandez vos plats en ligne, livraison à domicile. Découvrez notre menu, réservez une table et suivez votre commande en temps réel.{% endblock %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- PWA : le site client s'installe comme une vraie app mobile -->
     <meta name="theme-color" content="#f97316">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="{{ parametre.nom|default:'Restaurant' }}">
+    <link rel="manifest" href="{% url 'manifest' %}?v={{ parametre.version_manifest }}">
+    <link rel="apple-touch-icon" href="{% url 'pwa_icon' 192 %}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{% url 'pwa_icon' 192 %}">
+    <link rel="icon" type="image/png" sizes="512x512" href="{% url 'pwa_icon' 512 %}">
+    <meta name="description" content="{% block meta_description %}{{ parametre.nom|default:'Restaurant' }} — Commandez vos plats en ligne, livraison à domicile. Découvrez notre menu, réservez une table et suivez votre commande en temps réel.{% endblock %}">
     <meta property="og:title" content="{{ parametre.nom|default:'Restaurant' }}">
     <meta property="og:description" content="Commandez vos plats en ligne et faites-vous livrer à domicile.">
     <meta property="og:type" content="website">
@@ -44,13 +53,53 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
-        body { font-family: 'Poppins', sans-serif; }
+        body {
+            font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            padding-left: env(safe-area-inset-left, 0px);
+            padding-right: env(safe-area-inset-right, 0px);
+            -webkit-font-smoothing: antialiased;
+            overscroll-behavior-y: contain;
+            overflow-x: hidden;
+        }
+        /* L'en-tete collant reste sous l'encoche (position: sticky top: 0) */
+        body > header { top: env(safe-area-inset-top, 0px); }
         #nav-mobile {
             transition: max-height 0.3s ease;
             max-height: 0;
             overflow: hidden;
         }
-        #nav-mobile.open { max-height: 24rem; }
+        #nav-mobile.open { max-height: 28rem; }
+
+        /* Touch targets mobile */
+        @media (max-width: 768px) {
+            button, a, [role="button"] {
+                -webkit-tap-highlight-color: transparent;
+                touch-action: manipulation;
+            }
+        }
+
+        /* PWA standalone */
+        @media (display-mode: standalone), (display-mode: fullscreen) {
+            body { -webkit-user-select: none; user-select: none; }
+            input, textarea, [contenteditable], p, span, h1, h2, h3, h4, li, td {
+                -webkit-user-select: text; user-select: text;
+            }
+        }
+
+        /* Bottom fixed CTA (commander, panier) safe area */
+        .site-bottom-cta {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            z-index: 40;
+            padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-top: 1px solid #e2e8f0;
+            box-shadow: 0 -4px 24px -8px rgba(15,23,42,0.1);
+        }
 
         /* ===== Animations ===== */
         @keyframes fadeUp {
@@ -612,6 +661,17 @@
     {% block extra_js %}{% endblock %}
 
     <script src="{% static 'js/toast.js' %}"></script>
+
+    <script>
+    // PWA : rend le site client installable et consultable hors ligne
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+            navigator.serviceWorker.register("{% url 'service_worker' %}")
+                .catch(function (err) { console.warn('Service worker non enregistre:', err); });
+        });
+    }
+    </script>
+    {% include "components/install_pwa.html" %}
 </body>
 
 </html>

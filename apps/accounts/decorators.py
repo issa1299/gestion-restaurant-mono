@@ -5,11 +5,14 @@ from functools import wraps
 
 # Accueil accessible selon le rôle (évite les boucles de redirection)
 ROLE_HOME = {
-    "CLIENT": "menu:accueil",
-    "VENDEUR": "menu:gestion",
-    "LIVREUR": "livraison:liste",
-    "GERANT": "dashboard:index",
     "ADMIN": "dashboard:index",
+    "GERANT": "dashboard:index",
+    "CAISSIER": "ventes:pos",          # Caisse directe
+    "SERVEUR": "commandes:liste",      # File des commandes
+    "CUISINIER": "cuisine:liste",      # File cuisine
+    "LIVREUR": "livraison:liste",      # Livraisons
+    "VENDEUR": "menu:gestion",         # Gestion menu / stock
+    "CLIENT": "menu:accueil",          # Carte publique
 }
 
 

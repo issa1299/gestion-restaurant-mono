@@ -580,15 +580,23 @@ def service_worker(request):
 
 
 SERVICE_WORKER_JS = r"""
-const CACHE_VERS = 'restaurantpro-login-v1';
+const CACHE_VERS = 'restaurantpro-v2';
+const PAGE_HORS_LIGNE = '/static/offline.html';
 const APP_SHELL = [
-  '/accounts/login/',
+  PAGE_HORS_LIGNE,
+  '/static/css/style.css',
   '/static/js/toast.js',
 ];
 
+// Ressources mises en cache en « cache-first » (jamais de donnees metier).
+const STATIC_DEST = ['style', 'script', 'image', 'font'];
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_VERS).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())
+    caches.open(CACHE_VERS).then((cache) =>
+      // add() individuel : une ressource manquante ne casse pas l'installation.
+      Promise.all(APP_SHELL.map((url) => cache.add(url).catch(() => null)))
+    ).then(() => self.skipWaiting())
   );
 });
 
@@ -604,26 +612,40 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
 
+  const url = new URL(request.url);
+  // Ne jamais intercepter les CDN externes (Tailwind, FontAwesome, Google Fonts).
+  if (url.origin !== self.location.origin) return;
+
+  // Pages HTML : toujours le reseau (donnees a jour et pas de fuite de session
+  // sur un poste de caisse partage). Hors ligne : page d'erreur dediee.
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_VERS).then((cache) => cache.put(request, copy));
-          return response;
+      fetch(request).catch(() => caches.match(PAGE_HORS_LIGNE).then(
+        (page) => page || new Response('Hors ligne', {
+          status: 503,
+          headers: { 'Content-Type': 'text/plain; charset=utf-8' },
         })
-        .catch(() => caches.match(request).then((cached) => cached || caches.match('/accounts/login/')))
+      ))
     );
     return;
   }
 
-  if (request.destination === 'style' || request.destination === 'script' || request.destination === 'image' || request.destination === 'font') {
+  // Manifest et icones PWA : reseau d'abord, cache en secours.
+  if (url.pathname === '/manifest.webmanifest' || url.pathname.indexOf('/pwa/') === 0) {
+    event.respondWith(fetch(request).catch(() => caches.match(request)));
+    return;
+  }
+
+  // Fichiers statiques : cache d'abord, puis reseau.
+  if (STATIC_DEST.indexOf(request.destination) !== -1) {
     event.respondWith(
       caches.match(request).then((cached) => {
         if (cached) return cached;
         return fetch(request).then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_VERS).then((cache) => cache.put(request, copy));
+          if (response && response.status === 200 && response.type === 'basic') {
+            const copy = response.clone();
+            caches.open(CACHE_VERS).then((cache) => cache.put(request, copy));
+          }
           return response;
         });
       })

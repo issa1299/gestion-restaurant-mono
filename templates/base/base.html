@@ -4,7 +4,17 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- PWA : installable comme une vraie app mobile -->
+    <meta name="theme-color" content="#f97316">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="{{ parametre.nom|default:'RestaurantPro' }}">
+    <link rel="manifest" href="{% url 'manifest' %}?v={{ parametre.version_manifest }}">
+    <link rel="apple-touch-icon" href="{% url 'pwa_icon' 192 %}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{% url 'pwa_icon' 192 %}">
+    <link rel="icon" type="image/png" sizes="512x512" href="{% url 'pwa_icon' 512 %}">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23f97316'/%3E%3Ctext x='50' y='72' font-size='62' font-family='Arial' font-weight='bold' text-anchor='middle' fill='white'%3ER%3C/text%3E%3C/svg%3E">
     <title>
         {% block title %}
@@ -29,18 +39,140 @@
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
 
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body{
-            font-family:'Poppins',sans-serif;
+        /* ========== RestaurantPro — Mobile App Experience ========== */
+        :root {
+            --bottomnav-h: 64px;
+            --app-orange: #f97316;
+            --app-orange-dark: #ea580c;
+            --app-safe-top: env(safe-area-inset-top, 0px);
+            --app-safe-bottom: env(safe-area-inset-bottom, 0px);
+            --app-safe-left: env(safe-area-inset-left, 0px);
+            --app-safe-right: env(safe-area-inset-right, 0px);
         }
-        /* Sidebar responsive - hamburger menu mobile */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html {
+            -webkit-text-size-adjust: 100%;
+            height: 100%;
+        }
+        body {
+            font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+            overflow-x: hidden;
+            padding-top: var(--app-safe-top);
+            padding-bottom: var(--app-safe-bottom);
+            padding-left: var(--app-safe-left);
+            padding-right: var(--app-safe-right);
+            min-height: 100%;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overscroll-behavior-y: contain;
+        }
+        img { max-width: 100%; height: auto; }
+
+        /* Touch: no highlight, larger targets on mobile */
+        @media (max-width: 1023px) {
+            button, a, [role="button"], .touch-target {
+                -webkit-tap-highlight-color: transparent;
+                touch-action: manipulation;
+            }
+            button, .btn-touch {
+                min-height: 44px;
+                min-width: 44px;
+            }
+        }
+
+        /* ========== Bottom Navigation (app style) ========== */
+        #mobile-bottomnav {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            z-index: 40;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border-top: 1px solid rgba(226,232,240,0.8);
+            padding-bottom: var(--app-safe-bottom);
+            box-shadow: 0 -4px 24px -8px rgba(15,23,42,0.08);
+        }
+        #mobile-bottomnav > div {
+            display: flex;
+            align-items: stretch;
+            height: var(--bottomnav-h);
+        }
+        #mobile-bottomnav a {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            color: #64748b;
+            text-decoration: none;
+            height: 100%;
+            padding: 4px 2px;
+            min-width: 0;
+            flex: 1 1 0;
+            overflow: hidden;
+            position: relative;
+            transition: color 0.2s ease, transform 0.15s ease;
+        }
+        #mobile-bottomnav a span {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            line-height: 1.1;
+        }
+        #mobile-bottomnav a i {
+            font-size: 20px;
+            line-height: 1;
+            transition: transform 0.2s ease;
+        }
+        #mobile-bottomnav a.active {
+            color: var(--app-orange-dark);
+        }
+        #mobile-bottomnav a.active i {
+            transform: scale(1.08);
+        }
+        /* Active indicator (pill under icon) */
+        #mobile-bottomnav a.active::before {
+            content: '';
+            position: absolute;
+            top: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 28px;
+            height: 3px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #f97316, #ea580c);
+            opacity: 0.95;
+        }
+        #mobile-bottomnav a:active {
+            transform: scale(0.94);
+        }
+
+        @media (max-width: 1023px) {
+            #main-content {
+                padding-bottom: calc(var(--bottomnav-h) + var(--app-safe-bottom));
+            }
+            /* Slightly tighter main padding on phone */
+            main {
+                padding-left: 0.75rem !important;
+                padding-right: 0.75rem !important;
+            }
+        }
+
+        /* ========== Sidebar mobile ========== */
         #sidebar {
-            transition: transform 0.3s ease;
+            transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
             z-index: 50;
+            padding-top: var(--app-safe-top);
         }
         @media (max-width: 1023px) {
             #sidebar {
                 transform: translateX(-100%);
+                width: min(18rem, 85vw) !important;
+                box-shadow: 8px 0 32px -8px rgba(0,0,0,0.25);
             }
             #sidebar.open {
                 transform: translateX(0);
@@ -49,11 +181,16 @@
                 display: none;
                 position: fixed;
                 inset: 0;
-                background: rgba(0,0,0,0.5);
+                background: rgba(15,23,42,0.45);
+                backdrop-filter: blur(2px);
+                -webkit-backdrop-filter: blur(2px);
                 z-index: 49;
+                opacity: 0;
+                transition: opacity 0.25s ease;
             }
             #sidebar-overlay.open {
                 display: block;
+                opacity: 1;
             }
             #main-content {
                 margin-left: 0 !important;
@@ -69,7 +206,6 @@
             #hamburger-btn {
                 display: none !important;
             }
-            /* Desktop sidebar icon-rail collapse */
             #sidebar {
                 width: 18rem;
                 transition: width 0.3s ease;
@@ -97,39 +233,109 @@
                 margin-left: 5rem !important;
             }
         }
-        /* Datatable responsive */
+
+        /* ========== PWA / Standalone (installed app) ========== */
+        @media (display-mode: standalone), (display-mode: fullscreen) {
+            body {
+                /* No browser chrome — pure app feel */
+                user-select: none;
+                -webkit-user-select: none;
+            }
+            /* Allow selection in inputs & content areas */
+            input, textarea, [contenteditable], main p, main span, main td, main th {
+                user-select: text;
+                -webkit-user-select: text;
+            }
+            #mobile-bottomnav {
+                background: rgba(255,255,255,0.98);
+            }
+        }
+
+        /* ========== Tables → mobile friendly ========== */
         .dataTables_wrapper {
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
-        /* Force table responsiveness */
         .table-responsive {
             width: 100%;
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
+            border-radius: 0.75rem;
         }
         .table-responsive table {
-            min-width: 600px;
+            min-width: 560px;
         }
-        /* Impression propre : masque sidebar/navbar/footer et boutons */
+        @media (max-width: 640px) {
+            .table-responsive table {
+                min-width: 480px;
+                font-size: 0.8125rem;
+            }
+            /* Card-like rows helper class */
+            .mobile-card-list > * {
+                border-radius: 1rem;
+            }
+        }
+
+        /* ========== Modals as bottom sheets on mobile ========== */
+        @media (max-width: 640px) {
+            .modal-app, [id^="modal"] {
+                /* many modals use fixed inset-0 flex items-center */
+            }
+            .modal-sheet > div,
+            .bottom-sheet {
+                border-radius: 1.25rem 1.25rem 0 0 !important;
+                max-height: 92vh !important;
+                margin-top: auto !important;
+            }
+        }
+
+        /* ========== Utility: fixed action bars above bottomnav ========== */
+        .app-action-bar {
+            position: fixed;
+            left: 0; right: 0;
+            bottom: calc(var(--bottomnav-h) + var(--app-safe-bottom));
+            z-index: 35;
+            padding: 0.75rem 1rem;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid #e2e8f0;
+            box-shadow: 0 -4px 20px -6px rgba(15,23,42,0.1);
+        }
+        @media (min-width: 1024px) {
+            .app-action-bar {
+                position: static;
+                background: transparent;
+                backdrop-filter: none;
+                border: none;
+                box-shadow: none;
+                padding: 0;
+            }
+        }
+
+        /* ========== Smooth content ========== */
+        main {
+            animation: appFadeIn 0.25s ease;
+        }
+        @keyframes appFadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: none; }
+        }
+
+        /* ========== Print ========== */
         @media print {
             #sidebar, #sidebar-overlay, #hamburger-btn, #btn-burger,
-            #main-content > nav, #main-content > footer {
+            #mobile-bottomnav,
+            #main-content > nav, #main-content > footer,
+            .app-action-bar, .no-print {
                 display: none !important;
             }
-            #main-content {
-                margin-left: 0 !important;
-            }
-            main {
-                padding: 0 !important;
-            }
-            body {
-                background: white;
-            }
-            .no-print {
-                display: none !important;
-            }
+            #main-content { margin-left: 0 !important; }
+            main { padding: 0 !important; }
+            body { background: white; }
         }
     </style>
+
 
     {% block extra_css %}{% endblock %}
 </head>
@@ -171,9 +377,96 @@
 
     </div>
 
+    <!-- Barre de navigation basse façon vraie app mobile (visible < lg).
+         Les onglets reprennent exactement ROLE_HOME et les rôles autorisés
+         par chaque vue : aucun onglet ne mène à un "Accès refusé". -->
+    <nav id="mobile-bottomnav" class="lg:hidden no-print">
+        <div>
+            {% load role_tags %}
+
+            {% if request.user.is_superuser or request.user.role == "ADMIN" or request.user.role == "GERANT" %}
+            <a href="{% url 'dashboard:index' %}" class="{% if request.resolver_match.namespace == 'dashboard' %}active{% endif %}">
+                <i class="fas fa-chart-pie"></i><span>Accueil</span>
+            </a>
+            <a href="{% url 'ventes:pos' %}" class="{% if request.resolver_match.namespace == 'ventes' %}active{% endif %}">
+                <i class="fas fa-cash-register"></i><span>Caisse</span>
+            </a>
+            <a href="{% url 'commandes:liste' %}" class="{% if request.resolver_match.namespace == 'commandes' %}active{% endif %}">
+                <i class="fas fa-clipboard-list"></i><span>Commandes</span>
+            </a>
+            <a href="{% url 'cuisine:liste' %}" class="{% if request.resolver_match.namespace == 'cuisine' %}active{% endif %}">
+                <i class="fas fa-fire-burner"></i><span>Cuisine</span>
+            </a>
+            <a href="{% url 'rapports:index' %}" class="{% if request.resolver_match.namespace == 'rapports' %}active{% endif %}">
+                <i class="fas fa-chart-line"></i><span>Rapports</span>
+            </a>
+
+            {% elif request.user.role == "CAISSIER" %}
+            <a href="{% url 'dashboard:index' %}" class="{% if request.resolver_match.namespace == 'dashboard' %}active{% endif %}">
+                <i class="fas fa-chart-pie"></i><span>Accueil</span>
+            </a>
+            <a href="{% url 'ventes:pos' %}" class="{% if request.resolver_match.namespace == 'ventes' %}active{% endif %}">
+                <i class="fas fa-cash-register"></i><span>Caisse</span>
+            </a>
+            <a href="{% url 'clients:list' %}" class="{% if request.resolver_match.namespace == 'clients' %}active{% endif %}">
+                <i class="fas fa-users"></i><span>Clients</span>
+            </a>
+            <a href="{% url 'ventes:historique' %}" class="{% if request.resolver_match.namespace == 'ventes' %}active{% endif %}">
+                <i class="fas fa-receipt"></i><span>Historique</span>
+            </a>
+
+            {% elif request.user.role == "SERVEUR" %}
+            <a href="{% url 'dashboard:index' %}" class="{% if request.resolver_match.namespace == 'dashboard' %}active{% endif %}">
+                <i class="fas fa-chart-pie"></i><span>Accueil</span>
+            </a>
+            <a href="{% url 'commandes:liste' %}" class="{% if request.resolver_match.namespace == 'commandes' %}active{% endif %}">
+                <i class="fas fa-clipboard-list"></i><span>Commandes</span>
+            </a>
+            <a href="{% url 'tables:liste' %}" class="{% if request.resolver_match.namespace == 'tables' %}active{% endif %}">
+                <i class="fas fa-chair"></i><span>Tables</span>
+            </a>
+            <a href="{% url 'menu:accueil' %}" class="{% if request.resolver_match.namespace == 'menu' %}active{% endif %}">
+                <i class="fas fa-utensils"></i><span>Menu</span>
+            </a>
+
+            {% elif request.user.role == "CUISINIER" %}
+            <a href="{% url 'dashboard:index' %}" class="{% if request.resolver_match.namespace == 'dashboard' %}active{% endif %}">
+                <i class="fas fa-chart-pie"></i><span>Accueil</span>
+            </a>
+            <a href="{% url 'cuisine:liste' %}" class="{% if request.resolver_match.namespace == 'cuisine' %}active{% endif %}">
+                <i class="fas fa-fire-burner"></i><span>Cuisine</span>
+            </a>
+            <a href="{% url 'commandes:liste' %}" class="{% if request.resolver_match.namespace == 'commandes' %}active{% endif %}">
+                <i class="fas fa-clipboard-list"></i><span>Commandes</span>
+            </a>
+
+            {% elif request.user.role == "VENDEUR" %}
+            <a href="{% url 'menu:gestion' %}" class="{% if request.resolver_match.url_name == 'gestion' %}active{% endif %}">
+                <i class="fas fa-book-open"></i><span>Menu</span>
+            </a>
+            <a href="{% url 'stock:liste' %}" class="{% if request.resolver_match.namespace == 'stock' %}active{% endif %}">
+                <i class="fas fa-boxes-stacked"></i><span>Stock</span>
+            </a>
+            <a href="{% url 'menu:accueil' %}" class="{% if request.resolver_match.url_name == 'accueil' %}active{% endif %}">
+                <i class="fas fa-utensils"></i><span>Carte</span>
+            </a>
+
+            {% elif request.user.role == "LIVREUR" %}
+            <a href="{% url 'livraison:liste' %}" class="{% if request.resolver_match.namespace == 'livraison' %}active{% endif %}">
+                <i class="fas fa-motorcycle"></i><span>Livraisons</span>
+            </a>
+            <a href="{% url 'menu:accueil' %}" class="{% if request.resolver_match.namespace == 'menu' %}active{% endif %}">
+                <i class="fas fa-utensils"></i><span>Carte</span>
+            </a>
+
+            {% endif %}
+        </div>
+    </nav>
+
     <script src="{% static 'js/app.js' %}"></script>
 
     {% block extra_js %}{% endblock %}
+    {% include "components/install_pwa.html" %}
     {% include "components/toast.html" %}
     {% include "components/modal_delete.html" %}
 <script>
@@ -187,6 +480,14 @@ function closeSidebar() {
     document.getElementById('sidebar').classList.remove('open');
     document.getElementById('sidebar-overlay').classList.remove('open');
     document.body.classList.remove('overflow-hidden');
+}
+// Enregistre le service worker sur toutes les pages (PWA installable)
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+        navigator.serviceWorker.register("{% url 'service_worker' %}").catch(function (err) {
+            console.warn('Service worker non enregistré:', err);
+        });
+    });
 }
 // Close sidebar on link click (mobile)
 document.addEventListener('DOMContentLoaded', function() {

@@ -1,0 +1,106 @@
+{# Bannière "Installer l'app" — visible uniquement si l'app n'est pas déjà installée #}
+<div id="pwa-install-banner" class="hidden fixed z-50 left-3 right-3 sm:left-auto sm:right-4 sm:w-96 bottom-[calc(var(--bottomnav-h,64px)+env(safe-area-inset-bottom,0px)+0.75rem)] lg:bottom-6"
+     style="display:none;">
+    <div class="bg-slate-900 text-white rounded-2xl shadow-2xl shadow-black/30 p-4 flex items-start gap-3 border border-slate-700">
+        <div class="w-12 h-12 rounded-xl bg-orange-500 flex items-center justify-center shrink-0 text-xl shadow-lg shadow-orange-500/30">
+            <i class="fas fa-mobile-screen-button"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+            <p class="font-bold text-sm leading-tight">Installer {{ parametre.nom|default:"RestaurantPro" }}</p>
+            <p class="text-xs text-slate-300 mt-0.5 leading-snug">Ajoutez l'app à votre écran d'accueil pour un accès rapide, hors navigateur.</p>
+            <div class="flex gap-2 mt-3">
+                <button type="button" id="pwa-install-btn"
+                        class="flex-1 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition">
+                    <i class="fas fa-download mr-1"></i> Installer
+                </button>
+                <button type="button" id="pwa-install-dismiss"
+                        class="px-3 py-2.5 text-xs font-semibold text-slate-400 hover:text-white rounded-xl transition">
+                    Plus tard
+                </button>
+            </div>
+        </div>
+        <button type="button" id="pwa-install-close" class="text-slate-500 hover:text-white p-1 -mt-1 -mr-1" aria-label="Fermer">
+            <i class="fas fa-times text-sm"></i>
+        </button>
+    </div>
+</div>
+
+<script>
+(function () {
+    var deferredPrompt = null;
+    var banner = document.getElementById('pwa-install-banner');
+    var btnInstall = document.getElementById('pwa-install-btn');
+    var btnDismiss = document.getElementById('pwa-install-dismiss');
+    var btnClose = document.getElementById('pwa-install-close');
+    var STORAGE_KEY = 'pwa_install_dismissed_until';
+
+    function isStandalone() {
+        return window.matchMedia('(display-mode: standalone)').matches
+            || window.navigator.standalone === true;
+    }
+
+    function isDismissed() {
+        try {
+            var until = localStorage.getItem(STORAGE_KEY);
+            if (!until) return false;
+            return Date.now() < parseInt(until, 10);
+        } catch (e) { return false; }
+    }
+
+    function showBanner() {
+        if (!banner || isStandalone() || isDismissed()) return;
+        banner.classList.remove('hidden');
+        banner.style.display = 'block';
+    }
+
+    function hideBanner() {
+        if (!banner) return;
+        banner.classList.add('hidden');
+        banner.style.display = 'none';
+    }
+
+    function dismissForDays(days) {
+        try {
+            localStorage.setItem(STORAGE_KEY, String(Date.now() + days * 24 * 60 * 60 * 1000));
+        } catch (e) {}
+        hideBanner();
+    }
+
+    // Chrome / Edge / Android : événement beforeinstallprompt
+    window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        deferredPrompt = e;
+        showBanner();
+    });
+
+    if (btnInstall) {
+        btnInstall.addEventListener('click', function () {
+            if (!deferredPrompt) {
+                // iOS / Safari : pas d'API install — afficher instructions
+                alert('Pour installer l\\'app :\\n\\n• iPhone : partage → « Sur l\\'écran d\\'accueil »\\n• Android : menu ⋮ → « Installer l\\'application »');
+                return;
+            }
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then(function (choice) {
+                deferredPrompt = null;
+                hideBanner();
+            });
+        });
+    }
+
+    if (btnDismiss) btnDismiss.addEventListener('click', function () { dismissForDays(7); });
+    if (btnClose) btnClose.addEventListener('click', function () { dismissForDays(3); });
+
+    window.addEventListener('appinstalled', function () {
+        deferredPrompt = null;
+        hideBanner();
+    });
+
+    // iOS : afficher la bannière avec instructions si pas installé et Safari
+    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if (isIOS && !isStandalone() && !isDismissed()) {
+        // Délai pour ne pas gêner au premier chargement
+        setTimeout(showBanner, 2500);
+    }
+})();
+</script>
