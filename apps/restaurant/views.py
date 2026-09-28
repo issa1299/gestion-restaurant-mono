@@ -580,21 +580,28 @@ def service_worker(request):
 
 
 SERVICE_WORKER_JS = r"""
-const CACHE_VERS = 'restaurantpro-v2';
+const CACHE_VERS = 'restaurantpro-v3-offline';
 const PAGE_HORS_LIGNE = '/static/offline.html';
 const APP_SHELL = [
   PAGE_HORS_LIGNE,
   '/static/css/style.css',
   '/static/js/toast.js',
+  '/static/js/offline.js',
 ];
 
-// Ressources mises en cache en « cache-first » (jamais de donnees metier).
+// Pages metier utiles hors-ligne (derniere version vue)
+const PAGES_UTILES = [
+  '/livraisons/',
+  '/cuisine/',
+  '/ventes/pos/',
+  '/commandes/',
+];
+
 const STATIC_DEST = ['style', 'script', 'image', 'font'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_VERS).then((cache) =>
-      // add() individuel : une ressource manquante ne casse pas l'installation.
       Promise.all(APP_SHELL.map((url) => cache.add(url).catch(() => null)))
     ).then(() => self.skipWaiting())
   );
@@ -608,36 +615,48 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+function estPageUtile(pathname) {
+  return PAGES_UTILES.some((p) => pathname === p || pathname.indexOf(p) === 0);
+}
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
-  // Ne jamais intercepter les CDN externes (Tailwind, FontAwesome, Google Fonts).
   if (url.origin !== self.location.origin) return;
 
-  // Pages HTML : toujours le reseau (donnees a jour et pas de fuite de session
-  // sur un poste de caisse partage). Hors ligne : page d'erreur dediee.
+  // Navigation HTML : reseau d'abord, puis cache de la page, puis offline.html
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => caches.match(PAGE_HORS_LIGNE).then(
-        (page) => page || new Response('Hors ligne', {
-          status: 503,
-          headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      fetch(request).then((response) => {
+        // Mettre en cache les pages utiles (livreur, caisse, cuisine…)
+        if (response && response.ok && estPageUtile(url.pathname)) {
+          const copy = response.clone();
+          caches.open(CACHE_VERS).then((cache) => cache.put(request, copy));
+        }
+        return response;
+      }).catch(() =>
+        caches.match(request).then((cached) => {
+          if (cached) return cached;
+          return caches.match(PAGE_HORS_LIGNE).then((page) =>
+            page || new Response('Hors ligne', {
+              status: 503,
+              headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+            })
+          );
         })
-      ))
+      )
     );
     return;
   }
 
-  // Manifest et icones PWA : reseau d'abord, cache en secours.
   if (url.pathname === '/manifest.webmanifest' || url.pathname.indexOf('/pwa/') === 0) {
     event.respondWith(fetch(request).catch(() => caches.match(request)));
     return;
   }
 
-  // Fichiers statiques : cache d'abord, puis reseau.
-  if (STATIC_DEST.indexOf(request.destination) !== -1) {
+  if (STATIC_DEST.indexOf(request.destination) !== -1 || url.pathname.indexOf('/static/') === 0) {
     event.respondWith(
       caches.match(request).then((cached) => {
         if (cached) return cached;
@@ -647,9 +666,16 @@ self.addEventListener('fetch', (event) => {
             caches.open(CACHE_VERS).then((cache) => cache.put(request, copy));
           }
           return response;
-        });
+        }).catch(() => cached);
       })
     );
+  }
+});
+
+// Message depuis la page : forcer mise a jour du cache
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
   }
 });
 """

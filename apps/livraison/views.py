@@ -16,11 +16,27 @@ from apps.notifications.utils import envoyer_notification_broadcast
 @role_required(["ADMIN", "GERANT", "LIVREUR"])
 def index(request):
     """Liste des livraisons."""
+    from django.db.models import Case, When, IntegerField, Value
+
+    # Priorité d'affichage :
+    # 0 = En cours (prise en charge) → toujours en haut
+    # 1 = En attente
+    # 2 = Livrée / Annulée → en bas
+    # Puis plus récentes en premier (updated_at)
     livraisons = Livraison.objects.select_related(
         "commande", "livreur"
     ).prefetch_related(
         "commande__lignes__produit"
-    ).all()
+    ).annotate(
+        priorite=Case(
+            When(statut=Livraison.EN_COURS, then=Value(0)),
+            When(statut=Livraison.EN_ATTENTE, then=Value(1)),
+            When(statut=Livraison.LIVREE, then=Value(2)),
+            When(statut=Livraison.ANNULEE, then=Value(3)),
+            default=Value(4),
+            output_field=IntegerField(),
+        )
+    ).order_by("priorite", "-updated_at")
 
     # Commandes prêtes sans livraison encore créée — uniquement les commandes Livraison
     commandes_pretes = Commande.objects.filter(
@@ -33,6 +49,10 @@ def index(request):
             Livraison.LIVREE
         ]
     ).prefetch_related("lignes__produit")
+
+    # Pour le livreur : uniquement SES livraisons (plus récentes d'abord)
+    if getattr(request.user, "role", None) == "LIVREUR":
+        livraisons = livraisons.filter(livreur=request.user).order_by("priorite", "-updated_at")
 
     stats = {
         "en_attente": livraisons.filter(statut=Livraison.EN_ATTENTE).count(),

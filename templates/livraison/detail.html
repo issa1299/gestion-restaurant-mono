@@ -1,199 +1,197 @@
 {% extends "base/base.html" %}
-{% load role_tags %}
-{% block title %}Livraison N° {{ livraison.id }}{% endblock %}
+{% load static %}
+{% block title %}Course #{{ livraison.id }}{% endblock %}
 
 {% block extra_css %}
 <style>
-@media (max-width: 768px) {
-    #map-livraison { height: 50vh !important; min-height: 280px; }
-    #btn-gps { min-height: 48px; font-size: 0.9375rem; border-radius: 0.875rem; }
-}
+  #map-livraison { height: 260px; width: 100%; background: #f1f5f9; }
+  @media (min-width: 768px) { #map-livraison { height: 340px; } }
+  #map-wrap.map-fullscreen {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 9999 !important;
+    border-radius: 0 !important;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+  }
+  #map-wrap.map-fullscreen #map-livraison {
+    flex: 1 !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  #map-wrap.map-fullscreen .map-fs-header { display: flex !important; }
+  #map-wrap.map-fullscreen .map-normal-header { display: none !important; }
+  .map-fs-header { display: none; }
+
+  #map-livraison {
+    height: 55vh;
+    min-height: 320px;
+    max-height: 520px;
+    width: 100%;
+    background: #f1f5f9;
+  }
+  @media (min-width: 768px) {
+    #map-livraison {
+      height: 60vh;
+      min-height: 400px;
+      max-height: 600px;
+    }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="space-y-4 sm:space-y-6">
+{% if request.user.role == "LIVREUR" %}
 
-    <!-- En-tête -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <div class="flex items-center gap-3">
-            <a href="{% url 'livraison:liste' %}"
-               class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-white shadow hover:bg-gray-50 transition text-gray-600 shrink-0">
-                <i class="fas fa-arrow-left text-sm"></i>
-            </a>
-            <div>
-                <h1 class="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
-                    <i class="fas fa-truck text-orange-500"></i>Livraison N° {{ livraison.id }}
-                </h1>
-                <p class="text-gray-500 text-xs sm:text-sm">Commande N° {{ livraison.commande.id }} — créée le {{ livraison.created_at|date:"d/m/Y H:i" }}</p>
-            </div>
-        </div>
-        <div class="flex gap-2 w-full sm:w-auto">
-            {% if livraison.telephone and request.user.role == "LIVREUR" %}
-            <a href="tel:{{ livraison.telephone }}"
-               class="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 sm:px-5 py-2.5 rounded-xl font-semibold text-sm transition w-full sm:w-auto">
-                <i class="fas fa-phone"></i> Appeler le client
-            </a>
-            {% endif %}
-            {% if request.user.role == "LIVREUR" %}
-            <a href="{% url 'livraison:modifier' livraison.id %}"
-               class="flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 sm:px-5 py-2.5 rounded-xl font-semibold text-sm transition w-full sm:w-auto">
-                <i class="fas fa-pen"></i> Modifier
-            </a>
-            <a href="{% url 'livraison:supprimer' livraison.id %}"
-               class="flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 px-4 sm:px-5 py-2.5 rounded-xl font-semibold text-sm transition w-full sm:w-auto">
-                <i class="fas fa-trash"></i> Supprimer
-            </a>
-            {% endif %}
-        </div>
+<div class="space-y-3 max-w-xl">
+
+  {# Retour + titre #}
+  <div class="flex items-center gap-3">
+    <a href="{% url 'livraison:liste' %}"
+       class="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 shrink-0">
+      <i class="fas fa-arrow-left"></i>
+    </a>
+    <div class="flex-1 min-w-0">
+      <h1 class="text-lg font-bold text-slate-900">Course #{{ livraison.id }}</h1>
+      <p class="text-xs text-slate-500">Commande #{{ livraison.commande.id }}</p>
     </div>
+    <span class="text-xs font-bold px-2.5 py-1 rounded-full
+      {% if livraison.statut == 'LIVREE' %}bg-emerald-500 text-white
+      {% elif livraison.statut == 'EN_COURS' %}bg-orange-500 text-white
+      {% else %}bg-slate-600 text-white{% endif %}">
+      {{ livraison.get_statut_display }}
+    </span>
+  </div>
 
-<!-- Statut -->
-    <div class="bg-white rounded-xl sm:rounded-2xl shadow p-4 sm:p-6">
-        <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div class="flex-1">
-                <p class="text-gray-500 text-xs uppercase tracking-wider font-semibold mb-1">Statut</p>
-                <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-bold
-                    {% if livraison.statut == 'EN_ATTENTE' %}bg-orange-100 text-orange-700
-                    {% elif livraison.statut == 'EN_COURS' %}bg-blue-100 text-blue-700
-                    {% elif livraison.statut == 'LIVREE' %}bg-emerald-100 text-emerald-700
-                    {% else %}bg-red-100 text-red-700{% endif %}">
-                    <i class="fas fa-circle text-[6px]"></i>{{ livraison.get_statut_display }}
-                </span>
-            </div>
-            <div class="flex-1">
-                <p class="text-gray-500 text-xs uppercase tracking-wider font-semibold mb-1">Livreur</p>
-                <p class="font-semibold text-slate-800 text-sm">
-                    {% if livraison.livreur %}
-                        <i class="fas fa-user text-blue-500 mr-1"></i>{{ livraison.livreur.get_full_name|default:livraison.livreur.username }}
-                    {% else %}
-                        <span class="text-gray-400">Non assigné</span>
-                    {% endif %}
-                </p>
-            </div>
-            {% if livraison.date_livraison %}
-            <div class="flex-1">
-                <p class="text-gray-500 text-xs uppercase tracking-wider font-semibold mb-1">Livrée le</p>
-                <p class="font-semibold text-slate-800 text-sm">{{ livraison.date_livraison|date:"d/m/Y H:i" }}</p>
-            </div>
-            {% endif %}
-        </div>
+  {# Adresse #}
+  <div class="bg-white rounded-2xl border border-slate-200 p-4">
+    <p class="text-xs font-bold text-slate-400 uppercase mb-1">Adresse</p>
+    <p class="font-bold text-slate-900 text-base">
+      {{ livraison.adresse|default:"Adresse non renseignée" }}
+    </p>
+    {% if livraison.commande.nom_client_livraison %}
+    <p class="text-sm text-slate-600 mt-2">
+      <i class="fas fa-user text-slate-400 mr-1"></i>
+      {{ livraison.commande.nom_client_livraison }}
+    </p>
+    {% endif %}
+    {% if livraison.telephone %}
+    <p class="text-sm text-slate-600 mt-1">
+      <i class="fas fa-phone text-slate-400 mr-1"></i>
+      <a href="tel:{{ livraison.telephone }}" class="font-semibold text-slate-800">{{ livraison.telephone }}</a>
+    </p>
+    {% endif %}
+  </div>
 
-        {% if request.user.role == "LIVREUR" %}
-        <div class="mt-4 pt-4 border-t border-gray-100 flex flex-wrap gap-2">
-            {% for code, label in livraison.STATUTS %}
-            {% if code != livraison.statut %}
-            <button type="button" onclick="changerStatut('{{ code }}')"
-                    class="px-4 py-2 rounded-xl text-sm font-semibold transition
-                    {% if code == 'LIVREE' %}bg-emerald-500 hover:bg-emerald-600 text-white
-                    {% elif code == 'EN_COURS' %}bg-blue-500 hover:bg-blue-600 text-white
-                    {% elif code == 'ANNULEE' %}bg-red-500 hover:bg-red-600 text-white
-                    {% else %}bg-slate-100 hover:bg-slate-200 text-slate-700{% endif %}">
-                <i class="fas fa-{% if code == 'LIVREE' %}truck-ramp-box{% elif code == 'EN_COURS' %}play{% elif code == 'ANNULEE' %}ban{% else %}clock{% endif %} mr-1"></i>
-                Passer à {{ label }}
-            </button>
-            {% endif %}
-            {% endfor %}
-        </div>
-        {% endif %}
+  {# Appeler + Maps #}
+  <div class="grid {% if livraison.telephone %}grid-cols-2{% else %}grid-cols-1{% endif %} gap-2">
+    {% if livraison.telephone %}
+    <a href="tel:{{ livraison.telephone }}"
+       class="flex items-center justify-center gap-2 py-3.5 rounded-xl bg-emerald-500 text-white font-bold text-sm">
+      <i class="fas fa-phone"></i> Appeler
+    </a>
+    {% endif %}
+    <a href="https://www.google.com/maps/dir/?api=1&destination={{ livraison.adresse|urlencode }}"
+       target="_blank" rel="noopener"
+       class="flex items-center justify-center gap-2 py-3.5 rounded-xl bg-slate-800 text-white font-bold text-sm">
+      <i class="fas fa-location-arrow"></i> Y aller
+    </a>
+  </div>
+
+  {# Articles #}
+  <div class="bg-white rounded-2xl border border-slate-200 p-4">
+    <p class="text-xs font-bold text-slate-400 uppercase mb-2">Articles</p>
+    {% for ligne in livraison.commande.lignes.all %}
+    <div class="flex justify-between text-sm py-1">
+      <span>{{ ligne.quantite }}× {{ ligne.produit.nom }}</span>
+      <span class="text-slate-500">{{ ligne.sous_total|floatformat:0 }}</span>
     </div>
-
-    <!-- Informations -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-
-        <div class="bg-white rounded-xl sm:rounded-2xl shadow p-5 sm:p-6">
-            <h3 class="font-bold text-gray-800 mb-4"><i class="fas fa-location-dot text-orange-500 mr-2"></i>Informations de livraison</h3>
-            <div class="space-y-3 text-sm">
-                <p class="flex items-start gap-2 text-gray-600"><i class="fas fa-map-pin text-gray-400 mt-0.5 w-4"></i> {{ livraison.adresse|default:"Adresse non renseignée" }}</p>
-                <p class="flex items-center gap-2 text-gray-600">
-                    <i class="fas fa-phone text-gray-400 w-4"></i>
-                    {% if livraison.telephone and request.user.role == "LIVREUR" %}
-                    <a href="tel:{{ livraison.telephone }}" class="text-blue-600 hover:text-blue-700 hover:underline font-semibold">{{ livraison.telephone }}</a>
-                    {% else %}
-                    {{ livraison.telephone|default:"—" }}
-                    {% endif %}
-                </p>
-                {% if livraison.telephone and request.user.role == "LIVREUR" %}
-                <a href="tel:{{ livraison.telephone }}"
-                   class="inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2.5 rounded-xl font-bold text-sm transition">
-                    <i class="fas fa-phone"></i> Appeler le client
-                </a>
-                {% endif %}
-                {% if livraison.notes %}
-                <p class="flex items-start gap-2 text-gray-600"><i class="fas fa-sticky-note text-gray-400 mt-0.5 w-4"></i> {{ livraison.notes }}</p>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl sm:rounded-2xl shadow overflow-hidden">
-            <div class="p-5">
-                <h3 class="font-bold text-gray-800"><i class="fas fa-box text-orange-500 mr-2"></i>Articles (Commande N° {{ livraison.commande.id }})</h3>
-            </div>
-            <div class="border-t divide-y divide-gray-100">
-                {% for ligne in livraison.commande.lignes.all %}
-                <div class="flex items-center justify-between px-5 py-3">
-                    <span class="text-sm text-gray-700">{{ ligne.produit.nom }}</span>
-                    <span class="text-sm font-bold text-slate-800">{{ ligne.quantite }}x</span>
-                </div>
-                {% empty %}
-                <p class="px-5 py-4 text-sm text-gray-400">Aucun article.</p>
-                {% endfor %}
-            </div>
-        </div>
-
+    {% empty %}
+    <p class="text-sm text-slate-400">Aucun article</p>
+    {% endfor %}
+    <div class="border-t border-slate-100 mt-2 pt-2 flex justify-between">
+      <span class="font-bold">Total</span>
+      <span class="font-bold text-orange-600">{{ livraison.commande.total|floatformat:0 }} {{ parametre.devise|default:"FCFA" }}</span>
     </div>
+  </div>
 
-<!-- Carte de suivi -->
-    {% if request.user.role == "LIVREUR" %}
-    <div class="no-print bg-white rounded-xl sm:rounded-2xl shadow p-5 sm:p-6">
-        <div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
-            <h3 class="font-bold text-gray-800"><i class="fas fa-map-location-dot text-orange-500 mr-2"></i>Position du livreur</h3>
-            <div class="flex gap-2">
-                {% if livraison.telephone %}
-                <a href="tel:{{ livraison.telephone }}"
-                   class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl font-semibold text-sm transition inline-flex items-center gap-2">
-                    <i class="fas fa-phone"></i> Appeler le client
-                </a>
-                {% endif %}
-                <button type="button" id="btn-partager-position" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl font-semibold text-sm transition">
-                    <i class="fas fa-location-crosshairs mr-1"></i> ▶ Démarrer le partage GPS
-                </button>
-            </div>
-        </div>
-        <div id="map-livraison" class="h-72 sm:h-96 w-full rounded-2xl border border-slate-200"></div>
-        <div class="flex items-center gap-4 mt-3 flex-wrap text-xs text-slate-500">
-            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-orange-500 inline-block"></span> 🏠 Client</span>
-            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span> 🛵 Vous</span>
-            <span id="distance-livraison" class="ml-auto font-semibold text-slate-600"></span>
-        </div>
-        <p id="status-position" class="text-sm text-slate-500 mt-3">Cliquez sur « Démarrer le partage GPS » pour envoyer votre position toutes les 5 secondes.</p>
+  {# Carte #}
+  <div id="map-wrap" class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+    <div class="map-fs-header items-center justify-between px-4 py-3 border-b border-slate-100 bg-white">
+      <span class="text-sm font-bold text-slate-800">Carte</span>
+      <button type="button" onclick="toggleMapFullscreen(false)"
+              class="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center active:scale-95">
+        <i class="fas fa-times text-lg"></i>
+      </button>
     </div>
+    <div class="map-normal-header px-4 py-2 border-b border-slate-100 flex justify-between items-center gap-2">
+      <span class="text-sm font-bold text-slate-800">Carte</span>
+      <div class="flex items-center gap-2">
+        <span id="distance-livraison" class="text-xs text-slate-500"></span>
+        <button type="button" onclick="toggleMapFullscreen(true)"
+                class="lg:hidden inline-flex items-center gap-1.5 text-xs font-bold text-orange-600 bg-orange-50 border border-orange-100 px-2.5 py-1.5 rounded-lg active:scale-95">
+          <i class="fas fa-expand"></i> Agrandir
+        </button>
+      </div>
+    </div>
+    <div id="map-livraison"></div>
+    <p id="status-position" class="text-xs text-slate-500 px-4 py-2">Activez le GPS pour partager votre position.</p>
+  </div>
+
+  {# Actions — dans le flux normal, pas de barre fixe #}
+  {% if livraison.statut != "LIVREE" and livraison.statut != "ANNULEE" %}
+  <div class="space-y-2 pb-4">
+    <button type="button" id="btn-partager-position"
+            class="w-full bg-slate-800 text-white font-bold py-3.5 rounded-xl text-sm flex items-center justify-center gap-2">
+      <i class="fas fa-location-crosshairs"></i> Démarrer le GPS
+    </button>
+
+    {% if livraison.statut != "EN_COURS" %}
+    <button type="button" onclick="changerStatut('EN_COURS')"
+            class="w-full bg-orange-500 text-white font-bold py-3.5 rounded-xl text-sm flex items-center justify-center gap-2">
+      <i class="fas fa-motorcycle"></i> Je suis en route
+    </button>
     {% endif %}
 
-    <!-- Assignation livreur -->
-    {% if request.user.role == "LIVREUR" %}
-    <div class="no-print bg-white rounded-xl sm:rounded-2xl shadow p-5 sm:p-6">
-        <h3 class="font-bold text-gray-800 mb-4"><i class="fas fa-user-plus text-orange-500 mr-2"></i>Assigner un livreur</h3>
-        <form method="POST" action="{% url 'livraison:modifier' livraison.id %}" class="flex flex-col sm:flex-row gap-3">
-            {% csrf_token %}
-            <select name="livreur" class="flex-1 border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition">
-                <option value="">-- Aucun livreur --</option>
-                {% for livreur in livreurs %}
-                <option value="{{ livreur.id }}" {% if livraison.livreur and livraison.livreur.id == livreur.id %}selected{% endif %}>
-                    {{ livreur.get_full_name|default:livreur.username }} ({{ livreur.username }})
-                </option>
-                {% endfor %}
-            </select>
-            <button type="submit"
-                    class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl font-semibold text-sm transition">
-                <i class="fas fa-check mr-1"></i> Assigner
-            </button>
-        </form>
-    </div>
-    {% endif %}
+    <button type="button" onclick="changerStatut('LIVREE')"
+            class="w-full bg-emerald-500 text-white font-bold py-3.5 rounded-xl text-sm flex items-center justify-center gap-2">
+      <i class="fas fa-check-circle"></i> Marquer comme livrée
+    </button>
+  </div>
+  {% else %}
+  <div class="text-center py-4 bg-emerald-50 rounded-xl text-emerald-700 font-bold border border-emerald-100">
+    ✓ Course terminée
+  </div>
+  {% endif %}
 
 </div>
+
+{% else %}
+{# Admin / Gérant #}
+<div class="space-y-4 max-w-3xl">
+  <div class="flex items-center gap-3">
+    <a href="{% url 'livraison:liste' %}" class="w-10 h-10 rounded-xl bg-white border flex items-center justify-center">
+      <i class="fas fa-arrow-left"></i>
+    </a>
+    <div>
+      <h1 class="text-xl font-bold">Livraison #{{ livraison.id }}</h1>
+      <p class="text-sm text-slate-500">Cmd #{{ livraison.commande.id }} · {{ livraison.get_statut_display }}</p>
+    </div>
+  </div>
+  <div class="bg-white rounded-2xl border p-4 text-sm space-y-1">
+    <p><strong>Adresse :</strong> {{ livraison.adresse|default:"—" }}</p>
+    <p><strong>Tél :</strong> {{ livraison.telephone|default:"—" }}</p>
+    <p><strong>Livreur :</strong> {% if livraison.livreur %}{{ livraison.livreur.get_full_name|default:livraison.livreur.username }}{% else %}—{% endif %}</p>
+  </div>
+  <div id="map-livraison" class="rounded-2xl border overflow-hidden"></div>
+  <p id="status-position" class="text-sm text-slate-500"></p>
+  <span id="distance-livraison"></span>
+  <button type="button" id="btn-partager-position" class="hidden">GPS</button>
+</div>
+{% endif %}
 {% endblock %}
+
 
 {% block extra_js %}
 {% load static static_version %}
@@ -210,7 +208,7 @@ const livraisonId = {{ livraison.id }};
 
     const mapInitLat = clientLat || {{ livraison.latitude|stringformat:"f"|default:'12.6392' }};
     const mapInitLng = clientLng || {{ livraison.longitude|stringformat:"f"|default:'-8.0029' }};
-    const mapLivraison = L.map('map-livraison', {
+    const mapLivraison = window.mapLivraison = L.map('map-livraison', {
         center: [mapInitLat, mapInitLng],
         zoom: 13,
         preferCanvas: true,
@@ -493,13 +491,57 @@ const livraisonId = {{ livraison.id }};
 
     // ===== Changement de statut (AJAX) =====
     function changerStatut(statut) {
-        confirmerAction(`Changer le statut en « ${statut} » ?`).then(ok => {
-            if (!ok) return;
-            changerStatutAction(`/livraisons/${livraisonId}/statut/`, statut, {
-                csrf: csrftoken,
-                reload: true,
-            });
-        });
+        const label = statut === 'LIVREE' ? 'livrée' : (statut === 'EN_COURS' ? 'en route' : statut);
+        const go = () => {
+            // Hors ligne : file d'attente
+            if (!navigator.onLine && typeof offlineFetch === 'function') {
+                offlineFetch(`/livraisons/${livraisonId}/statut/`, {
+                    method: 'POST',
+                    body: { statut: statut },
+                    label: 'Statut ' + label,
+                }).then(() => {
+                    if (typeof afficherToast === 'function') {
+                        afficherToast('Statut enregistré hors ligne — envoi dès le retour du réseau', 'info');
+                    }
+                });
+                return;
+            }
+            if (typeof changerStatutAction === 'function') {
+                changerStatutAction(`/livraisons/${livraisonId}/statut/`, statut, {
+                    csrf: csrftoken,
+                    reload: true,
+                });
+            } else {
+                fetch(`/livraisons/${livraisonId}/statut/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ statut: statut }),
+                }).then(() => location.reload());
+            }
+        };
+        if (typeof confirmerAction === 'function') {
+            confirmerAction(`Changer le statut en « ${label} » ?`).then(ok => { if (ok) go(); });
+        } else if (confirm(`Changer le statut en « ${label} » ?`)) {
+            go();
+        }
     }
+
+function toggleMapFullscreen(open) {
+    const wrap = document.getElementById('map-wrap');
+    if (!wrap) return;
+    if (open === false || wrap.classList.contains('map-fullscreen')) {
+        wrap.classList.remove('map-fullscreen');
+        document.body.style.overflow = '';
+    } else {
+        wrap.classList.add('map-fullscreen');
+        document.body.style.overflow = 'hidden';
+    }
+    setTimeout(function () {
+        if (window.mapLivraison) window.mapLivraison.invalidateSize();
+    }, 250);
+}
 </script>
 {% endblock %}

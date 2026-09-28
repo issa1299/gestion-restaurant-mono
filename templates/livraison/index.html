@@ -1,390 +1,217 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %}Livraisons - RestaurantPro{% endblock %}
+{% block title %}{% if request.user.role == "LIVREUR" %}Mes courses{% else %}Livraisons{% endif %}{% endblock %}
 
 {% block content %}
-<div class="space-y-5">
+{% include "components/notifications.html" with groupe="livraison" %}
+{% csrf_token %}
 
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+{% if request.user.role == "LIVREUR" %}
+<div class="w-full space-y-4">
+
+    <div class="flex items-center justify-between gap-3">
         <div>
-            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 flex items-center gap-3">
-                <span class="w-11 h-11 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
-                    <i class="fas fa-truck-fast"></i>
-                </span>
-                Livraisons
-            </h1>
-            <p class="text-slate-500 text-sm mt-1">Gérez et suivez toutes vos livraisons en temps réel</p>
+            <h1 class="text-2xl font-extrabold text-slate-900">Mes courses</h1>
+            <p class="text-sm text-slate-500">{{ request.user.get_full_name|default:request.user.username }}</p>
         </div>
-        <div class="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold">
-            <span class="relative flex h-2.5 w-2.5">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
-            </span>
-            Temps réel
-        </div>
+        <span class="shrink-0 inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-full">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> En ligne
+        </span>
     </div>
 
-    <!-- Stats -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-5">
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-            <div class="p-4">
-                <div class="flex items-center justify-between">
-                    <p class="text-slate-500 text-xs sm:text-sm">En attente</p>
-                    <span class="w-9 h-9 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center"><i class="fas fa-clock"></i></span>
-                </div>
-                <p class="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">{{ stats.en_attente }}</p>
-            </div>
-        </div>
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-            <div class="p-4">
-                <div class="flex items-center justify-between">
-                    <p class="text-slate-500 text-xs sm:text-sm">En cours</p>
-                    <span class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center"><i class="fas fa-truck"></i></span>
-                </div>
-                <p class="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">{{ stats.en_cours }}</p>
-            </div>
-        </div>
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-            <div class="p-4">
-                <div class="flex items-center justify-between">
-                    <p class="text-slate-500 text-xs sm:text-sm">Livrées</p>
-                    <span class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center"><i class="fas fa-check-circle"></i></span>
-                </div>
-                <p class="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">{{ stats.livrees }}</p>
-            </div>
-        </div>
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-            <div class="p-4">
-                <div class="flex items-center justify-between">
-                    <p class="text-slate-500 text-xs sm:text-sm">Annulées</p>
-                    <span class="w-9 h-9 rounded-lg bg-red-50 text-red-600 flex items-center justify-center"><i class="fas fa-ban"></i></span>
-                </div>
-                <p class="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">{{ stats.annulees }}</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Section: Commandes prêtes à livrer -->
-    {% if commandes_pretes %}
-    <section>
-        <div class="flex items-center justify-between mb-3">
-            <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
-                Commandes prêtes à livrer
-            </h2>
-            <span class="bg-green-100 text-green-700 text-xs font-bold px-2.5 py-1 rounded-full">{{ commandes_pretes|length }} à créer</span>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {% for commande in commandes_pretes %}
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition p-4 sm:p-5" id="commande-prete-{{ commande.id }}">
-                <div class="flex justify-between items-start mb-3">
-                    <div>
-                        <p class="text-[11px] text-slate-400 uppercase tracking-wide font-semibold">Commande</p>
-                        <h4 class="font-bold text-slate-900 text-lg">N° {{ commande.id }}</h4>
-                        <p class="text-xs text-slate-400">{{ commande.created_at|date:"d/m/Y H:i" }}</p>
-                    </div>
-                    <span class="text-[11px] px-2.5 py-1 rounded-full bg-green-100 text-green-700 font-bold flex items-center gap-1">
-                        <i class="fas fa-circle text-[6px]"></i>Prête
+    <!-- EN COURS -->
+    <section class="space-y-3">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-orange-600 flex items-center gap-2">
+            <i class="fas fa-motorcycle"></i> En cours maintenant
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+            {% for livraison in livraisons %}
+            {% if livraison.livreur_id == request.user.id %}
+            {% if livraison.statut == "EN_COURS" or livraison.statut == "EN_ATTENTE" %}
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                <div class="bg-slate-800 text-white px-4 py-3 flex items-center justify-between">
+                    <span class="font-bold">Course #{{ livraison.id }}</span>
+                    <span class="text-[11px] font-bold bg-orange-500 px-2.5 py-1 rounded-full">
+                        {% if livraison.statut == "EN_COURS" %}En route{% else %}À démarrer{% endif %}
                     </span>
                 </div>
-
-                <div class="space-y-1.5 text-sm text-slate-600 mb-3">
-                    <p class="flex items-center gap-2"><i class="fas fa-map-pin text-slate-400 w-4"></i> <span class="truncate">{{ commande.adresse_livraison|default:"Adresse non renseignée" }}</span></p>
-                    <p class="flex items-center gap-2"><i class="fas fa-phone text-slate-400 w-4"></i> {{ commande.telephone_livraison|default:"—" }}</p>
+                <div class="p-4 flex-1 space-y-2">
+                    <p class="font-semibold text-slate-900 text-base leading-snug">
+                        <i class="fas fa-map-marker-alt text-orange-500 mr-1"></i>
+                        {{ livraison.adresse|default:"Adresse manquante" }}
+                    </p>
+                    {% if livraison.telephone %}
+                    <a href="tel:{{ livraison.telephone }}"
+                       class="inline-flex items-center gap-2 text-slate-700 font-semibold text-sm"
+                       onclick="event.stopPropagation()">
+                        <i class="fas fa-phone text-orange-500"></i> {{ livraison.telephone }}
+                    </a>
+                    {% endif %}
                 </div>
-
-                <div class="text-xs text-slate-500 mb-4 livraison-articles">
-                    {% for ligne in commande.lignes.all %}
-                    <span class="inline-block bg-slate-100 rounded-lg px-2 py-1 mr-1 mb-1 font-medium">{{ ligne.quantite }}x {{ ligne.produit.nom }}</span>
-                    {% endfor %}
+                <div class="p-3 pt-0 grid grid-cols-2 gap-2">
+                    {% if livraison.telephone %}
+                    <a href="tel:{{ livraison.telephone }}"
+                       class="flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm active:scale-95">
+                        <i class="fas fa-phone"></i> Appeler
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'livraison:detail' livraison.id %}"
+                       class="flex items-center justify-center gap-2 py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm active:scale-95 {% if not livraison.telephone %}col-span-2{% endif %}">
+                        Ouvrir <i class="fas fa-arrow-right"></i>
+                    </a>
                 </div>
-
-                {% if request.user.role == "LIVREUR" %}
-                <button onclick="prendreEnCharge(this)"
-                    data-id="{{ commande.id }}"
-                    class="w-full bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2 shadow-sm shadow-orange-200">
-                    <i class="fas fa-truck"></i> Prendre en charge
-                </button>
-                {% endif %}
             </div>
+            {% endif %}
+            {% endif %}
             {% endfor %}
         </div>
     </section>
-    {% endif %}
 
-    <!-- Section: Suivi des livraisons -->
-    <section>
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-                Suivi des livraisons
-            </h2>
-            <span class="bg-slate-100 text-slate-600 text-xs font-bold px-2.5 py-1 rounded-full">{{ livraisons|length }} au total</span>
-        </div>
+    <!-- À PRENDRE -->
+    <section class="space-y-3">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
+            <i class="fas fa-bell text-orange-500"></i> À prendre
+            {% if commandes_pretes %}
+            <span class="bg-orange-500 text-white text-[11px] font-bold px-2 py-0.5 rounded-full">{{ commandes_pretes|length }}</span>
+            {% endif %}
+        </h2>
 
-        <!-- Filtres + recherche -->
-        <div class="flex flex-col lg:flex-row lg:items-center gap-3 mb-4">
-            <div class="flex flex-wrap gap-1.5 sm:gap-2" id="filtres-statut">
-                <button onclick="filtrerStatut('TOUS', this)" data-statut="TOUS"
-                        class="filter-btn active px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition border-2 border-slate-200 text-slate-600 bg-white hover:border-orange-400">
-                    Tous
-                </button>
-                <button onclick="filtrerStatut('EN_ATTENTE', this)" data-statut="EN_ATTENTE"
-                        class="filter-btn px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition border-2 border-slate-200 text-slate-600 bg-white hover:border-orange-400">
-                    <i class="fas fa-clock text-orange-500 mr-1"></i>En attente
-                </button>
-                <button onclick="filtrerStatut('EN_COURS', this)" data-statut="EN_COURS"
-                        class="filter-btn px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition border-2 border-slate-200 text-slate-600 bg-white hover:border-orange-400">
-                    <i class="fas fa-truck text-blue-500 mr-1"></i>En cours
-                </button>
-                <button onclick="filtrerStatut('LIVREE', this)" data-statut="LIVREE"
-                        class="filter-btn px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition border-2 border-slate-200 text-slate-600 bg-white hover:border-orange-400">
-                    <i class="fas fa-check-circle text-emerald-500 mr-1"></i>Livrées
-                </button>
-                <button onclick="filtrerStatut('ANNULEE', this)" data-statut="ANNULEE"
-                        class="filter-btn px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition border-2 border-slate-200 text-slate-600 bg-white hover:border-orange-400">
-                    <i class="fas fa-ban text-red-500 mr-1"></i>Annulées
-                </button>
+        {% if commandes_pretes %}
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+            {% for commande in commandes_pretes %}
+            <div class="bg-white rounded-2xl border border-orange-200 shadow-sm overflow-hidden flex flex-col" id="cmd-{{ commande.id }}">
+                <div class="bg-orange-500 text-white px-4 py-3 flex items-center justify-between">
+                    <span class="font-bold">Commande #{{ commande.id }}</span>
+                    <span class="font-extrabold">{{ commande.total|floatformat:0 }} {{ parametre.devise|default:"F" }}</span>
+                </div>
+                <div class="p-4 flex-1 space-y-2">
+                    <p class="font-semibold text-slate-900 text-base leading-snug">
+                        <i class="fas fa-map-marker-alt text-orange-500 mr-1"></i>
+                        {{ commande.adresse_livraison|default:"Adresse à confirmer" }}
+                    </p>
+                    {% if commande.telephone_livraison %}
+                    <a href="tel:{{ commande.telephone_livraison }}" class="inline-flex items-center gap-2 text-slate-700 font-semibold text-sm">
+                        <i class="fas fa-phone text-orange-500"></i> {{ commande.telephone_livraison }}
+                    </a>
+                    {% endif %}
+                    <div class="flex flex-wrap gap-1 pt-1">
+                        {% for ligne in commande.lignes.all %}
+                        <span class="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-medium">
+                            {{ ligne.quantite }}× {{ ligne.produit.nom }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="p-3 pt-0">
+                    <button type="button"
+                            onclick="prendreCourse(this, {{ commande.id }})"
+                            class="w-full bg-orange-500 hover:bg-orange-600 active:scale-[0.97] text-white font-extrabold py-3.5 rounded-xl text-sm flex items-center justify-center gap-2 min-h-[48px] shadow-md shadow-orange-200">
+                        <i class="fas fa-hand-holding-heart"></i>
+                        Je prends cette course
+                    </button>
+                </div>
             </div>
-            <div class="relative lg:ml-auto lg:w-72">
-                <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                <input type="text" id="recherche-livraison" placeholder="Rechercher (n°, adresse, téléphone)..."
-                       class="w-full pl-10 pr-4 py-2 bg-white border-2 border-slate-200 rounded-xl text-sm focus:border-orange-400 focus:outline-none transition"
-                       oninput="filtrerLivraisons()">
-            </div>
+            {% endfor %}
         </div>
+        {% else %}
+        <div class="bg-slate-50 border border-dashed border-slate-200 rounded-2xl py-8 text-center">
+            <p class="text-sm font-semibold text-slate-500">Aucune nouvelle course pour le moment</p>
+        </div>
+        {% endif %}
+    </section>
 
-        <div id="liste-livraisons" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+    <details class="bg-white rounded-2xl border border-slate-100">
+        <summary class="px-4 py-3 text-sm font-semibold text-slate-500 cursor-pointer">Historique</summary>
+        <div class="px-3 pb-3 space-y-1">
             {% for livraison in livraisons %}
-                <div class="livraison-card bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition"
-                    data-statut="{{ livraison.statut }}" id="livraison-{{ livraison.id }}">
-
-                    <!-- Bandeau statut -->
-                    <div class="px-4 py-2.5 flex items-center justify-between
-                        {% if livraison.statut == 'EN_ATTENTE' %}bg-orange-50
-                        {% elif livraison.statut == 'EN_COURS' %}bg-blue-50
-                        {% elif livraison.statut == 'LIVREE' %}bg-emerald-50
-                        {% else %}bg-red-50{% endif %}">
-                        <p class="text-xs sm:text-sm font-bold
-                            {% if livraison.statut == 'EN_ATTENTE' %}text-orange-700
-                            {% elif livraison.statut == 'EN_COURS' %}text-blue-700
-                            {% elif livraison.statut == 'LIVREE' %}text-emerald-700
-                            {% else %}text-red-700{% endif %}">
-                            {{ livraison.get_statut_display }}
-                        </p>
-                        <p class="text-[11px] text-slate-500">{{ livraison.created_at|date:"d/m H:i" }}</p>
-                    </div>
-
-                    <div class="p-4">
-                        <!-- En-tête -->
-                        <div class="flex justify-between items-start mb-3">
-                            <div>
-                                <p class="text-[11px] text-slate-400 uppercase tracking-wide font-semibold">Livraison</p>
-                                <h4 class="font-bold text-slate-900">N° {{ livraison.id }}</h4>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-[11px] text-slate-400 uppercase tracking-wide font-semibold">Commande</p>
-                                <p class="font-bold text-slate-900">N° {{ livraison.commande.id }}</p>
-                            </div>
-                        </div>
-
-                        <!-- Informations -->
-                        <div class="space-y-1.5 text-sm text-slate-600 mb-3">
-                            <p class="flex items-start gap-2"><i class="fas fa-map-pin text-slate-400 w-4 mt-0.5"></i> <span class="flex-1">{{ livraison.adresse|default:"Adresse non renseignée" }}</span></p>
-                            <p class="flex items-center gap-2">
-                                <i class="fas fa-phone text-slate-400 w-4"></i>
-                                {% if livraison.telephone and request.user.role == "LIVREUR" %}
-                                <a href="tel:{{ livraison.telephone }}" class="text-blue-600 hover:text-blue-700 hover:underline font-medium">{{ livraison.telephone }}</a>
-                                {% else %}
-                                {{ livraison.telephone|default:"—" }}
-                                {% endif %}
-                            </p>
-                            {% if livraison.livreur %}
-                            <p class="flex items-center gap-2">
-                                <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold flex items-center justify-center shrink-0">
-                                    {{ livraison.livreur.username|first|upper }}
-                                </span>
-                                {{ livraison.livreur.get_full_name|default:livraison.livreur.username }}
-                            </p>
-                            {% endif %}
-                            {% if livraison.date_livraison %}
-                            <p class="flex items-center gap-2 text-xs text-slate-500"><i class="fas fa-clock text-slate-400 w-4"></i> Livrée le {{ livraison.date_livraison|date:"d/m/Y H:i" }}</p>
-                            {% endif %}
-                        </div>
-
-                        <!-- Articles -->
-                        <details class="mb-3">
-                            <summary class="text-xs text-slate-500 cursor-pointer hover:text-orange-600 font-medium">
-                                <i class="fas fa-box"></i> Voir les articles
-                            </summary>
-                            <div class="mt-2 text-xs text-slate-500">
-                                {% for ligne in livraison.commande.lignes.all %}
-                                <span class="inline-block bg-slate-100 rounded-lg px-2 py-1 mr-1 mb-1 font-medium">{{ ligne.quantite }}x {{ ligne.produit.nom }}</span>
-                                {% endfor %}
-                            </div>
-                        </details>
-
-                        <!-- Actions -->
-                        {% if request.user.role == "LIVREUR" %}
-                        <div class="space-y-2">
-                            {% if livraison.telephone and livraison.statut == 'EN_ATTENTE' or livraison.statut == 'EN_COURS' %}
-                            <a href="tel:{{ livraison.telephone }}"
-                                class="w-full bg-green-500 hover:bg-green-600 text-white text-sm font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2">
-                                <i class="fas fa-phone"></i> Appeler le client
-                            </a>
-                            {% endif %}
-                            {% if livraison.statut == 'EN_ATTENTE' %}
-                                <button onclick="changerStatutLivraison({{ livraison.id }}, 'EN_COURS')"
-                                    class="w-full bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2">
-                                    <i class="fas fa-play"></i> Prendre en charge
-                                </button>
-                            {% elif livraison.statut == 'EN_COURS' %}
-                                <div class="grid grid-cols-2 gap-2">
-                                    <button onclick="changerStatutLivraison({{ livraison.id }}, 'LIVREE')"
-                                        class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2">
-                                        <i class="fas fa-check-circle"></i> Livrée
-                                    </button>
-                                    <button onclick="changerStatutLivraison({{ livraison.id }}, 'ANNULEE')"
-                                        class="bg-red-50 hover:bg-red-100 text-red-600 text-sm font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2">
-                                        <i class="fas fa-times"></i> Annuler
-                                    </button>
-                                </div>
-                            {% elif livraison.statut == 'LIVREE' %}
-                                <div class="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 font-bold py-2.5 rounded-xl text-sm">
-                                    <i class="fas fa-check-circle"></i> Livrée
-                                </div>
-                            {% elif livraison.statut == 'ANNULEE' %}
-                                <div class="flex items-center justify-center gap-2 bg-red-50 text-red-500 font-bold py-2.5 rounded-xl text-sm">
-                                    <i class="fas fa-times-circle"></i> Annulée
-                                </div>
-                            {% endif %}
-                            <a href="{% url 'livraison:detail' livraison.id %}"
-                               class="w-full inline-flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold py-2 rounded-xl transition">
-                                <i class="fas fa-eye"></i> Détail
-                            </a>
-                        </div>
-                        {% else %}
-                        <div class="space-y-2">
-                            <a href="{% url 'livraison:detail' livraison.id %}"
-                               class="w-full inline-flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold py-2 rounded-xl transition">
-                                <i class="fas fa-eye"></i> Détail
-                            </a>
-                        </div>
-                        {% endif %}
-                    </div>
+            {% if livraison.livreur_id == request.user.id and livraison.statut == "LIVREE" %}
+            <a href="{% url 'livraison:detail' livraison.id %}" class="flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-slate-50">
+                <span class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm shrink-0">✓</span>
+                <div class="min-w-0">
+                    <p class="text-sm font-medium text-slate-700 truncate">#{{ livraison.id }} — {{ livraison.adresse|truncatechars:40 }}</p>
+                    <p class="text-[11px] text-slate-400">Livrée</p>
                 </div>
-            {% empty %}
-                <div class="col-span-full text-center py-14 text-slate-400">
-                    <div class="w-20 h-20 mx-auto rounded-full bg-slate-100 flex items-center justify-center mb-4">
-                        <i class="fas fa-truck text-3xl text-slate-300"></i>
-                    </div>
-                    <p class="font-semibold text-slate-500">Aucune livraison pour le moment</p>
-                    <p class="text-sm mt-1">Les livraisons apparaîtront ici dès leur création.</p>
-                </div>
+            </a>
+            {% endif %}
             {% endfor %}
         </div>
-    </section>
+    </details>
 </div>
 
+{% else %}
+<div class="space-y-5">
+    <h1 class="text-2xl font-bold text-slate-900"><i class="fas fa-truck-fast text-orange-500 mr-2"></i>Livraisons</h1>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="bg-white rounded-2xl border p-4"><p class="text-xs text-slate-500">En attente</p><p class="text-2xl font-bold">{{ stats.en_attente }}</p></div>
+        <div class="bg-white rounded-2xl border p-4"><p class="text-xs text-slate-500">En cours</p><p class="text-2xl font-bold">{{ stats.en_cours }}</p></div>
+        <div class="bg-white rounded-2xl border p-4"><p class="text-xs text-slate-500">Livrées</p><p class="text-2xl font-bold">{{ stats.livrees }}</p></div>
+        <div class="bg-white rounded-2xl border p-4"><p class="text-xs text-slate-500">Total</p><p class="text-2xl font-bold">{{ livraisons|length }}</p></div>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for livraison in livraisons %}
+        <a href="{% url 'livraison:detail' livraison.id %}" class="block bg-white rounded-2xl border p-4 hover:border-orange-300">
+            <div class="flex justify-between mb-2">
+                <span class="font-bold">#{{ livraison.id }}</span>
+                <span class="text-xs font-bold px-2 py-0.5 rounded-full
+                    {% if livraison.statut == 'LIVREE' %}bg-emerald-100 text-emerald-700
+                    {% elif livraison.statut == 'EN_COURS' %}bg-orange-100 text-orange-700
+                    {% else %}bg-slate-100 text-slate-700{% endif %}">{{ livraison.get_statut_display }}</span>
+            </div>
+            <p class="text-sm text-slate-600 line-clamp-2">{{ livraison.adresse|default:"—" }}</p>
+        </a>
+        {% empty %}
+        <p class="text-slate-400 col-span-full text-center py-8">Aucune livraison</p>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}
-{% load static %}
-<script src="{% static 'js/statut.js' %}"></script>
-<script src="{% static 'js/toast.js' %}"></script>
 <script>
-function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(";").shift();
+function getCsrf() {
+    const el = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (el && el.value) return el.value;
+    const m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? decodeURIComponent(m[1]) : '';
 }
-
-async function prendreEnCharge(btn) {
-    const ok = await confirmerAction("Prendre en charge cette commande ?", { okText: "Prendre en charge" });
-    if (!ok) return;
+async function prendreCourse(btn, commandeId) {
+    if (btn.disabled) return;
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Prise en charge...';
-    const commandeId = btn.dataset.id;
+    window._priseEnCours = true;
+    const old = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Prise en charge…';
     try {
-        const response = await fetch(`/livraisons/creer/${commandeId}/`, {
-            method: "POST",
-            headers: { "X-CSRFToken": getCookie("csrftoken") },
+        const res = await fetch('/livraisons/creer/' + commandeId + '/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCsrf(), 'X-Requested-With': 'XMLHttpRequest' },
         });
-        const data = await response.json();
-        if (data.success) {
-            window.location.reload();
-        } else {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-truck"></i> Prendre en charge';
-            afficherToast(data.error || "Erreur lors de la prise en charge.", "error");
+        let data = {};
+        try { data = await res.json(); } catch (e) {}
+        if (res.ok && (data.success || data.livraison_id)) {
+            if (data.livraison_id) { window.location.href = '/livraisons/' + data.livraison_id + '/'; return; }
+            window.location.reload(); return;
         }
-    } catch (error) {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-truck"></i> Prendre en charge';
-        afficherToast("Erreur réseau.", "error");
+        btn.disabled = false; btn.innerHTML = old; window._priseEnCours = false;
+        const msg = data.error || 'Impossible de prendre cette course.';
+        if (typeof afficherToast === 'function') afficherToast(msg, 'error'); else alert(msg);
+    } catch (e) {
+        btn.disabled = false; btn.innerHTML = old; window._priseEnCours = false;
+        if (typeof afficherToast === 'function') afficherToast('Erreur réseau', 'error'); else alert('Erreur réseau');
     }
 }
-
-function changerStatutLivraison(id, statut) {
-    changerStatutAction(`/livraisons/${id}/statut/`, statut, {
-        reload: true,
-    }).catch(() => {
-        afficherToast("Erreur réseau.", "error");
-    });
-}
-
-// === Filtres par statut ===
-let filtreActuel = 'TOUS';
-
-function filtrerStatut(statut, btn) {
-    filtreActuel = statut;
-    document.querySelectorAll('.filter-btn').forEach(b => {
-        b.classList.remove('active', 'border-orange-500', 'bg-orange-50', 'text-orange-700');
-    });
-    if (btn) btn.classList.add('active', 'border-orange-500', 'bg-orange-50', 'text-orange-700');
-    appliquerFiltres();
-}
-
-function appliquerFiltres() {
-    const recherche = document.getElementById('recherche-livraison').value.toLowerCase();
-    document.querySelectorAll('.livraison-card').forEach(card => {
-        const statutOk = filtreActuel === 'TOUS' || card.dataset.statut === filtreActuel;
-        const texte = card.textContent.toLowerCase();
-        const rechercheOk = recherche === '' || texte.includes(recherche);
-        card.style.display = (statutOk && rechercheOk) ? '' : 'none';
-    });
-}
-
-function filtrerLivraisons() {
-    appliquerFiltres();
-}
-
-// === WebSocket temps réel ===
-const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-const socket = new WebSocket(`${protocol}://${window.location.host}/ws/commandes/livraison/`);
-
-socket.onmessage = function(event) {
-    const message = JSON.parse(event.data);
-    if (message.evenement === 'nouvelle_commande'
-        || message.evenement === 'nouvelle_livraison'
-        || message.evenement === 'statut_livraison') {
-        document.body.style.opacity = '0.5';
-        document.body.style.transition = '0.2s';
-        setTimeout(() => {
-            window.location.reload();
-        }, 500);
-    }
-};
-
-socket.onopen = () => {
-    console.log('✓ Connecté au canal livraison');
-};
-
-socket.onerror = (error) => {
-    console.error('Erreur WebSocket:', error);
-};
+try {
+    const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+    const socket = new WebSocket(protocol + '://' + location.host + '/ws/commandes/livraison/');
+    socket.onmessage = function (event) {
+        try {
+            const message = JSON.parse(event.data);
+            if (['nouvelle_commande', 'nouvelle_livraison', 'statut_livraison'].indexOf(message.evenement) !== -1) {
+                if (!window._priseEnCours) location.reload();
+            }
+        } catch (e) {}
+    };
+} catch (e) {}
 </script>
 {% endblock %}
-
